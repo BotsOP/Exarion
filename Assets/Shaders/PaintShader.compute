@@ -1,0 +1,11 @@
+#pragma kernel Paint
+
+RWTexture2D<float4> Result;
+float2 cursorPos;
+
+[numthreads(16,16,1)]
+void Paint (uint3 id : SV_DispatchThreadID)
+{
+    cursorPos += id.xy;
+    Result[cursorPos] = float4(1, 1, 1, 0);
+}
