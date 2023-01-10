@@ -4,8 +4,8 @@ RWTexture2D<float4> Result;
 float2 cursorPos;
 float2 lastCursorPos;
 float2 startPos;
-float2 endPos;
 float brushSize;
+float timeColor;
 
 float LineSegment2DSDF(float2 p, float2 a, float2 b)
 {
@@ -22,6 +22,7 @@ void Paint (uint3 id : SV_DispatchThreadID)
     
     float paintColor = LineSegment2DSDF(paintPos, cursorPos, lastCursorPos);
     paintColor = smoothstep(brushSize, brushSize - 5, paintColor);
+    paintColor *= timeColor;
     if(Result[paintPos].x < paintColor)
     {
         Result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
