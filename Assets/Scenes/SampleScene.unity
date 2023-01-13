@@ -176,8 +176,8 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 0.5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -201,7 +201,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.5, y: 0.49, z: -1.07}
+  m_LocalPosition: {x: 0.5, y: 0.5, z: -1.07}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -653,7 +653,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 7c823323d34cde642a1885678b0b3a4e, type: 2}
+  - {fileID: 2100000, guid: b42390756a8021a46903a26abae5ec9e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -698,7 +698,9 @@ MonoBehaviour:
   paintShader: {fileID: 7200000, guid: 40b8e38a8796d6a43b6281636c8b9daf, type: 3}
   cam: {fileID: 330585545}
   rt: {fileID: 8400000, guid: e4bb5f9d4f3558647819bd4ef21140a7, type: 2}
+  strokeIDTex: {fileID: 8400000, guid: 8f0fe88ea1f228d4493058b918278d74, type: 2}
   mat: {fileID: 2100000, guid: 7c823323d34cde642a1885678b0b3a4e, type: 2}
+  mat2: {fileID: 2100000, guid: b42390756a8021a46903a26abae5ec9e, type: 2}
   imageWidth: 2048
   imageHeight: 2048
   brushSize: 50

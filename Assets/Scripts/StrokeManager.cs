@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
@@ -13,7 +14,11 @@ public class StrokeManager : MonoBehaviour
     [SerializeField]
     private RenderTexture rt;
     [SerializeField]
+    private RenderTexture strokeIDTex;
+    [SerializeField]
     private Material mat;
+    [SerializeField]
+    private Material mat2;
     [SerializeField]
     private int imageWidth;
     [SerializeField]
@@ -31,9 +36,10 @@ public class StrokeManager : MonoBehaviour
     private bool firstUse;
     private List<BrushStroke> brushStrokes;
     private List<BrushStrokeID> brushStrokesID;
-    private int currentID;
+    private int currentID = 1;
     private int lastID;
     private float lastTime;
+    private Vector4 tempBox;
 
     private float time => Time.time / 10;
 
@@ -47,9 +53,21 @@ public class StrokeManager : MonoBehaviour
         rt = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
         rt.enableRandomWrite = true;
         mat.SetTexture("_MainTex", rt);
+        strokeIDTex = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+        strokeIDTex.enableRandomWrite = true;
+        mat2.SetTexture("_MainTex", strokeIDTex);
 
         brushStrokes = new List<BrushStroke>();
         brushStrokesID = new List<BrushStrokeID>();
+        //brushStrokesID.Add(new BrushStrokeID(0, currentID, 0, 0, tempBox));
+
+        tempBox = ResetTempBox(tempBox);
+    }
+
+    private void OnDisable()
+    {
+        strokeIDTex.Release();
+        strokeIDTex = null;
     }
 
     void Update()
@@ -82,55 +100,91 @@ public class StrokeManager : MonoBehaviour
                 paintShader.SetVector("startPos", startPos);
                 paintShader.SetFloat("brushSize", brushSize);
                 paintShader.SetFloat("timeColor", time);
-                paintShader.SetTexture(kernelID, "Result", rt);
+                paintShader.SetFloat("strokeID", lastID);
+                paintShader.SetTexture(kernelID, "result", rt);
+                paintShader.SetTexture(kernelID, "strokeIDs", strokeIDTex);
 
                 paintShader.Dispatch(kernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
 
                 brushStrokes.Add(new BrushStroke(lastCursorPos, cursorPos, startPos, brushSize, time));
                 lastCursorPos = cursorPos;
                 currentID++;
+                
+                if (tempBox.x > cursorPos.x) { tempBox.x = cursorPos.x; }
+                if (tempBox.y > cursorPos.y) { tempBox.y = cursorPos.y; }
+                if (tempBox.z < cursorPos.x) { tempBox.z = cursorPos.x; }
+                if (tempBox.w < cursorPos.y) { tempBox.w = cursorPos.y; }
+                // ball1.position = new Vector3(tempBox.x / imageWidth, tempBox.y / imageHeight, 0);
+                // ball2.position = new Vector3(tempBox.z / imageWidth, tempBox.w / imageHeight, 0);
             }
         }
         else
         {
+            //runs once after mouse is not being clicked anymore
             if (firstUse)
             {
-                Debug.Log($"{lastID} {currentID}");
-                brushStrokesID.Add(new BrushStrokeID(lastID, currentID, lastTime, time));
+                brushStrokesID.Add(new BrushStrokeID(lastID, currentID, lastTime, time, tempBox));
+                tempBox = ResetTempBox(tempBox);
                 firstUse = false;
             }
         }
 
         if (Input.GetKeyDown(KeyCode.B))
         {
-            Debug.Log($"test");
-            BrushStrokeID strokeID = brushStrokesID[0];
-            Redraw(strokeID.startID, strokeID.endID, 0.5f, 1);
+            Redraw(0, 0.5f, 1);
         }
     }
 
-    private void Redraw(int startID, int endID, float startTime, float endTime)
+    private void Redraw(int brushstrokStartID, float startTime, float endTime)
     {
-        int amountStrokes = endID - startID;
-        for (int i = startID; i < endID; i++)
+        for (int i = brushstrokStartID; i < brushStrokesID.Count; i++)
         {
-            BrushStroke stroke = brushStrokes[i];
+            Debug.Log($"{brushStrokesID.Count} {i}");
+            BrushStrokeID strokeID = brushStrokesID[i];
+            int startID = strokeID.startID;
+            int endID = strokeID.endID;
             
-            threadGroupSize.x = Mathf.CeilToInt((math.abs(stroke.lastPos.x - stroke.currentPos.x) + stroke.brushSize * 2) / threadGroupSizeOut.x);
-            threadGroupSize.y = Mathf.CeilToInt((math.abs(stroke.lastPos.y - stroke.currentPos.y) + stroke.brushSize * 2) / threadGroupSizeOut.y);
+            for (int j = startID; j < endID - 1; j++)
+            {
+                Debug.Log($"{brushStrokes.Count} {j}");
+                BrushStroke stroke = brushStrokes[j];
+            
+                threadGroupSize.x = Mathf.CeilToInt((math.abs(stroke.lastPos.x - stroke.currentPos.x) + stroke.brushSize * 2) / threadGroupSizeOut.x);
+                threadGroupSize.y = Mathf.CeilToInt((math.abs(stroke.lastPos.y - stroke.currentPos.y) + stroke.brushSize * 2) / threadGroupSizeOut.y);
 
-            float idPercentage = ExtensionMethods.Remap(i, startID, endID, 0, 1);
-            float currentTime = (endTime - startTime) * idPercentage + startTime;
+                float currentTime = stroke.time;
+                if (i == 0)
+                {
+                    float idPercentage = ExtensionMethods.Remap(j, startID, endID, 0, 1);
+                    currentTime = (endTime - startTime) * idPercentage + startTime;
+                }
 
-            paintShader.SetVector("cursorPos", stroke.currentPos);
-            paintShader.SetVector("lastCursorPos", stroke.lastPos);
-            paintShader.SetVector("startPos", stroke.startPos);
-            paintShader.SetFloat("brushSize", stroke.brushSize);
-            paintShader.SetFloat("timeColor",  currentTime);
-            paintShader.SetTexture(kernelID, "Result", rt);
+                paintShader.SetVector("cursorPos", stroke.currentPos);
+                paintShader.SetVector("lastCursorPos", stroke.lastPos);
+                paintShader.SetVector("startPos", stroke.startPos);
+                paintShader.SetFloat("brushSize", stroke.brushSize);
+                paintShader.SetFloat("timeColor",  currentTime);
+                paintShader.SetFloat("strokeID", startID);
+                paintShader.SetTexture(kernelID, "result", rt);
+                paintShader.SetTexture(kernelID, "strokeIDs", strokeIDTex);
 
-            paintShader.Dispatch(kernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+                paintShader.Dispatch(kernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+            }
         }
+    }
+
+    private Vector4 ResetTempBox(Vector4 box)
+    {
+        box.x = imageWidth;
+        box.y = imageHeight;
+        box.z = 0;
+        box.w = 0;
+        return box;
+    }
+    
+    private bool CheckCollision(Vector4 box1, Vector4 box2)
+    {
+        return box1.x <= box2.z && box1.z >= box2.x && box1.y <= box2.w && box1.w >= box2.y;
     }
 }
 
@@ -159,13 +213,15 @@ struct BrushStrokeID
     public int endID;
     public float startTime;
     public float endTime;
+    public Vector4 box;
 
-    public BrushStrokeID(int startID, int endID, float startTime, float endTime)
+    public BrushStrokeID(int startID, int endID, float startTime, float endTime, Vector4 box)
     {
         this.startID = startID;
         this.endID = endID;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.box = box;
     }
 }
 
@@ -173,5 +229,4 @@ public static class ExtensionMethods {
     public static float Remap (this float value, float from1, float to1, float from2, float to2) {
         return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
     }
-   
 }

@@ -1,11 +1,13 @@
 #pragma kernel Paint
 
-RWTexture2D<float4> Result;
+RWTexture2D<float4> result;
+RWTexture2D<float4> strokeIDs;
 float2 cursorPos;
 float2 lastCursorPos;
 float2 startPos;
 float brushSize;
 float timeColor;
+float strokeID;
 
 float LineSegment2DSDF(float2 p, float2 a, float2 b)
 {
@@ -23,8 +25,9 @@ void Paint (uint3 id : SV_DispatchThreadID)
     float paintColor = LineSegment2DSDF(paintPos, cursorPos, lastCursorPos);
     paintColor = smoothstep(brushSize, brushSize - 5, paintColor);
     paintColor *= timeColor;
-    if(Result[paintPos].x < paintColor)
+    if(paintColor > result[paintPos].x && (strokeID == strokeIDs[paintPos].r || strokeIDs[paintPos].r == 0))
     {
-        Result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+        result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+        strokeIDs[paintPos] = float4(strokeID, strokeID, strokeID, 1);
     }
 }
