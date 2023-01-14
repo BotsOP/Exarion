@@ -101,6 +101,7 @@ public class StrokeManager : MonoBehaviour
                 paintShader.SetFloat("brushSize", brushSize);
                 paintShader.SetFloat("timeColor", time);
                 paintShader.SetFloat("strokeID", lastID);
+                paintShader.SetBool("drawing", true);
                 paintShader.SetTexture(kernelID, "result", rt);
                 paintShader.SetTexture(kernelID, "strokeIDs", strokeIDTex);
 
@@ -137,23 +138,23 @@ public class StrokeManager : MonoBehaviour
 
     private void Redraw(int brushstrokStartID, float startTime, float endTime)
     {
-        for (int i = brushstrokStartID; i < brushStrokesID.Count; i++)
+        for (int i = brushStrokesID.Count - 1; i >= brushstrokStartID; i--)
         {
-            Debug.Log($"{brushStrokesID.Count} {i}");
+            //Debug.Log($"{brushStrokesID.Count} {i}");
             BrushStrokeID strokeID = brushStrokesID[i];
             int startID = strokeID.startID;
             int endID = strokeID.endID;
             
             for (int j = startID; j < endID - 1; j++)
             {
-                Debug.Log($"{brushStrokes.Count} {j}");
+                //Debug.Log($"{brushStrokes.Count} {j}");
                 BrushStroke stroke = brushStrokes[j];
             
                 threadGroupSize.x = Mathf.CeilToInt((math.abs(stroke.lastPos.x - stroke.currentPos.x) + stroke.brushSize * 2) / threadGroupSizeOut.x);
                 threadGroupSize.y = Mathf.CeilToInt((math.abs(stroke.lastPos.y - stroke.currentPos.y) + stroke.brushSize * 2) / threadGroupSizeOut.y);
 
                 float currentTime = stroke.time;
-                if (i == 0)
+                if (i == brushstrokStartID)
                 {
                     float idPercentage = ExtensionMethods.Remap(j, startID, endID, 0, 1);
                     currentTime = (endTime - startTime) * idPercentage + startTime;
@@ -164,7 +165,8 @@ public class StrokeManager : MonoBehaviour
                 paintShader.SetVector("startPos", stroke.startPos);
                 paintShader.SetFloat("brushSize", stroke.brushSize);
                 paintShader.SetFloat("timeColor",  currentTime);
-                paintShader.SetFloat("strokeID", startID);
+                paintShader.SetFloat("strokeID", (float)startID);
+                paintShader.SetBool("drawing", false);
                 paintShader.SetTexture(kernelID, "result", rt);
                 paintShader.SetTexture(kernelID, "strokeIDs", strokeIDTex);
 

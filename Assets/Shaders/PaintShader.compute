@@ -8,6 +8,7 @@ float2 startPos;
 float brushSize;
 float timeColor;
 float strokeID;
+bool drawing;
 
 float LineSegment2DSDF(float2 p, float2 a, float2 b)
 {
@@ -25,9 +26,18 @@ void Paint (uint3 id : SV_DispatchThreadID)
     float paintColor = LineSegment2DSDF(paintPos, cursorPos, lastCursorPos);
     paintColor = smoothstep(brushSize, brushSize - 5, paintColor);
     paintColor *= timeColor;
-    if(paintColor > result[paintPos].x && (strokeID == strokeIDs[paintPos].r || strokeIDs[paintPos].r == 0))
+    if(paintColor > result[paintPos].x )
     {
-        result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
-        strokeIDs[paintPos] = float4(strokeID, strokeID, strokeID, 1);
+        if(drawing)
+        {
+            result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+            strokeIDs[paintPos] = float4(strokeID, strokeID, strokeID, 1);
+            return;
+        }
+        if(strokeID == strokeIDs[paintPos].r || strokeIDs[paintPos].r == 0)
+        {
+            result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+            strokeIDs[paintPos] = float4(strokeID, strokeID, strokeID, 1);
+        }
     }
 }
