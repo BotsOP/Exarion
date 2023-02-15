@@ -7,8 +7,11 @@ float2 lastCursorPos;
 float2 startPos;
 float brushSize;
 float timeColor;
+float previousTimeColor;
 float strokeID;
-bool drawing;
+bool firstStroke;
+
+AppendStructuredBuffer<float4> debug;
 
 float LineSegment2DSDF(float2 p, float2 a, float2 b)
 {
@@ -17,27 +20,49 @@ float LineSegment2DSDF(float2 p, float2 a, float2 b)
     float k = saturate(dot(pa, ba) / dot(ba, ba));
     return length(pa - ba * k);
 }
+float2 ClosestPointOnLine(float2 lineStart, float2 lineEnd, float2 position)
+{
+    float2 lineDirection = normalize(lineEnd - lineStart);
+    float2 positionRelativeToStart = position - lineStart;
+    float projectionDistance = dot(positionRelativeToStart, lineDirection);
+    return lineStart + projectionDistance * lineDirection;
+}
 
 [numthreads(32,32,1)]
 void Paint (uint3 id : SV_DispatchThreadID)
 {
     float2 paintPos = startPos.xy + id.xy;
-    
-    float paintColor = LineSegment2DSDF(paintPos, cursorPos, lastCursorPos);
-    paintColor = smoothstep(brushSize, brushSize - 5, paintColor);
-    paintColor *= timeColor;
-    if(paintColor > result[paintPos].x )
+    lastCursorPos += float2(0.01, 0.01);
+
+    if(distance(paintPos, lastCursorPos) < brushSize + 1 && !firstStroke)
     {
-        if(drawing)
+        float2 AtoB = cursorPos - lastCursorPos;
+        float2 paintPosToA = lastCursorPos - paintPos;
+        if(dot(AtoB, paintPosToA) > 0)
         {
-            result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
-            strokeIDs[paintPos] = float4(strokeID, strokeID, strokeID, 1);
             return;
         }
-        if(strokeID == strokeIDs[paintPos].r || strokeIDs[paintPos].r == 0)
-        {
-            result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
-            strokeIDs[paintPos] = float4(strokeID, strokeID, strokeID, 1);
-        }
+    }
+
+    float4 test;
+    
+    float paintColor = LineSegment2DSDF(paintPos, lastCursorPos, cursorPos);
+    test.x = paintColor;
+    paintColor = 1 - smoothstep(brushSize, brushSize, paintColor);
+    
+    float2 paintPosOnLine = ClosestPointOnLine(lastCursorPos, cursorPos, paintPos);
+    test.y = paintPosOnLine;
+    float distanceToPointA = distance(lastCursorPos, paintPosOnLine);
+    distanceToPointA /= distance(lastCursorPos, cursorPos);
+    paintColor = lerp(paintColor * previousTimeColor, paintColor * timeColor, distanceToPointA);
+    paintColor = saturate(paintColor);
+
+    //debug.Append(float4(test.xy, paintColor, 1));
+    
+    if(paintColor > 0)
+    {
+        result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
     }
 }
+
+
