@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Shader Graphs_StrokeIDShowcase
+  m_Name: Display
   m_Shader: {fileID: -6465566751694194690, guid: 8f64883a8547852438a75b4d9490b9ff,
     type: 3}
   m_Parent: {fileID: 0}

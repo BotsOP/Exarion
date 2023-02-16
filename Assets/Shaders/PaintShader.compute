@@ -28,40 +28,85 @@ float2 ClosestPointOnLine(float2 lineStart, float2 lineEnd, float2 position)
     return lineStart + projectionDistance * lineDirection;
 }
 
+// float safeMultiply(float a, float b)
+// {
+//     if(a == 0 || b == 0)
+//     {
+//         return 0;
+//     }
+//     return a * b;
+// }
+//
+// float SafeLerp(float firstFloat, float secondFloat, float by)
+// {
+//     return safeMultiply(firstFloat, 1 - by) + safeMultiply(secondFloat, by);
+// }
+
 [numthreads(32,32,1)]
 void Paint (uint3 id : SV_DispatchThreadID)
 {
     float2 paintPos = startPos.xy + id.xy;
     lastCursorPos += float2(0.01, 0.01);
+    bool beginSideLine = false;
+    bool endSideLine = false;
 
-    if(distance(paintPos, lastCursorPos) < brushSize + 1 && !firstStroke)
+    if(distance(paintPos, lastCursorPos) < brushSize + 1)
     {
         float2 AtoB = cursorPos - lastCursorPos;
         float2 paintPosToA = lastCursorPos - paintPos;
         if(dot(AtoB, paintPosToA) > 0)
         {
-            return;
+            if(firstStroke)
+            {
+                beginSideLine = true;
+            }
+            else
+            {
+                return;
+            }
+        }
+    }
+    if(distance(paintPos, cursorPos) < brushSize + 1)
+    {
+        float2 BtoA = lastCursorPos - cursorPos;
+        float2 paintPosToB = cursorPos - paintPos;
+        if(dot(BtoA, paintPosToB) > 0)
+        {
+            endSideLine = true;
         }
     }
 
-    float4 test;
-    
     float paintColor = LineSegment2DSDF(paintPos, lastCursorPos, cursorPos);
-    test.x = paintColor;
     paintColor = 1 - smoothstep(brushSize, brushSize, paintColor);
     
-    float2 paintPosOnLine = ClosestPointOnLine(lastCursorPos, cursorPos, paintPos);
-    test.y = paintPosOnLine;
-    float distanceToPointA = distance(lastCursorPos, paintPosOnLine);
-    distanceToPointA /= distance(lastCursorPos, cursorPos);
-    paintColor = lerp(paintColor * previousTimeColor, paintColor * timeColor, distanceToPointA);
+    if(!beginSideLine && !endSideLine)
+    {
+        float2 paintPosOnLine = ClosestPointOnLine(lastCursorPos, cursorPos, paintPos);
+        float distanceToPointA = distance(lastCursorPos, paintPosOnLine);
+        distanceToPointA /= distance(lastCursorPos, cursorPos);
+        paintColor = lerp(paintColor * previousTimeColor, paintColor * timeColor, distanceToPointA);
+    }
+    else if(beginSideLine)
+    {
+        paintColor *= previousTimeColor;
+    }
+    else if(endSideLine)
+    {
+        paintColor *= timeColor;
+    }
+    
     paintColor = saturate(paintColor);
 
-    //debug.Append(float4(test.xy, paintColor, 1));
-    
     if(paintColor > 0)
     {
-        result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+        if(beginSideLine)
+        {
+            result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+        }
+        else
+        {
+            result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+        }
     }
 }
 
