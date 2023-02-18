@@ -132,12 +132,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 62736194}
-  - component: {fileID: 62736193}
   - component: {fileID: 62736192}
   - component: {fileID: 62736191}
   - component: {fileID: 62736190}
   m_Layer: 0
-  m_Name: Quad (1)
+  m_Name: Display board
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -215,31 +214,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 62736189}
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &62736193
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 62736189}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d317fe4026964144bbd983f6c2f21f1c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  paintShader: {fileID: 7200000, guid: 40b8e38a8796d6a43b6281636c8b9daf, type: 3}
-  cam: {fileID: 330585545}
-  rt: {fileID: 8400000, guid: e4bb5f9d4f3558647819bd4ef21140a7, type: 2}
-  mat: {fileID: 2100000, guid: 7c823323d34cde642a1885678b0b3a4e, type: 2}
-  mat2: {fileID: 2100000, guid: b42390756a8021a46903a26abae5ec9e, type: 2}
-  imageWidth: 2048
-  imageHeight: 2048
-  brushSize: 50
-  brushStrokeID: 0
-  brushStartTime: 0.0001
-  brushEndTime: 0.001
-  ball1: {fileID: 577936029}
-  ball2: {fileID: 940481431}
 --- !u!4 &62736194
 Transform:
   m_ObjectHideFlags: 0
@@ -253,7 +227,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &330585543
 GameObject:
@@ -605,7 +579,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517
 GameObject:
@@ -759,7 +733,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1345186072
 GameObject:
@@ -775,7 +749,7 @@ GameObject:
   - component: {fileID: 1345186074}
   - component: {fileID: 1345186073}
   m_Layer: 0
-  m_Name: Quad
+  m_Name: Drawing board
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -903,6 +877,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1397858692}
   - component: {fileID: 1397858691}
+  - component: {fileID: 1397858693}
   m_Layer: 5
   m_Name: UIDocument
   m_TagString: Untagged
@@ -940,5 +915,17 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1397858693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1397858690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58bfa7784246eb040851f992e62cd260, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
