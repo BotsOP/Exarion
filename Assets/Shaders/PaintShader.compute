@@ -1,17 +1,14 @@
 #pragma kernel Paint
+#pragma kernel FillBackGround
 
 RWTexture2D<float4> result;
-RWTexture2D<float4> strokeIDs;
 float2 cursorPos;
 float2 lastCursorPos;
 float2 startPos;
 float brushSize;
 float timeColor;
 float previousTimeColor;
-float strokeID;
 bool firstStroke;
-
-AppendStructuredBuffer<float4> debug;
 
 float LineSegment2DSDF(float2 p, float2 a, float2 b)
 {
@@ -28,86 +25,46 @@ float2 ClosestPointOnLine(float2 lineStart, float2 lineEnd, float2 position)
     return lineStart + projectionDistance * lineDirection;
 }
 
-// float safeMultiply(float a, float b)
-// {
-//     if(a == 0 || b == 0)
-//     {
-//         return 0;
-//     }
-//     return a * b;
-// }
-//
-// float SafeLerp(float firstFloat, float secondFloat, float by)
-// {
-//     return safeMultiply(firstFloat, 1 - by) + safeMultiply(secondFloat, by);
-// }
-
 [numthreads(32,32,1)]
 void Paint (uint3 id : SV_DispatchThreadID)
 {
     float2 paintPos = startPos.xy + id.xy;
     lastCursorPos += float2(0.01, 0.01);
-    bool beginSideLine = false;
-    bool endSideLine = false;
 
     if(distance(paintPos, lastCursorPos) < brushSize + 1)
     {
         float2 AtoB = cursorPos - lastCursorPos;
         float2 paintPosToA = lastCursorPos - paintPos;
-        if(dot(AtoB, paintPosToA) > 0)
+        if(dot(AtoB, paintPosToA) > 0 && !firstStroke)
         {
-            if(firstStroke)
-            {
-                beginSideLine = true;
-            }
-            else
-            {
-                return;
-            }
-        }
-    }
-    if(distance(paintPos, cursorPos) < brushSize + 1)
-    {
-        float2 BtoA = lastCursorPos - cursorPos;
-        float2 paintPosToB = cursorPos - paintPos;
-        if(dot(BtoA, paintPosToB) > 0)
-        {
-            endSideLine = true;
+            return;
         }
     }
 
     float paintColor = LineSegment2DSDF(paintPos, lastCursorPos, cursorPos);
     paintColor = 1 - smoothstep(brushSize, brushSize, paintColor);
-    
-    if(!beginSideLine && !endSideLine)
+
+    if(paintColor == 0)
     {
-        float2 paintPosOnLine = ClosestPointOnLine(lastCursorPos, cursorPos, paintPos);
-        float distanceToPointA = distance(lastCursorPos, paintPosOnLine);
-        distanceToPointA /= distance(lastCursorPos, cursorPos);
-        paintColor = lerp(paintColor * previousTimeColor, paintColor * timeColor, distanceToPointA);
+        return;
     }
-    else if(beginSideLine)
-    {
-        paintColor *= previousTimeColor;
-    }
-    else if(endSideLine)
-    {
-        paintColor *= timeColor;
-    }
-    
-    paintColor = saturate(paintColor);
+
+    float2 paintPosOnLine = ClosestPointOnLine(lastCursorPos, cursorPos, paintPos);
+    float distanceToPointA = distance(lastCursorPos, paintPosOnLine);
+    distanceToPointA /= distance(lastCursorPos, cursorPos);
+    paintColor = lerp(paintColor * previousTimeColor, paintColor * timeColor, distanceToPointA);
+    paintColor = clamp(paintColor, previousTimeColor, timeColor);
 
     if(paintColor > 0)
     {
-        if(beginSideLine)
-        {
-            result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
-        }
-        else
-        {
-            result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
-        }
+        result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
     }
+}
+
+[numthreads(32,32,1)]
+void FillBackGround (uint3 id : SV_DispatchThreadID)
+{
+    result[id.xy] = 1;
 }
 
 

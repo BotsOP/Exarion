@@ -49,6 +49,13 @@ public class StrokeManager : MonoBehaviour
 
         rt = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
         rt.enableRandomWrite = true;
+        
+        threadGroupSize.x = Mathf.CeilToInt(imageWidth / threadGroupSizeOut.x);
+        threadGroupSize.y = Mathf.CeilToInt(imageHeight / threadGroupSizeOut.y);
+        
+        paintShader.SetTexture(1, "result", rt);
+        paintShader.Dispatch(1, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+        
         mat.SetTexture("_MainTex", rt);
         mat2.SetTexture("_MainTex", rt);
 
