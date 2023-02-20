@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class TimelineClip : MouseManipulator
+public class TimelineClipResizer : MouseManipulator
 {
     private Vector2 startPos;
     private Vector2 elementStartPos;
     private bool isActive;
 
-    public TimelineClip()
+    public TimelineClipResizer()
     {
         activators.Add(new ManipulatorActivationFilter{ button = MouseButton.LeftMouse });
         isActive = false;
@@ -33,7 +33,7 @@ public class TimelineClip : MouseManipulator
     {
         if (CanStartManipulation(e))
         {
-            startPos = e.mousePosition;
+            startPos = e.localMousePosition;
             isActive = true;
             target.CaptureMouse();
             e.StopPropagation();
@@ -43,10 +43,10 @@ public class TimelineClip : MouseManipulator
     {
         if (!isActive || !target.HasMouseCapture()) return;
         
-        Vector2 diff = e.mousePosition - startPos;
-        Debug.Log($"{e.localMousePosition.x} {diff.x} {startPos}");
+        Vector2 diff = e.localMousePosition - startPos;
+        Debug.Log($"{e.localMousePosition.x} {diff.x} {startPos} {target.layout.x}");
 
-        target.style.left = diff.x;
+        target.parent.style.width = target.layout.x + diff.x;
     }
     protected void OnMouseUp(MouseUpEvent e)
     {

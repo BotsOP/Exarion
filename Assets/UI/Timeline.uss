@@ -1,5 +1,5 @@
 .red_box {
-    position: relative;
+    position: absolute;
 }
 
 #unity-tracker {
