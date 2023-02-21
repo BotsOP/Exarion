@@ -2,13 +2,16 @@
 #pragma kernel FillBackGround
 
 RWTexture2D<float4> result;
+RWTexture2D<float> strokeIDTexture;
 float2 cursorPos;
 float2 lastCursorPos;
 float2 startPos;
 float brushSize;
 float timeColor;
+float strokeID;
 float previousTimeColor;
 bool firstStroke;
+bool drawOverOwnLine;
 
 float LineSegment2DSDF(float2 p, float2 a, float2 b)
 {
@@ -35,19 +38,15 @@ void Paint (uint3 id : SV_DispatchThreadID)
     {
         float2 AtoB = cursorPos - lastCursorPos;
         float2 paintPosToA = lastCursorPos - paintPos;
-        if(dot(AtoB, paintPosToA) > 0 && !firstStroke)
-        {
-            return;
-        }
+        
+        if(dot(AtoB, paintPosToA) > 0 && !firstStroke) { return; }
     }
 
     float paintColor = LineSegment2DSDF(paintPos, lastCursorPos, cursorPos);
     paintColor = 1 - smoothstep(brushSize, brushSize, paintColor);
 
-    if(paintColor == 0)
-    {
-        return;
-    }
+    if(paintColor <= 0) { return; }
+    if(strokeIDTexture[paintPos] == strokeID) { return; }
 
     float2 paintPosOnLine = ClosestPointOnLine(lastCursorPos, cursorPos, paintPos);
     float distanceToPointA = distance(lastCursorPos, paintPosOnLine);
@@ -55,10 +54,9 @@ void Paint (uint3 id : SV_DispatchThreadID)
     paintColor = lerp(paintColor * previousTimeColor, paintColor * timeColor, distanceToPointA);
     paintColor = clamp(paintColor, previousTimeColor, timeColor);
 
-    if(paintColor > 0)
-    {
-        result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
-    }
+    
+    result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+    strokeIDTexture[paintPos] = strokeID;
 }
 
 [numthreads(32,32,1)]
