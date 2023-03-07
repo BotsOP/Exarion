@@ -2,13 +2,11 @@
 #pragma kernel FillBackGround
 
 RWTexture2D<float4> result;
-RWTexture2D<float> strokeIDTexture;
 float2 cursorPos;
 float2 lastCursorPos;
 float2 startPos;
 float brushSize;
 float timeColor;
-float strokeID;
 float previousTimeColor;
 bool firstStroke;
 bool drawOverOwnLine;
@@ -20,6 +18,7 @@ float LineSegment2DSDF(float2 p, float2 a, float2 b)
     float k = saturate(dot(pa, ba) / dot(ba, ba));
     return length(pa - ba * k);
 }
+
 float2 ClosestPointOnLine(float2 lineStart, float2 lineEnd, float2 position)
 {
     float2 lineDirection = normalize(lineEnd - lineStart);
@@ -32,7 +31,12 @@ float2 ClosestPointOnLine(float2 lineStart, float2 lineEnd, float2 position)
 void Paint (uint3 id : SV_DispatchThreadID)
 {
     float2 paintPos = startPos.xy + id.xy;
-    lastCursorPos += float2(0.01, 0.01);
+    lastCursorPos -= float2(0.01, 0.01);
+
+    if(result[paintPos].x < 1)
+    {
+        return;
+    }
 
     if(distance(paintPos, lastCursorPos) < brushSize + 1)
     {
@@ -46,7 +50,6 @@ void Paint (uint3 id : SV_DispatchThreadID)
     paintColor = 1 - smoothstep(brushSize, brushSize, paintColor);
 
     if(paintColor <= 0) { return; }
-    if(strokeIDTexture[paintPos] == strokeID) { return; }
 
     float2 paintPosOnLine = ClosestPointOnLine(lastCursorPos, cursorPos, paintPos);
     float distanceToPointA = distance(lastCursorPos, paintPosOnLine);
@@ -54,9 +57,18 @@ void Paint (uint3 id : SV_DispatchThreadID)
     paintColor = lerp(paintColor * previousTimeColor, paintColor * timeColor, distanceToPointA);
     paintColor = clamp(paintColor, previousTimeColor, timeColor);
 
-    
+    if(distance(paintPos, lastCursorPos) < brushSize + 1)
+    {
+        float2 BtoA = lastCursorPos - cursorPos;
+        float2 paintPosToB = cursorPos - paintPos;
+        
+        if(dot(BtoA, paintPosToB) > 0)
+        {
+            result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+            return;
+        }
+    }
     result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
-    strokeIDTexture[paintPos] = strokeID;
 }
 
 [numthreads(32,32,1)]

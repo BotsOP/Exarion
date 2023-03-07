@@ -12,7 +12,6 @@ public class StrokeManager : MonoBehaviour
     [SerializeField] private Camera cam;
     [SerializeField] private Material drawingMat;
     [SerializeField] private Material displayMat;
-    [SerializeField] private Material strokeIDMat;
     [SerializeField] private int imageWidth;
     [SerializeField] private int imageHeight;
     [SerializeField] private int brushSize;
@@ -24,7 +23,6 @@ public class StrokeManager : MonoBehaviour
     public Transform ball2;
     
     private RenderTexture drawingRenderTexture;
-    private RenderTexture strokeIDRenderTexture;
     private int kernelID;
     private Vector2 threadGroupSizeOut;
     private Vector2 threadGroupSize;
@@ -36,7 +34,6 @@ public class StrokeManager : MonoBehaviour
     private int lastID;
     private float strokeStartTime;
     private float cachedTime;
-    private float strokeID;
     private Vector4 tempBox;
 
     private ComputeBuffer debugBuffer;
@@ -56,9 +53,6 @@ public class StrokeManager : MonoBehaviour
         drawingRenderTexture = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
         drawingRenderTexture.enableRandomWrite = true;
         
-        strokeIDRenderTexture = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
-        strokeIDRenderTexture.enableRandomWrite = true;
-        
         threadGroupSize.x = Mathf.CeilToInt(imageWidth / threadGroupSizeOut.x);
         threadGroupSize.y = Mathf.CeilToInt(imageHeight / threadGroupSizeOut.y);
         
@@ -67,13 +61,9 @@ public class StrokeManager : MonoBehaviour
         
         drawingMat.SetTexture("_MainTex", drawingRenderTexture);
         displayMat.SetTexture("_MainTex", drawingRenderTexture);
-        strokeIDMat.SetTexture("_MainTex", strokeIDRenderTexture);
 
         brushStrokes = new List<BrushStroke>();
         brushStrokesID = new List<BrushStrokeID>();
-
-        //debugBuffer = new ComputeBuffer(100000, sizeof(float) * 4, ComputeBufferType.Append);
-        //brushStrokesID.Add(new BrushStrokeID(0, currentID, 0, 0, tempBox));
 
         tempBox = ResetTempBox(tempBox);
     }
@@ -100,13 +90,12 @@ public class StrokeManager : MonoBehaviour
                     lastID = currentID;
                     strokeStartTime = time;
                     lastCursorPos = cursorPos;
-                    strokeID = NextFloat(random);
                     firstUse = false;
                 }
 
                 bool firstStroke = lastID == currentID;
 
-                DrawStroke(lastCursorPos, cursorPos, brushSize, cachedTime, time, strokeID, firstStroke);
+                DrawStroke(lastCursorPos, cursorPos, brushSize, cachedTime, time, firstStroke);
 
                 brushStrokes.Add(new BrushStroke(lastCursorPos, cursorPos, brushSize, time, cachedTime));
                 lastCursorPos = cursorPos;
@@ -125,7 +114,7 @@ public class StrokeManager : MonoBehaviour
             //runs once after mouse is not being clicked anymore
             if (!firstUse)
             {
-                brushStrokesID.Add(new BrushStrokeID(lastID, currentID, strokeID, strokeStartTime, time, tempBox));
+                brushStrokesID.Add(new BrushStrokeID(lastID, currentID, strokeStartTime, time, tempBox));
                 tempBox = ResetTempBox(tempBox);
                 firstUse = true;
             }
@@ -135,14 +124,12 @@ public class StrokeManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.B))
         {
-            Debug.Log($"hoi");
             Redraw(brushStrokeIDToRedraw, brushStartTime, brushEndTime);
         }
     }
 
-    private void DrawStroke(Vector2 lastPos, Vector2 currentPos, float strokeBrushSize, float lastTime, float brushTime, float brushStrokeID, bool firstStroke, bool drawOverOwnLine = false)
+    private void DrawStroke(Vector2 lastPos, Vector2 currentPos, float strokeBrushSize, float lastTime, float brushTime, bool firstStroke, bool drawOverOwnLine = false)
     {
-        Debug.Log($"{brushStrokeID}");
         threadGroupSize.x = Mathf.CeilToInt((math.abs(lastPos.x - currentPos.x) + strokeBrushSize * 2) / threadGroupSizeOut.x);
         threadGroupSize.y = Mathf.CeilToInt((math.abs(lastPos.y - currentPos.y) + strokeBrushSize * 2) / threadGroupSizeOut.y);
         
@@ -156,9 +143,7 @@ public class StrokeManager : MonoBehaviour
         paintShader.SetFloat("brushSize", strokeBrushSize);
         paintShader.SetFloat("timeColor", brushTime);
         paintShader.SetFloat("previousTimeColor", lastTime);
-        paintShader.SetFloat("strokeID", brushStrokeID);
         paintShader.SetTexture(kernelID, "result", drawingRenderTexture);
-        paintShader.SetTexture(kernelID, "strokeIDTexture", strokeIDRenderTexture);
 
         paintShader.Dispatch(kernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
     }
@@ -184,7 +169,6 @@ public class StrokeManager : MonoBehaviour
     private void RedrawStroke(int brushstrokStartID)
     {
         BrushStrokeID strokeID = brushStrokesID[brushstrokStartID];
-        float brushStrokeID = strokeID.strokeID;
         int startID = strokeID.startID;
         int endID = strokeID.endID;
         bool firstLoop = true;
@@ -192,7 +176,7 @@ public class StrokeManager : MonoBehaviour
         {
             BrushStroke stroke = brushStrokes[i];
         
-            DrawStroke(stroke.lastPos, stroke.currentPos, stroke.strokeBrushSize, stroke.lastTime, stroke.brushTime, brushStrokeID, firstLoop);
+            DrawStroke(stroke.lastPos, stroke.currentPos, stroke.strokeBrushSize, stroke.lastTime, stroke.brushTime, firstLoop);
 
             firstLoop = false;
         }
@@ -224,7 +208,7 @@ public class StrokeManager : MonoBehaviour
 
             brushStrokes[i] = stroke;
             
-            DrawStroke(stroke.lastPos, stroke.currentPos, stroke.strokeBrushSize, stroke.lastTime, stroke.brushTime, brushStrokeID, firstLoop);
+            DrawStroke(stroke.lastPos, stroke.currentPos, stroke.strokeBrushSize, stroke.lastTime, stroke.brushTime, firstLoop);
 
             firstLoop = false;
             previousTime = currentTime;
@@ -284,16 +268,14 @@ struct BrushStrokeID
 {
     public int startID;
     public int endID;
-    public float strokeID;
     public float startTime;
     public float endTime;
     public Vector4 box;
 
-    public BrushStrokeID(int startID, int endID, float strokeID, float startTime, float endTime, Vector4 box)
+    public BrushStrokeID(int startID, int endID, float startTime, float endTime, Vector4 box)
     {
         this.startID = startID;
         this.endID = endID;
-        this.strokeID = strokeID;
         this.startTime = startTime;
         this.endTime = endTime;
         this.box = box;
