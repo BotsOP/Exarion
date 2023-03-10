@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using Random = System.Random;
 
-public class StrokeManager : MonoBehaviour
+public class StrokeManager : MonoBehaviour, IDataPersistence
 {
     [SerializeField] private ComputeShader paintShader;
     [SerializeField] private Camera cam;
@@ -37,14 +37,11 @@ public class StrokeManager : MonoBehaviour
     private Vector4 tempBox;
 
     private ComputeBuffer debugBuffer;
-    private Random random;
 
     private float time => Time.time / 10;
 
     void OnEnable()
     {
-        random = new Random();
-        
         kernelID = 0;
         paintShader.GetKernelThreadGroupSizes(kernelID, out uint threadGroupSizeX, out uint threadGroupSizeY, out _);
         threadGroupSizeOut.x = threadGroupSizeX;
@@ -61,9 +58,6 @@ public class StrokeManager : MonoBehaviour
         
         drawingMat.SetTexture("_MainTex", drawingRenderTexture);
         displayMat.SetTexture("_MainTex", drawingRenderTexture);
-
-        brushStrokes = new List<BrushStroke>();
-        brushStrokesID = new List<BrushStrokeID>();
 
         tempBox = ResetTempBox(tempBox);
     }
@@ -176,7 +170,7 @@ public class StrokeManager : MonoBehaviour
         {
             BrushStroke stroke = brushStrokes[i];
         
-            DrawStroke(stroke.lastPos, stroke.currentPos, stroke.strokeBrushSize, stroke.lastTime, stroke.brushTime, firstLoop);
+            DrawStroke(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, stroke.lastTime, stroke.brushTime, firstLoop);
 
             firstLoop = false;
         }
@@ -208,10 +202,18 @@ public class StrokeManager : MonoBehaviour
 
             brushStrokes[i] = stroke;
             
-            DrawStroke(stroke.lastPos, stroke.currentPos, stroke.strokeBrushSize, stroke.lastTime, stroke.brushTime, firstLoop);
+            DrawStroke(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, stroke.lastTime, stroke.brushTime, firstLoop);
 
             firstLoop = false;
             previousTime = currentTime;
+        }
+    }
+
+    private void RedrawAll()
+    {
+        for (int i = 0; i < brushStrokesID.Count; i++)
+        {
+            RedrawStroke(i);
         }
     }
 
@@ -223,54 +225,74 @@ public class StrokeManager : MonoBehaviour
         box.w = 0;
         return box;
     }
-    
-    public float NextFloat(Random random)
-    {
-        double mantissa = (random.NextDouble() * 2.0) - 1.0;
-        // choose -149 instead of -126 to also generate subnormal floats (*)
-        double exponent = Math.Pow(2.0, random.Next(-126, 128));
-        return (float)(mantissa * exponent);
-    }
-    
+
     private bool CheckCollision(Vector4 box1, Vector4 box2)
     {
         return box1.x <= box2.z && box1.z >= box2.x && box1.y <= box2.w && box1.w >= box2.y;
     }
+
+    public void LoadData(ToolData _data)
+    {
+        brushStrokes = _data.brushStrokes;
+        brushStrokesID = _data.brushStrokesID;
+        currentID = _data.currentID;
+        RedrawAll();
+    }
+
+    public void SaveData(ToolData _data)
+    {
+        _data.brushStrokes = brushStrokes;
+        _data.brushStrokesID = brushStrokesID;
+        _data.currentID = currentID;
+    }
 }
 
 
-struct BrushStroke
+public struct BrushStroke
 {
-    public Vector2 lastPos;
-    public Vector2 currentPos;
+    public float lastPosX;
+    public float lastPosY;
+    public float currentPosX;
+    public float currentPosY;
     public float strokeBrushSize;
     public float brushTime;
     public float lastTime;
 
     public BrushStroke(Vector2 lastPos, Vector2 currentPos, float strokeBrushSize, float brushTime, float lastTime)
     {
-        this.lastPos = lastPos;
-        this.currentPos = currentPos;
+        lastPosX = lastPos.x;
+        lastPosY = lastPos.y;
+        currentPosX = currentPos.x;
+        currentPosY = currentPos.y;
         this.strokeBrushSize = strokeBrushSize;
         this.brushTime = brushTime;
         this.lastTime = lastTime;
     }
 
-    public Vector2 GetStartPos()
+    public Vector2 GetLastPos()
     {
-        float lowestX = (lastPos.x < currentPos.x ? lastPos.x : currentPos.x) - brushTime;
-        float lowestY = (lastPos.y < currentPos.y ? lastPos.y : currentPos.y) - brushTime;
-        return new Vector2(lowestX, lowestY);
+        return new Vector2(lastPosX, lastPosY);
     }
+    public Vector2 GetCurrentPos()
+    {
+        return new Vector2(currentPosX, currentPosY);
+    }
+
+    // public Vector2 GetStartPos()
+    // {
+    //     float lowestX = (lastPos.x < currentPos.x ? lastPos.x : currentPos.x) - brushTime;
+    //     float lowestY = (lastPos.y < currentPos.y ? lastPos.y : currentPos.y) - brushTime;
+    //     return new Vector2(lowestX, lowestY);
+    // }
 }
 
-struct BrushStrokeID
+public struct BrushStrokeID
 {
     public int startID;
     public int endID;
     public float startTime;
     public float endTime;
-    public Vector4 box;
+    //public Vector4 box;
 
     public BrushStrokeID(int startID, int endID, float startTime, float endTime, Vector4 box)
     {
@@ -278,7 +300,7 @@ struct BrushStrokeID
         this.endID = endID;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.box = box;
+        //this.box = box;
     }
 }
 

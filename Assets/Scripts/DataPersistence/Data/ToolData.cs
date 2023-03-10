@@ -11,7 +11,9 @@ public class ToolData
     //Data for us
     //Variables per project
     public string projectName;
-    public int pixelateAmount;
+    public List<BrushStroke> brushStrokes;
+    public List<BrushStrokeID> brushStrokesID;
+    public int currentID;
 
     public byte[] imgBytes;
 
@@ -20,8 +22,10 @@ public class ToolData
     public ToolData() 
     {
         projectName = "";
-        pixelateAmount = 0;
         imgBytes = null;
+        currentID = 1;
+        brushStrokes = new List<BrushStroke>();
+        brushStrokesID = new List<BrushStrokeID>();
     }
 
     public string GetProjectName() 
@@ -29,3 +33,4 @@ public class ToolData
         return projectName;
     }
 }
+

@@ -15,6 +15,7 @@ public class Menu : MonoBehaviour
 
     public void SetFirstSelected(Button firstSelectedButton) 
     {
-        firstSelectedButton.Select();
+        // Debug.Log(firstSelectedButton);
+        // firstSelectedButton.Select();
     }
 }

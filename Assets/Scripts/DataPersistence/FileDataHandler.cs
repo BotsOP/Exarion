@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.IO;
+using Newtonsoft.Json;
+using UnityEditor;
 
 public class FileDataHandler
 {
@@ -52,7 +54,8 @@ public class FileDataHandler
                 }
 
                 // deserialize the data from Json back into the C# object
-                loadedData = JsonUtility.FromJson<ToolData>(dataToLoad);
+                loadedData = JsonConvert.DeserializeObject<ToolData>(dataToLoad);
+                //loadedData = JsonUtility.FromJson<ToolData>(dataToLoad);
             }
             catch (Exception e) 
             {
@@ -96,7 +99,8 @@ public class FileDataHandler
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
 
             // serialize the C# game data object into Json
-            string dataToStore = JsonUtility.ToJson(data, true);
+            string dataToStore = JsonConvert.SerializeObject(data);
+            //string dataToStore = JsonUtility.ToJson(data, true);
 
             // optionally encrypt the data
             if (useEncryption) 
