@@ -1,0 +1,68 @@
+#pragma kernel Paint
+
+RWTexture2D<float4> _Result;
+RWTexture2D<int> _IdTex;
+float2 _CursorPos;
+float2 _LastCursorPos;
+float2 _StartPos;
+float _BrushSize;
+float _TimeColor;
+float _PreviousTimeColor;
+bool _FirstStroke;
+bool _DrawOverOwnLine;
+int _StrokeID;
+
+float LineSegment2DSDF(float2 p, float2 a, float2 b)
+{
+    float2 ba = b - a;
+    float2 pa = p - a;
+    float k = saturate(dot(pa, ba) / dot(ba, ba));
+    return length(pa - ba * k);
+}
+
+float2 ClosestPointOnLine(float2 lineStart, float2 lineEnd, float2 position)
+{
+    float2 lineDirection = normalize(lineEnd - lineStart);
+    float2 positionRelativeToStart = position - lineStart;
+    float projectionDistance = dot(positionRelativeToStart, lineDirection);
+    return lineStart + projectionDistance * lineDirection;
+}
+
+[numthreads(32,32,1)]
+void Paint (uint3 id : SV_DispatchThreadID)
+{
+    float2 paintPos = _StartPos.xy + id.xy;
+    _LastCursorPos -= float2(0.01, 0.01);
+
+    if(_IdTex[paintPos] == _StrokeID)
+    {
+        return;
+    }
+
+    if(distance(paintPos, _LastCursorPos) < _BrushSize + 1)
+    {
+        float2 AtoB = _CursorPos - _LastCursorPos;
+        float2 paintPosToA = _LastCursorPos - paintPos;
+        
+        if(dot(AtoB, paintPosToA) > 0.0 && !_FirstStroke)
+        {
+            return;
+        }
+    }
+
+    float paintColor = LineSegment2DSDF(paintPos, _LastCursorPos, _CursorPos);
+    paintColor = 1 - smoothstep(_BrushSize, _BrushSize, paintColor);
+
+    if(paintColor <= 0) { return; }
+
+    float2 paintPosOnLine = ClosestPointOnLine(_LastCursorPos, _CursorPos, paintPos);
+    float distanceToPointA = distance(_LastCursorPos, paintPosOnLine);
+    distanceToPointA /= distance(_LastCursorPos, _CursorPos);
+    paintColor = lerp(paintColor * _PreviousTimeColor, paintColor * _TimeColor, distanceToPointA);
+    paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
+
+    _IdTex[paintPos] = _StrokeID;
+    _Result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+}
+
+
