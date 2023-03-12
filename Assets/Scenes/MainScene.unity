@@ -839,7 +839,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d317fe4026964144bbd983f6c2f21f1c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  paintShader: {fileID: 7200000, guid: 40b8e38a8796d6a43b6281636c8b9daf, type: 3}
   cam: {fileID: 330585545}
   drawingMat: {fileID: 2100000, guid: 7c823323d34cde642a1885678b0b3a4e, type: 2}
   displayMat: {fileID: 2100000, guid: b42390756a8021a46903a26abae5ec9e, type: 2}
@@ -847,7 +846,7 @@ MonoBehaviour:
   imageHeight: 2048
   brushSize: 50
   brushStrokeIDToRedraw: 0
-  brushStartTime: 0.1
+  brushStartTime: 0
   brushEndTime: 1
   ball1: {fileID: 577936029}
   ball2: {fileID: 940481431}
@@ -928,6 +927,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8470891677442858002, guid: 6a4a89c61caf91f4ba201c918a63e990,
+        type: 3}
+      propertyPath: disableDataPersistence
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8470891677442858003, guid: 6a4a89c61caf91f4ba201c918a63e990,
         type: 3}
