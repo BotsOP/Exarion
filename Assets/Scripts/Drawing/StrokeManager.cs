@@ -20,6 +20,7 @@ namespace Drawing
         [SerializeField] private float brushEndTime;
         public Transform ball1;
         public Transform ball2;
+        public Drawing drawer;
     
         private RenderTexture drawingRenderTexture;
         private int kernelID;
@@ -31,7 +32,6 @@ namespace Drawing
         private int brushStrokeID;
         private float cachedTime;
         private Vector4 collisionBox;
-        private Drawing drawer;
         private CommandManager commandManager;
 
         private float time => Time.time / 10;
@@ -45,60 +45,61 @@ namespace Drawing
             displayMat.SetTexture("_MainTex", drawer.rt);
 
             ResetTempBox(out collisionBox);
+            
+            EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
+            EventSystem.Subscribe(EventType.STOPPED_DRAWING, StoppedDrawing);
+            EventSystem.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
+        }
+
+        private void OnDisable()
+        {
+            EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
+            EventSystem.Unsubscribe(EventType.STOPPED_DRAWING, StoppedDrawing);
+            EventSystem.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
+        }
+
+        private void Draw(Vector2 mousePos)
+        {
+            bool firstDraw = firstUse;
+
+            if (firstUse)
+            {
+                brushStrokeID = drawer.GetNewID();
+                lastCursorPos = mousePos;
+                firstUse = false;
+            }
+
+            drawer.Draw(lastCursorPos, mousePos, brushSize, cachedTime, time, firstDraw, brushStrokeID);
+            drawer.AddBrushDraw(new BrushStroke(lastCursorPos, mousePos, brushSize, time, cachedTime));
+
+            lastCursorPos = mousePos;
+                
+            if (collisionBox.x > mousePos.x) { collisionBox.x = mousePos.x; }
+            if (collisionBox.y > mousePos.y) { collisionBox.y = mousePos.y; }
+            if (collisionBox.z < mousePos.x) { collisionBox.z = mousePos.x; }
+            if (collisionBox.w < mousePos.y) { collisionBox.w = mousePos.y; }
+            ball1.position = new Vector3(collisionBox.x / imageWidth, collisionBox.y / imageHeight, 0);
+            ball2.position = new Vector3(collisionBox.z / imageWidth, collisionBox.w / imageHeight, 0);
+        }
+        
+        private void StoppedDrawing()
+        {
+            drawer.FinishedStroke(collisionBox);
+            ICommand draw = new DrawCommand(ref drawer, collisionBox);
+            commandManager.Execute(draw, false);
+                    
+            ResetTempBox(out collisionBox);
+            firstUse = true;
+        }
+        
+        private void RedrawStroke()
+        {
+            drawer.Redraw(brushStrokeIDToRedraw, brushStartTime, brushEndTime);
         }
 
         void Update()
         {
-            if(Input.GetMouseButton(0))
-            {
-                RaycastHit hit;
-                Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-
-                if (Physics.Raycast(ray, out hit))
-                {
-                    Vector2 cursorPos = new Vector2(hit.point.x * imageWidth, hit.point.y * imageHeight);
-
-                    bool firstDraw = firstUse;
-
-                    if (firstUse)
-                    {
-                        brushStrokeID = drawer.GetNewID();
-                        lastCursorPos = cursorPos;
-                        firstUse = false;
-                    }
-
-                    drawer.Draw(lastCursorPos, cursorPos, brushSize, cachedTime, time, firstDraw, brushStrokeID);
-                    drawer.AddBrushDraw(new BrushStroke(lastCursorPos, cursorPos, brushSize, time, cachedTime));
-
-                    lastCursorPos = cursorPos;
-                
-                    if (collisionBox.x > cursorPos.x) { collisionBox.x = cursorPos.x; }
-                    if (collisionBox.y > cursorPos.y) { collisionBox.y = cursorPos.y; }
-                    if (collisionBox.z < cursorPos.x) { collisionBox.z = cursorPos.x; }
-                    if (collisionBox.w < cursorPos.y) { collisionBox.w = cursorPos.y; }
-                    ball1.position = new Vector3(collisionBox.x / imageWidth, collisionBox.y / imageHeight, 0);
-                    ball2.position = new Vector3(collisionBox.z / imageWidth, collisionBox.w / imageHeight, 0);
-                }
-            }
-            else
-            {
-                //runs once after mouse is not being clicked anymore
-                if (!firstUse)
-                {
-                    drawer.FinishedStroke(collisionBox);
-                    ICommand draw = new DrawCommand(ref drawer, collisionBox);
-                    commandManager.Execute(draw, false);
-                    ResetTempBox(out collisionBox);
-                    firstUse = true;
-                }
-            }
-
             cachedTime = time;
-
-            if (Input.GetKeyDown(KeyCode.B))
-            {
-                drawer.Redraw(brushStrokeIDToRedraw, brushStartTime, brushEndTime);
-            }
         }
 
         private void ResetTempBox(out Vector4 box)
@@ -116,7 +117,6 @@ namespace Drawing
 
         public void LoadData(ToolData data)
         {
-            //drawer.brushDrawID = data.currentID;
             drawer.BrushStrokes = data.brushStrokes;
             drawer.brushStrokesID = data.brushStrokesID;
             drawer.RedrawAll();
@@ -126,7 +126,6 @@ namespace Drawing
         {
             data.brushStrokes = drawer.BrushStrokes;
             data.brushStrokesID = drawer.brushStrokesID;
-            //data.currentID = drawer.brushDrawID;
         }
     }
 
