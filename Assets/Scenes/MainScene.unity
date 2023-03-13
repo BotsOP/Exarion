@@ -5969,7 +5969,7 @@ MonoBehaviour:
   brushStrokeIDToRedraw: 0
   brushStartTime: 0
   brushEndTime: 1
-  paintType: 2
+  paintType: 0
   ball1: {fileID: 577936029}
   ball2: {fileID: 940481431}
 --- !u!4 &1345186077

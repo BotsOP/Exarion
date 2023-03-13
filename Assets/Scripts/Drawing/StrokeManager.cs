@@ -101,6 +101,7 @@ namespace Drawing
         
         private void RedrawStroke()
         {
+            Debug.Log($"test");
             drawer.Redraw(brushStrokeIDToRedraw, brushStartTime, brushEndTime);
         }
 
