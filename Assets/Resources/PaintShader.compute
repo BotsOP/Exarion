@@ -1,4 +1,5 @@
 #pragma kernel Paint
+#pragma kernel Erase
 
 RWTexture2D<float4> _Result;
 RWTexture2D<int> _IdTex;
@@ -62,6 +63,21 @@ void Paint (uint3 id : SV_DispatchThreadID)
     paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
 
     _IdTex[paintPos] = _StrokeID;
+    _Result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+}
+
+[numthreads(32,32,1)]
+void Erase (uint3 id : SV_DispatchThreadID)
+{
+    float2 paintPos = _StartPos.xy + id.xy;
+    _LastCursorPos -= float2(0.01, 0.01);
+
+    float paintColor = LineSegment2DSDF(paintPos, _LastCursorPos, _CursorPos);
+    paintColor = 1 - smoothstep(_BrushSize, _BrushSize, paintColor);
+
+    if(paintColor <= 0) { return; }
+
+    _IdTex[paintPos] = 0;
     _Result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
 }
 
