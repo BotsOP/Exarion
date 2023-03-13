@@ -18,6 +18,7 @@ namespace Drawing
         [SerializeField] private int brushStrokeIDToRedraw;
         [SerializeField] private float brushStartTime;
         [SerializeField] private float brushEndTime;
+        [SerializeField] private PaintType paintType;
         public Transform ball1;
         public Transform ball2;
         public Drawing drawer;
@@ -34,7 +35,7 @@ namespace Drawing
         private Vector4 collisionBox;
         private CommandManager commandManager;
 
-        private float time => Time.time / 10;
+        private float time => (Time.time / 10) % 1;
 
         void OnEnable()
         {
@@ -62,6 +63,11 @@ namespace Drawing
         {
             bool firstDraw = firstUse;
 
+            if (lastCursorPos == mousePos)
+            {
+                return;
+            }
+
             if (firstUse)
             {
                 brushStrokeID = drawer.GetNewID();
@@ -69,7 +75,8 @@ namespace Drawing
                 firstUse = false;
             }
 
-            drawer.Draw(lastCursorPos, mousePos, brushSize, cachedTime, time, firstDraw, brushStrokeID);
+            Debug.Log(time);
+            drawer.Draw(lastCursorPos, mousePos, brushSize, paintType, cachedTime, time, firstDraw, brushStrokeID);
             drawer.AddBrushDraw(new BrushStroke(lastCursorPos, mousePos, brushSize, time, cachedTime));
 
             lastCursorPos = mousePos;
@@ -84,8 +91,8 @@ namespace Drawing
         
         private void StoppedDrawing()
         {
-            drawer.FinishedStroke(collisionBox);
-            ICommand draw = new DrawCommand(ref drawer, collisionBox);
+            drawer.FinishedStroke(collisionBox, paintType);
+            ICommand draw = new DrawCommand(ref drawer, collisionBox, paintType);
             commandManager.Execute(draw, false);
                     
             ResetTempBox(out collisionBox);
@@ -117,14 +124,14 @@ namespace Drawing
 
         public void LoadData(ToolData data)
         {
-            drawer.BrushStrokes = data.brushStrokes;
+            drawer.brushStrokes = data.brushStrokes;
             drawer.brushStrokesID = data.brushStrokesID;
             drawer.RedrawAll();
         }
 
         public void SaveData(ToolData data)
         {
-            data.brushStrokes = drawer.BrushStrokes;
+            data.brushStrokes = drawer.brushStrokes;
             data.brushStrokesID = drawer.brushStrokesID;
         }
     }

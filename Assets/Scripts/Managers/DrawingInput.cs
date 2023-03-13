@@ -5,14 +5,24 @@ using UnityEngine;
 
 public class DrawingInput : MonoBehaviour
 {
-    [SerializeField] private RectTransform drawArea;
+    [SerializeField] private UIManager uiManager;
     private Vector3[] drawAreaCorners;
     private bool mouseWasDrawing;
 
     void Update()
     {
-        drawAreaCorners = new Vector3[4];
-        drawArea.GetWorldCorners(drawAreaCorners);
+        if (uiManager.isFullView)
+        {
+            drawAreaCorners = new Vector3[4];
+            uiManager.paintBoard.rectTransform.GetWorldCorners(drawAreaCorners);
+        }
+        else
+        {
+            drawAreaCorners = new Vector3[4];
+            uiManager.paintBoard2.rectTransform.GetWorldCorners(drawAreaCorners);
+        }
+        
+        
         Vector2 mousePos = Input.mousePosition;
         if (Input.GetMouseButton(0) && IsMouseInsideDrawArea(mousePos))
         {

@@ -9,9 +9,11 @@ public class DrawCommand : ICommand
     private int brushstrokStartID;
     private List<BrushStroke> brushStrokes;
     private Vector4 collisionBox;
+    private PaintType paintType;
     
-    public DrawCommand(ref Drawing.Drawing drawer, Vector4 collisionBox)
+    public DrawCommand(ref Drawing.Drawing drawer, Vector4 collisionBox, PaintType paintType)
     {
+        this.paintType = paintType;
         this.collisionBox = collisionBox;
         this.drawer = drawer;
         brushstrokStartID = drawer.brushStrokesID.Count - 1;
@@ -19,13 +21,13 @@ public class DrawCommand : ICommand
         int startID = drawer.brushStrokesID[brushstrokStartID].startID;
         int count = drawer.brushStrokesID[brushstrokStartID].endID - startID;
 
-        brushStrokes = drawer.BrushStrokes.GetRange(startID, count);
+        brushStrokes = drawer.brushStrokes.GetRange(startID, count);
     }
 
     public void Execute()
     {
-        drawer.BrushStrokes.AddRange(brushStrokes);
-        drawer.FinishedStroke(collisionBox);
+        drawer.brushStrokes.AddRange(brushStrokes);
+        drawer.FinishedStroke(collisionBox, paintType);
         drawer.RedrawAll();
     }
     public void Undo()
