@@ -5,21 +5,27 @@ using UnityEngine;
 
 public class DrawingInput : MonoBehaviour
 {
-    [SerializeField] private UIManager uiManager;
+    [SerializeField] private UIManager UIManager;
+    [SerializeField] private int brushStrokeToRedraw;
+    [SerializeField] private float startTime;
+    [SerializeField] private float endTime;
+    [SerializeField] private float brushSize;
     private Vector3[] drawAreaCorners;
     private bool mouseWasDrawing;
+    
+    
 
     void Update()
     {
-        if (uiManager.isFullView)
+        if (UIManager.isFullView)
         {
             drawAreaCorners = new Vector3[4];
-            uiManager.paintBoard.rectTransform.GetWorldCorners(drawAreaCorners);
+            UIManager.paintBoard.rectTransform.GetWorldCorners(drawAreaCorners);
         }
         else
         {
             drawAreaCorners = new Vector3[4];
-            uiManager.paintBoard2.rectTransform.GetWorldCorners(drawAreaCorners);
+            UIManager.paintBoard2.rectTransform.GetWorldCorners(drawAreaCorners);
         }
         
         
@@ -40,9 +46,13 @@ public class DrawingInput : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.B))
         {
-            EventSystem.RaiseEvent(EventType.REDRAW_STROKE);
+            EventSystem<int, float, float>.RaiseEvent(EventType.REDRAW_STROKE, brushStrokeToRedraw, startTime, endTime);
         }
+        
+        EventSystem<float>.RaiseEvent(EventType.CHANGE_BRUSH_SIZE, brushSize);
     }
+
+    
 
     private bool IsMouseInsideDrawArea(Vector2 mousePos)
     {

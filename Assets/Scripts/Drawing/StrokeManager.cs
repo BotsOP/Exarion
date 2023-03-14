@@ -13,11 +13,7 @@ namespace Drawing
         [SerializeField] private Material displayMat;
         [SerializeField] private int imageWidth;
         [SerializeField] private int imageHeight;
-        [SerializeField] private int brushSize;
     
-        [SerializeField] private int brushStrokeIDToRedraw;
-        [SerializeField] private float brushStartTime;
-        [SerializeField] private float brushEndTime;
         [SerializeField] private PaintType paintType;
         public Transform ball1;
         public Transform ball2;
@@ -30,6 +26,7 @@ namespace Drawing
         private Vector2 lastCursorPos;
         private bool firstUse = true;
 
+        private float brushSize;
         private int brushStrokeID;
         private float cachedTime;
         private Vector4 collisionBox;
@@ -49,14 +46,22 @@ namespace Drawing
             
             EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
             EventSystem.Subscribe(EventType.STOPPED_DRAWING, StoppedDrawing);
-            EventSystem.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
+            EventSystem<int, float, float>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
+            EventSystem<float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
         }
 
         private void OnDisable()
         {
             EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
             EventSystem.Unsubscribe(EventType.STOPPED_DRAWING, StoppedDrawing);
-            EventSystem.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
+            EventSystem<int, float, float>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
+            EventSystem<float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
+        }
+
+
+        private void SetBrushSize(float brushSize)
+        {
+            this.brushSize = brushSize;
         }
 
         private void Draw(Vector2 mousePos)
@@ -75,7 +80,6 @@ namespace Drawing
                 firstUse = false;
             }
 
-            Debug.Log(time);
             drawer.Draw(lastCursorPos, mousePos, brushSize, paintType, cachedTime, time, firstDraw, brushStrokeID);
             drawer.AddBrushDraw(new BrushStroke(lastCursorPos, mousePos, brushSize, time, cachedTime));
 
@@ -99,7 +103,7 @@ namespace Drawing
             firstUse = true;
         }
         
-        private void RedrawStroke()
+        private void RedrawStroke(int brushStrokeIDToRedraw, float brushStartTime, float brushEndTime)
         {
             Debug.Log($"test");
             drawer.Redraw(brushStrokeIDToRedraw, brushStartTime, brushEndTime);
