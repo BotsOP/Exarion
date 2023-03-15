@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using Drawing;
 using UnityEngine;
 
-public struct TimelineClip
+public  enum MouseAction
 {
-    enum MouseAction
-    {
-        Nothing,
-        GrabbedClip,
-        ResizeClipLeft,
-        ResizeClipRight
-    }
+    Nothing,
+    GrabbedClip,
+    ResizeClipLeft,
+    ResizeClipRight
+}
+public class TimelineClip
+{
+   
     
     public float leftSideScaled
     {
@@ -20,6 +21,31 @@ public struct TimelineClip
             rect.GetWorldCorners(corners);
             parentRect.GetWorldCorners(timelineBarCorners);
             return ExtensionMethods.Remap(corners[0].x, timelineBarCorners[0].x, timelineBarCorners[2].x, 0, 1);
+        }
+        set
+        {
+            rect.GetWorldCorners(corners);
+            parentRect.GetWorldCorners(timelineBarCorners);
+            var sizeDelta = rect.sizeDelta;
+            var position = rect.position;
+            
+            float xPos = ExtensionMethods.Remap(value, 0, 1, timelineBarCorners[0].x, timelineBarCorners[2].x);
+            float differenceInLength = corners[0].x - xPos;
+            float clipLength = sizeDelta.x + differenceInLength;
+            sizeDelta = new Vector2(clipLength, sizeDelta.y);
+            rect.sizeDelta = sizeDelta;
+
+            if (rect.pivot.x == 0)
+            {
+                position = new Vector3(xPos, position.y, position.z);
+                rect.position = position;
+            }
+            else
+            {
+                xPos += clipLength;
+                position = new Vector3(xPos, position.y, position.z);
+                rect.position = position;
+            }
         }
     }
 
@@ -30,6 +56,32 @@ public struct TimelineClip
             rect.GetWorldCorners(corners);
             return ExtensionMethods.Remap(corners[2].x, timelineBarCorners[0].x, timelineBarCorners[2].x, 0, 1);
         }
+        set
+        {
+            Debug.Log($"test");
+            rect.GetWorldCorners(corners);
+            parentRect.GetWorldCorners(timelineBarCorners);
+            var sizeDelta = rect.sizeDelta;
+            var position = rect.position;
+            
+            float xPos = ExtensionMethods.Remap(value, 0, 1, timelineBarCorners[0].x, timelineBarCorners[2].x);
+            float differenceInLength = xPos - corners[2].x;
+            float clipLength = sizeDelta.x + differenceInLength;
+            sizeDelta = new Vector2(clipLength, sizeDelta.y);
+            rect.sizeDelta = sizeDelta;
+
+            if (rect.pivot.x == 0)
+            {
+                xPos -= clipLength;
+                position = new Vector3(xPos, position.y, position.z);
+                rect.position = position;
+            }
+            else
+            {
+                position = new Vector3(xPos, position.y, position.z);
+                rect.position = position;
+            }
+        }
     }
     
     public int brushStrokeID;
@@ -38,26 +90,27 @@ public struct TimelineClip
     
     private Vector3[] corners;
     private Vector3[] timelineBarCorners;
+    public MouseAction mouseAction;
+    private float mouseOffset;
 
     public TimelineClip(int brushStrokeID, RectTransform rect, RectTransform parentRect)
     {
-        Debug.Log($"test");
         this.brushStrokeID = brushStrokeID;
         this.rect = rect;
         this.parentRect = parentRect;
         corners = new Vector3[4];
         timelineBarCorners = new Vector3[4];
+        mouseAction = MouseAction.Nothing;
     }
     
-    public void UpdateUI(Vector2 mousePos, Vector2 previouMousePos)
+    public void UpdateUI(Vector2 mousePos, Vector2 previousMousePos)
     {
         rect.GetWorldCorners(corners);
         parentRect.GetWorldCorners(timelineBarCorners);
 
-        MouseAction mouseAction = MouseAction.Nothing;
+        Debug.Log(mouseAction);
         
-        float mouseDeltaX = mousePos.x - previouMousePos.x;
-        float mouseOffset = 0;
+        float mouseDeltaX = mousePos.x - previousMousePos.x;
 
         if (IsMouseOver(mousePos) && Input.GetMouseButtonDown(0) && mouseAction == MouseAction.Nothing)
         {
@@ -65,7 +118,6 @@ public struct TimelineClip
 
             if (mousePos.x > corners[0].x && mousePos.x < corners[0].x + 10)
             {
-                Debug.Log($"set resize left");
                 if (rect.pivot.x < 1)
                 {
                     float clipLength = rect.sizeDelta.x;
@@ -76,7 +128,6 @@ public struct TimelineClip
             }
             else if (mousePos.x < corners[2].x && mousePos.x > corners[2].x - 10)
             {
-                Debug.Log($"set resize right");
                 if (rect.pivot.x > 0)
                 {
                     float clipLength = rect.sizeDelta.x;
@@ -87,23 +138,20 @@ public struct TimelineClip
             }
             else
             {
-                Debug.Log($"set grabbed");
                 mouseAction = MouseAction.GrabbedClip;
             }
         }
-        else if (Input.GetMouseButtonUp(0) && mouseAction != MouseAction.Nothing)
+        else if(Input.GetMouseButtonUp(0) && mouseAction != MouseAction.Nothing)
         {
-            Debug.Log($"set to nothing");
             mouseAction = MouseAction.Nothing;
         }
-        
+
 
         switch (mouseAction)
         {
             case MouseAction.Nothing:
                 break;
             case MouseAction.GrabbedClip:
-                Debug.Log($"grabbed");
                 float clipLength = rect.sizeDelta.x;
                 float xPos = mousePos.x - mouseOffset;
             
@@ -121,7 +169,6 @@ public struct TimelineClip
                 rect.position = position;
                 break;
             case MouseAction.ResizeClipLeft:
-                Debug.Log($"resize left");
                 if (corners[0].x < timelineBarCorners[0].x || mousePos.x < timelineBarCorners[0].x)
                 {
                     float width = corners[2].x - timelineBarCorners[0].x;
@@ -139,7 +186,6 @@ public struct TimelineClip
                 rect.sizeDelta -= new Vector2(mouseDeltaX, 0);
                 break;
             case MouseAction.ResizeClipRight:
-                Debug.Log($"resize right");
                 if (corners[2].x > timelineBarCorners[2].x || mousePos.x > timelineBarCorners[2].x)
                 {
                     float width = timelineBarCorners[2].x - corners[0].x;
