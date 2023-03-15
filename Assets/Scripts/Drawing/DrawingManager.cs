@@ -6,7 +6,7 @@ using Random = UnityEngine.Random;
 
 namespace Drawing
 {
-    public class StrokeManager : MonoBehaviour, IDataPersistence
+    public class DrawingManager : MonoBehaviour, IDataPersistence
     {
         [SerializeField] private Camera cam;
         [SerializeField] private Material drawingMat;
@@ -30,6 +30,7 @@ namespace Drawing
         private int brushStrokeID;
         private float cachedTime;
         private Vector4 collisionBox;
+        private Vector4 resetBox;
         private CommandManager commandManager;
 
         private float time => (Time.time / 10) % 1;
@@ -42,12 +43,14 @@ namespace Drawing
             drawingMat.SetTexture("_MainTex", drawer.rt);
             displayMat.SetTexture("_MainTex", drawer.rt);
 
-            ResetTempBox(out collisionBox);
+            collisionBox = resetBox;
             
             EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
             EventSystem.Subscribe(EventType.STOPPED_DRAWING, StoppedDrawing);
             EventSystem<int, float, float>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
+
+            resetBox = new Vector4(imageWidth, imageHeight, 0, 0);
         }
 
         private void OnDisable()
@@ -57,7 +60,6 @@ namespace Drawing
             EventSystem<int, float, float>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
         }
-
 
         private void SetBrushSize(float brushSize)
         {
@@ -98,8 +100,8 @@ namespace Drawing
             drawer.FinishedStroke(collisionBox, paintType);
             ICommand draw = new DrawCommand(ref drawer, collisionBox, paintType);
             commandManager.Execute(draw, false);
-                    
-            ResetTempBox(out collisionBox);
+
+            collisionBox = resetBox;
             firstUse = true;
         }
         
@@ -111,20 +113,8 @@ namespace Drawing
 
         void Update()
         {
+            Debug.Log(time);
             cachedTime = time;
-        }
-
-        private void ResetTempBox(out Vector4 box)
-        {
-            box.x = imageWidth;
-            box.y = imageHeight;
-            box.z = 0;
-            box.w = 0;
-        }
-
-        private bool CheckCollision(Vector4 box1, Vector4 box2)
-        {
-            return box1.x <= box2.z && box1.z >= box2.x && box1.y <= box2.w && box1.w >= box2.y;
         }
 
         public void LoadData(ToolData data)

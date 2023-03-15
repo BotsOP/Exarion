@@ -10,7 +10,7 @@ public class UIManager : MonoBehaviour
     public bool isFullView;
     public RawImage paintBoard;
     public RawImage paintBoard2;
-    [SerializeField] private StrokeManager strokeManager;
+    [SerializeField] private DrawingManager drawingManager;
     [SerializeField] private Color selectedColor;
     [SerializeField] private Color backgroundColor;
     [SerializeField] private GameObject fullView;
@@ -19,8 +19,8 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
-        paintBoard.texture = strokeManager.drawer.rt;
-        paintBoard2.texture = strokeManager.drawer.rt;
+        paintBoard.texture = drawingManager.drawer.rt;
+        paintBoard2.texture = drawingManager.drawer.rt;
     }
 
     public void SwitchToFullView(Image buttonImage)

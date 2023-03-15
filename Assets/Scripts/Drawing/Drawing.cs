@@ -250,6 +250,11 @@ namespace Drawing
         {
             brushStrokesID.Add(new BrushStrokeID(lastBrushDrawID, brushDrawID, collisionBox, paintType));
         }
+        
+        private bool CheckCollision(Vector4 box1, Vector4 box2)
+        {
+            return box1.x <= box2.z && box1.z >= box2.x && box1.y <= box2.w && box1.w >= box2.y;
+        }
     }
 
     public struct BrushStroke
