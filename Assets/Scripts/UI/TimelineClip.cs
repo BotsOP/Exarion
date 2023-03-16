@@ -12,20 +12,18 @@ public  enum MouseAction
 }
 public class TimelineClip
 {
-   
-    
     public float leftSideScaled
     {
         get
         {
             rect.GetWorldCorners(corners);
-            parentRect.GetWorldCorners(timelineBarCorners);
+            timelineBarRect.GetWorldCorners(timelineBarCorners);
             return ExtensionMethods.Remap(corners[0].x, timelineBarCorners[0].x, timelineBarCorners[2].x, 0, 1);
         }
         set
         {
             rect.GetWorldCorners(corners);
-            parentRect.GetWorldCorners(timelineBarCorners);
+            timelineBarRect.GetWorldCorners(timelineBarCorners);
             var sizeDelta = rect.sizeDelta;
             var position = rect.position;
             
@@ -60,7 +58,7 @@ public class TimelineClip
         {
             Debug.Log($"test");
             rect.GetWorldCorners(corners);
-            parentRect.GetWorldCorners(timelineBarCorners);
+            timelineBarRect.GetWorldCorners(timelineBarCorners);
             var sizeDelta = rect.sizeDelta;
             var position = rect.position;
             
@@ -83,38 +81,46 @@ public class TimelineClip
             }
         }
     }
-    
+
     public int brushStrokeID;
-    private RectTransform rect;
-    private RectTransform parentRect;
+    public RectTransform rect;
+    private RectTransform timelineBarRect;
+    private RectTransform timelineAreaRect;
     
     private Vector3[] corners;
     private Vector3[] timelineBarCorners;
+    private Vector3[] timelineAreaCorners;
     public MouseAction mouseAction;
-    private float mouseOffset;
+    private Vector2 mouseOffset;
 
-    public TimelineClip(int brushStrokeID, RectTransform rect, RectTransform parentRect)
+    public TimelineClip(int brushStrokeID, RectTransform rect, RectTransform timelineBarRect, RectTransform timelineAreaRect)
     {
         this.brushStrokeID = brushStrokeID;
         this.rect = rect;
-        this.parentRect = parentRect;
+        this.timelineBarRect = timelineBarRect;
+        this.timelineAreaRect = timelineAreaRect;
         corners = new Vector3[4];
         timelineBarCorners = new Vector3[4];
+        timelineAreaCorners = new Vector3[4];
         mouseAction = MouseAction.Nothing;
+    }
+
+    ~TimelineClip()
+    {
+        Debug.Log($"destroyed a timelineclip");
     }
     
     public void UpdateUI(Vector2 mousePos, Vector2 previousMousePos)
     {
         rect.GetWorldCorners(corners);
-        parentRect.GetWorldCorners(timelineBarCorners);
+        timelineBarRect.GetWorldCorners(timelineBarCorners);
+        timelineAreaRect.GetWorldCorners(timelineAreaCorners);
 
-        Debug.Log(mouseAction);
-        
         float mouseDeltaX = mousePos.x - previousMousePos.x;
 
         if (IsMouseOver(mousePos) && Input.GetMouseButtonDown(0) && mouseAction == MouseAction.Nothing)
         {
-            mouseOffset = mousePos.x - rect.position.x;
+            mouseOffset = new Vector2(mousePos.x - rect.position.x, mousePos.y - rect.position.y) ;
 
             if (mousePos.x > corners[0].x && mousePos.x < corners[0].x + 10)
             {
@@ -122,7 +128,7 @@ public class TimelineClip
                 {
                     float clipLength = rect.sizeDelta.x;
                     rect.position += new Vector3(clipLength, 0, 0);
-                    rect.pivot = new Vector2(1, 0.5f);
+                    rect.pivot = new Vector2(1, 1);
                 }
                 mouseAction = MouseAction.ResizeClipLeft;
             }
@@ -132,7 +138,7 @@ public class TimelineClip
                 {
                     float clipLength = rect.sizeDelta.x;
                     rect.position -= new Vector3(clipLength, 0, 0);
-                    rect.pivot = new Vector2(0, 0.5f);
+                    rect.pivot = new Vector2(0, 1);
                 }
                 mouseAction = MouseAction.ResizeClipRight;
             }
@@ -153,8 +159,11 @@ public class TimelineClip
                 break;
             case MouseAction.GrabbedClip:
                 float clipLength = rect.sizeDelta.x;
-                float xPos = mousePos.x - mouseOffset;
-            
+                Vector3 position = rect.position;
+                float spacing = 10;
+                float xPos = mousePos.x - mouseOffset.x;
+                float yPos = GetYPos(mousePos, spacing, mousePos.y);
+                
                 if (rect.pivot.x == 0)
                 {
                     xPos = Mathf.Clamp(xPos, timelineBarCorners[0].x, timelineBarCorners[2].x - clipLength);
@@ -164,8 +173,8 @@ public class TimelineClip
                     xPos = Mathf.Clamp(xPos, timelineBarCorners[0].x + clipLength, timelineBarCorners[2].x);
                 }
                 
-                Vector3 position = rect.position;
-                position = new Vector3(xPos, position.y, position.z);
+
+                position = new Vector3(xPos, yPos, position.z);
                 rect.position = position;
                 break;
             case MouseAction.ResizeClipLeft:
@@ -203,10 +212,29 @@ public class TimelineClip
                 rect.sizeDelta += new Vector2(mouseDeltaX, 0);
                 break;
         }
-
     }
 
-    public bool IsMouseOver(Vector2 mousePos)
+    private float GetYPos(Vector2 mousePos, float spacing, float mousePosY)
+    {
+        float yPos = rect.position.y;
+        float timelineBarHeight = corners[2].y - corners[0].y + spacing;
+        if (mousePosY < timelineAreaCorners[0].y || mousePosY > timelineAreaCorners[2].y)
+        {
+            return yPos;
+        }
+        
+        if (mousePos.y < corners[0].y - (spacing))
+        {
+            return yPos - timelineBarHeight;
+        }
+        if (mousePos.y > corners[2].y + (spacing))
+        {
+            return yPos + timelineBarHeight;
+        }
+        return yPos;
+    }
+
+    private bool IsMouseOver(Vector2 mousePos)
     {
         return mousePos.x > corners[0].x && mousePos.x < corners[2].x && mousePos.y > corners[0].y &&
                mousePos.y < corners[2].y;

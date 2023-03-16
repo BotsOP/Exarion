@@ -29,6 +29,7 @@ namespace Drawing
         private float brushSize;
         private int brushStrokeID;
         private float cachedTime;
+        private float startBrushStrokeTime;
         private Vector4 collisionBox;
         private Vector4 resetBox;
         private CommandManager commandManager;
@@ -77,6 +78,7 @@ namespace Drawing
 
             if (firstUse)
             {
+                startBrushStrokeTime = time;
                 brushStrokeID = drawer.GetNewID();
                 lastCursorPos = mousePos;
                 firstUse = false;
@@ -97,8 +99,9 @@ namespace Drawing
         
         private void StoppedDrawing()
         {
-            drawer.FinishedStroke(collisionBox, paintType);
-            ICommand draw = new DrawCommand(ref drawer, collisionBox, paintType);
+            drawer.FinishedStroke(collisionBox, paintType, startBrushStrokeTime, time);
+            EventSystem<int, float, float>.RaiseEvent(EventType.STOPPED_DRAWING, drawer.brushStrokesID.Count - 1, startBrushStrokeTime, time);
+            ICommand draw = new DrawCommand(ref drawer, collisionBox, paintType,drawer.brushStrokesID.Count - 1, startBrushStrokeTime, time);
             commandManager.Execute(draw, false);
 
             collisionBox = resetBox;
@@ -107,7 +110,6 @@ namespace Drawing
         
         private void RedrawStroke(int brushStrokeIDToRedraw, float brushStartTime, float brushEndTime)
         {
-            Debug.Log($"test");
             drawer.Redraw(brushStrokeIDToRedraw, brushStartTime, brushEndTime);
         }
 

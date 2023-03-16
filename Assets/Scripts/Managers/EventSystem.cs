@@ -8,6 +8,7 @@ public enum EventType
     STOPPED_DRAWING,
     REDRAW_STROKE,
     CHANGE_BRUSH_SIZE,
+    REMOVE_CLIP,
     UIINTERACTING
 }
 

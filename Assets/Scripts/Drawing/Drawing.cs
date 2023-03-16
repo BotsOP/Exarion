@@ -156,6 +156,25 @@ namespace Drawing
                 firstLoop = false;
             }
         }
+        
+        public void RedrawStroke(int brushstrokStartID, PaintType newPaintType)
+        {
+            BrushStrokeID brushStrokeID = brushStrokesID[brushstrokStartID];
+            int startID = brushStrokeID.startID;
+            int endID = brushStrokeID.endID;
+            int newStrokeID = GetNewID();
+            bool firstLoop = true;
+            PaintType paintType = newPaintType;
+            
+            for (int i = startID; i < endID; i++)
+            {
+                BrushStroke stroke = brushStrokes[i];
+        
+                Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
+
+                firstLoop = false;
+            }
+        }
     
         public void RedrawStroke(int brushstrokStartID, float startTime, float endTime)
         {
@@ -166,6 +185,11 @@ namespace Drawing
             float previousTime = startTime;
             bool firstLoop = true;
             PaintType paintType = brushStrokeID.paintType;
+
+            if (paintType == PaintType.PaintUnderEverything)
+            {
+                RedrawStroke(brushstrokStartID, PaintType.Erase);
+            }
         
             for (int i = startID; i < endID; i++)
             {
@@ -189,6 +213,8 @@ namespace Drawing
                 previousTime = currentTime;
             }
         }
+
+        
 
         public void RemoveStroke(int brushstrokStartID)
         {
@@ -246,9 +272,9 @@ namespace Drawing
             brushStrokes.Add(brushStroke);
         }
 
-        public void FinishedStroke(Vector4 collisionBox, PaintType paintType)
+        public void FinishedStroke(Vector4 collisionBox, PaintType paintType, float lastTime, float currentTime)
         {
-            brushStrokesID.Add(new BrushStrokeID(lastBrushDrawID, brushDrawID, collisionBox, paintType));
+            brushStrokesID.Add(new BrushStrokeID(lastBrushDrawID, brushDrawID, paintType, lastTime, currentTime, collisionBox));
         }
         
         private bool CheckCollision(Vector4 box1, Vector4 box2)
@@ -306,12 +332,16 @@ namespace Drawing
         private float collisionBoxZ;
         private float collisionBoxW;
         public PaintType paintType;
+        public float lastTime;
+        public float currentTime;
 
-        public BrushStrokeID(int startID, int endID, Vector4 collisionBox, PaintType paintType)
+        public BrushStrokeID(int startID, int endID, PaintType paintType, float lastTime, float currentTime, Vector4 collisionBox) : this()
         {
             this.startID = startID;
             this.endID = endID;
             this.paintType = paintType;
+            this.lastTime = lastTime;
+            this.currentTime = currentTime;
             collisionBoxX = collisionBox.x;
             collisionBoxY = collisionBox.y;
             collisionBoxZ = collisionBox.z;
