@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Undo;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -47,7 +48,7 @@ namespace Drawing
             collisionBox = resetBox;
             
             EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
-            EventSystem.Subscribe(EventType.STOPPED_DRAWING, StoppedDrawing);
+            EventSystem.Subscribe(EventType.FINISHED_STROKE, StoppedDrawing);
             EventSystem<int, float, float>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
 
@@ -57,7 +58,7 @@ namespace Drawing
         private void OnDisable()
         {
             EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
-            EventSystem.Unsubscribe(EventType.STOPPED_DRAWING, StoppedDrawing);
+            EventSystem.Unsubscribe(EventType.FINISHED_STROKE, StoppedDrawing);
             EventSystem<int, float, float>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
         }
@@ -100,7 +101,7 @@ namespace Drawing
         private void StoppedDrawing()
         {
             drawer.FinishedStroke(collisionBox, paintType, startBrushStrokeTime, time);
-            EventSystem<int, float, float>.RaiseEvent(EventType.STOPPED_DRAWING, drawer.brushStrokesID.Count - 1, startBrushStrokeTime, time);
+            EventSystem<int, float, float>.RaiseEvent(EventType.FINISHED_STROKE, drawer.brushStrokesID.Count - 1, startBrushStrokeTime, time);
             ICommand draw = new DrawCommand(ref drawer, collisionBox, paintType,drawer.brushStrokesID.Count - 1, startBrushStrokeTime, time);
             commandManager.Execute(draw, false);
 
@@ -123,6 +124,7 @@ namespace Drawing
             drawer.brushStrokes = data.brushStrokes;
             drawer.brushStrokesID = data.brushStrokesID;
             drawer.RedrawAll();
+            drawer.RedrawAllTimelineClips();
         }
 
         public void SaveData(ToolData data)

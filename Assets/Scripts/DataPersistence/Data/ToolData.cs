@@ -14,7 +14,6 @@ public class ToolData
     public string projectName;
     public List<BrushStroke> brushStrokes;
     public List<BrushStrokeID> brushStrokesID;
-    public int currentID;
 
     public byte[] imgBytes;
 
@@ -24,7 +23,6 @@ public class ToolData
     {
         projectName = "";
         imgBytes = null;
-        currentID = 1;
         brushStrokes = new List<BrushStroke>();
         brushStrokesID = new List<BrushStrokeID>();
     }

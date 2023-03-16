@@ -1,27 +1,28 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class AlwaysSquare : MonoBehaviour
+namespace UI
 {
-    [SerializeField] private RectTransform rectTransformParent;
-    private RectTransform rectTransform;
-    void Start()
+    public class AlwaysSquare : MonoBehaviour
     {
-        rectTransform = GetComponent<RectTransform>();
-    }
-
-    void Update()
-    {
-        float width = rectTransformParent.rect.width;
-        float height = rectTransformParent.rect.height;
-        if (width > height)
+        [SerializeField] private RectTransform rectTransformParent;
+        private RectTransform rectTransform;
+        void Start()
         {
-            rectTransform.sizeDelta = new Vector2(height, height);
+            rectTransform = GetComponent<RectTransform>();
         }
-        if (height > width)
+
+        void Update()
         {
-            rectTransform.sizeDelta = new Vector2(width, width);
+            float width = rectTransformParent.rect.width;
+            float height = rectTransformParent.rect.height;
+            if (width > height)
+            {
+                rectTransform.sizeDelta = new Vector2(height, height);
+            }
+            if (height > width)
+            {
+                rectTransform.sizeDelta = new Vector2(width, width);
+            }
         }
     }
 }

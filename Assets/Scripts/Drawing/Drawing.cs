@@ -176,33 +176,37 @@ namespace Drawing
             }
         }
     
-        public void RedrawStroke(int brushstrokStartID, float startTime, float endTime)
+        public void RedrawStroke(int brushstrokStartID, float lastTime, float currentTime)
         {
             BrushStrokeID brushStrokeID = brushStrokesID[brushstrokStartID];
             int startID = brushStrokeID.startID;
             int endID = brushStrokeID.endID;
             int newStrokeID = GetNewID();
-            float previousTime = startTime;
+            brushStrokeID.lastTime = lastTime;
+            brushStrokeID.currentTime = currentTime;
             bool firstLoop = true;
             PaintType paintType = brushStrokeID.paintType;
 
-            if (paintType == PaintType.PaintUnderEverything)
+            brushStrokesID[brushstrokStartID] = brushStrokeID;
+
+            if (paintType is PaintType.PaintUnderEverything or PaintType.PaintOverOwnLine)
             {
                 RedrawStroke(brushstrokStartID, PaintType.Erase);
             }
         
+            float previousTime = lastTime;
             for (int i = startID; i < endID; i++)
             {
                 BrushStroke stroke = brushStrokes[i];
         
-                float currentTime = stroke.brushTime;
-                if (startTime >= 0 && endTime >= 0)
+                float newTime = stroke.brushTime;
+                if (lastTime >= 0 && currentTime >= 0)
                 {
                     float idPercentage = ExtensionMethods.Remap(i, startID, endID, 0, 1);
-                    currentTime = (endTime - startTime) * idPercentage + startTime;
+                    newTime = (currentTime - lastTime) * idPercentage + lastTime;
                 }
 
-                stroke.brushTime = currentTime;
+                stroke.brushTime = newTime;
                 stroke.lastTime = previousTime;
 
                 brushStrokes[i] = stroke;
@@ -210,11 +214,9 @@ namespace Drawing
                 Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
 
                 firstLoop = false;
-                previousTime = currentTime;
+                previousTime = newTime;
             }
         }
-
-        
 
         public void RemoveStroke(int brushstrokStartID)
         {
@@ -266,6 +268,14 @@ namespace Drawing
                 RedrawStroke(i);
             }
         }
+        public void RedrawAllTimelineClips()
+        {
+            for (int i = 0; i < brushStrokesID.Count; i++)
+            {
+                BrushStrokeID brushStrokeID = brushStrokesID[i];
+                EventSystem<int, float, float>.RaiseEvent(EventType.FINISHED_STROKE, i, brushStrokeID.lastTime, brushStrokeID.currentTime);
+            }
+        }
 
         public void AddBrushDraw(BrushStroke brushStroke)
         {
@@ -285,10 +295,10 @@ namespace Drawing
 
     public struct BrushStroke
     {
-        private float lastPosX;
-        private float lastPosY;
-        private float currentPosX;
-        private float currentPosY;
+        public float lastPosX;
+        public float lastPosY;
+        public float currentPosX;
+        public float currentPosY;
         public float strokeBrushSize;
         public float brushTime;
         public float lastTime;
@@ -327,10 +337,10 @@ namespace Drawing
     {
         public int startID;
         public int endID;
-        private float collisionBoxX;
-        private float collisionBoxY;
-        private float collisionBoxZ;
-        private float collisionBoxW;
+        public float collisionBoxX;
+        public float collisionBoxY;
+        public float collisionBoxZ;
+        public float collisionBoxW;
         public PaintType paintType;
         public float lastTime;
         public float currentTime;

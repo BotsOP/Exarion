@@ -32,6 +32,21 @@ float2 ClosestPointOnLine(float2 lineStart, float2 lineEnd, float2 position)
     return lineStart + projectionDistance * lineDirection;
 }
 
+float CalculatePaintColor(float2 paintPos)
+{
+    float2 AtoB = _CursorPos - _LastCursorPos;
+    float2 BtoA = _LastCursorPos - _CursorPos;
+    normalize(AtoB);
+    normalize(BtoA);
+
+    float paintColor;
+    float2 paintPosOnLine = ClosestPointOnLine(_LastCursorPos + BtoA * _BrushSize, _CursorPos + AtoB * _BrushSize, paintPos);
+    float distanceToPointA = distance(_LastCursorPos, paintPosOnLine);
+    distanceToPointA /= distance(_LastCursorPos + BtoA * _BrushSize, _CursorPos + AtoB * _BrushSize);
+    paintColor = lerp(_PreviousTimeColor, _TimeColor, distanceToPointA);
+    paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
+    return paintColor;
+}
 [numthreads(32,32,1)]
 void PaintUnderOwnLine (uint3 id : SV_DispatchThreadID)
 {
@@ -59,11 +74,7 @@ void PaintUnderOwnLine (uint3 id : SV_DispatchThreadID)
 
     if(paintColor <= 0) { return; }
 
-    float2 paintPosOnLine = ClosestPointOnLine(_LastCursorPos, _CursorPos, paintPos);
-    float distanceToPointA = distance(_LastCursorPos, paintPosOnLine);
-    distanceToPointA /= distance(_LastCursorPos, _CursorPos);
-    paintColor = lerp(paintColor * _PreviousTimeColor, paintColor * _TimeColor, distanceToPointA);
-    paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
+    paintColor = CalculatePaintColor(paintPos);
 
     _IdTex[paintPos] = _StrokeID;
     _Result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
@@ -96,14 +107,20 @@ void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
 
     if(paintColor <= 0) { return; }
 
-    float2 paintPosOnLine = ClosestPointOnLine(_LastCursorPos, _CursorPos, paintPos);
-    float distanceToPointA = distance(_LastCursorPos, paintPosOnLine);
-    distanceToPointA /= distance(_LastCursorPos, _CursorPos);
-    paintColor = lerp(paintColor * _PreviousTimeColor, paintColor * _TimeColor, distanceToPointA);
-    paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
+    paintColor = CalculatePaintColor(paintPos);
 
-    _IdTex[paintPos] = _StrokeID;
     _Result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+    // if(distance(paintPos, _LastCursorPos) < _BrushSize + 1)
+    // {
+    //     float2 BtoA = _LastCursorPos - _CursorPos;
+    //     float2 paintPosToB = _CursorPos - paintPos;
+    //     
+    //     if(dot(BtoA, paintPosToB) > 0.0 && !_FirstStroke)
+    //     {
+    //         return;
+    //     }
+    // }
+    _IdTex[paintPos] = _StrokeID;
 }
 
 [numthreads(32,32,1)]
@@ -133,11 +150,7 @@ void PaintOverOwnLine (uint3 id : SV_DispatchThreadID)
 
     if(paintColor <= 0) { return; }
 
-    float2 paintPosOnLine = ClosestPointOnLine(_LastCursorPos, _CursorPos, paintPos);
-    float distanceToPointA = distance(_LastCursorPos, paintPosOnLine);
-    distanceToPointA /= distance(_LastCursorPos, _CursorPos);
-    paintColor = lerp(paintColor * _PreviousTimeColor, paintColor * _TimeColor, distanceToPointA);
-    paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
+    paintColor = CalculatePaintColor(paintPos);
 
     _IdTex[paintPos] = _StrokeID;
     _Result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
@@ -165,14 +178,10 @@ void PaintOverEverything (uint3 id : SV_DispatchThreadID)
 
     if(paintColor <= 0) { return; }
 
-    float2 paintPosOnLine = ClosestPointOnLine(_LastCursorPos, _CursorPos, paintPos);
-    float distanceToPointA = distance(_LastCursorPos, paintPosOnLine);
-    distanceToPointA /= distance(_LastCursorPos, _CursorPos);
-    paintColor = lerp(paintColor * _PreviousTimeColor, paintColor * _TimeColor, distanceToPointA);
-    paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
+    paintColor = CalculatePaintColor(paintPos);
 
-    _IdTex[paintPos] = _StrokeID;
     _Result[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+    _IdTex[paintPos] = _StrokeID;
 }
 
 [numthreads(32,32,1)]

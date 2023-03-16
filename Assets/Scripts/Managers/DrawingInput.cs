@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Drawing;
+using UI;
 using UnityEngine;
 
 public class DrawingInput : MonoBehaviour
@@ -40,7 +41,7 @@ public class DrawingInput : MonoBehaviour
         }
         else if (Input.GetMouseButtonUp(0) && mouseWasDrawing)
         {
-            EventSystem.RaiseEvent(EventType.STOPPED_DRAWING);
+            EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
             mouseWasDrawing = false;
         }
 

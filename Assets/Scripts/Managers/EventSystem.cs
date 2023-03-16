@@ -5,7 +5,7 @@ using UnityEngine;
 public enum EventType
 {
     DRAW,
-    STOPPED_DRAWING,
+    FINISHED_STROKE,
     REDRAW_STROKE,
     CHANGE_BRUSH_SIZE,
     REMOVE_CLIP,
