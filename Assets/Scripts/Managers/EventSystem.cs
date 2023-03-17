@@ -12,6 +12,7 @@ public enum EventType
     UPDATE_CLIP,
     TIME,
     TIME_SHOWCASE,
+    VIEW_CHANGED,
     UIINTERACTING
 }
 

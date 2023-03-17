@@ -8,11 +8,10 @@ namespace UI
 {
     public class UIManager : MonoBehaviour
     {
-        public bool isFullView;
-        public RawImage viewImageFull;
-        public RawImage viewImageFocus;
-        public RawImage displayImageFull;
-        public RawImage displayImageFocus;
+        [SerializeField] private RawImage viewImageFull;
+        [SerializeField] private RawImage viewImageFocus;
+        [SerializeField] private RawImage displayImageFull;
+        [SerializeField] private RawImage displayImageFocus;
         [SerializeField] private Camera viewCam;
         [SerializeField] private Camera displayCam;
         [SerializeField] private Color selectedColor;
@@ -29,32 +28,51 @@ namespace UI
         private CustomRenderTexture displayFullRT;
         private CustomRenderTexture displayFocusRT;
         private RectTransform rectTransformViewFull;
+        private RectTransform rectTransformDisplayFull;
         private RectTransform rectTransformViewFocus;
-        private DrawingInput drawingInput;
+        private RectTransform rectTransformDisplayFocus;
+        private bool isFullView;
 
         private void Awake()
         {
-            drawingInput = new DrawingInput();
-            
             rectTransformViewFull = viewImageFull.rectTransform;
             rectTransformViewFocus = viewImageFocus.rectTransform;
+            rectTransformDisplayFull = displayImageFull.rectTransform;
+            rectTransformDisplayFocus = displayImageFocus.rectTransform;
             
             Vector3[] viewCorners = new Vector3[4];
             rectTransformViewFull.GetWorldCorners(viewCorners);
             int imageWidth = (int)(viewCorners[2].x - viewCorners[0].x);
             int imageHeight = (int)(viewCorners[2].y - viewCorners[0].y);
-            viewFullRT = new CustomRenderTexture(imageWidth, imageHeight);
-            viewFocusRT = new CustomRenderTexture(imageWidth, imageHeight);
-            
-            viewCorners = new Vector3[4];
+            viewFullRT = new CustomRenderTexture(imageWidth, imageHeight)
+            {
+                name = "viewFull",
+            };
             rectTransformViewFocus.GetWorldCorners(viewCorners);
             imageWidth = (int)(viewCorners[2].x - viewCorners[0].x);
             imageHeight = (int)(viewCorners[2].y - viewCorners[0].y);
-            displayFullRT = new CustomRenderTexture(imageWidth, imageHeight);
-            displayFocusRT = new CustomRenderTexture(imageWidth, imageHeight);
+            viewFocusRT = new CustomRenderTexture(imageWidth, imageHeight)
+            {
+                name = "viewFocus",
+            };
+            
+            rectTransformDisplayFull.GetWorldCorners(viewCorners);
+            imageWidth = (int)(viewCorners[2].x - viewCorners[0].x);
+            imageHeight = (int)(viewCorners[2].y - viewCorners[0].y);
+            displayFullRT = new CustomRenderTexture(imageWidth, imageHeight)
+            {
+                name = "displayFull",
+            };
+            rectTransformDisplayFocus.GetWorldCorners(viewCorners);
+            imageWidth = (int)(viewCorners[2].x - viewCorners[0].x);
+            imageHeight = (int)(viewCorners[2].y - viewCorners[0].y);
+            displayFocusRT = new CustomRenderTexture(imageWidth, imageHeight)
+            {
+                name = "displayFocusRT",
+            };
             
             viewCam.targetTexture = viewFullRT;
-            displayCam.targetTexture = displayFocusRT;
+            displayCam.targetTexture = displayFullRT;
             
             viewImageFull.texture = viewFullRT;
             viewImageFocus.texture = viewFocusRT;
@@ -63,16 +81,11 @@ namespace UI
             
             EventSystem<float>.RaiseEvent(EventType.CHANGE_BRUSH_SIZE, brushSizeSlider.value);
             EventSystem<float>.RaiseEvent(EventType.TIME_SHOWCASE, speedSliderShowcase.value);
+            EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
         }
 
         private void Update()
         {
-            Debug.Log(Input.mousePosition);
-            
-            Vector3[] drawAreaCorners = new Vector3[4];
-            rectTransformViewFull.GetWorldCorners(drawAreaCorners);
-            drawingInput.UpdateDrawingInput(drawAreaCorners, viewCam.transform.position, viewCam.orthographicSize);
-            
             EventSystem<float>.RaiseEvent(EventType.TIME, Time.time / speedSliderTimeline.value % 1);
         }
 
@@ -87,6 +100,10 @@ namespace UI
             buttonImage.GetComponent<Image>().color = selectedColor;
             if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
             cachedButton = buttonImage;
+            
+            EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
+            viewCam.targetTexture = viewFullRT;
+            displayCam.targetTexture = displayFullRT;
         
             fullView.SetActive(true);
             focusView.SetActive(false);
@@ -98,6 +115,10 @@ namespace UI
             buttonImage.GetComponent<Image>().color = selectedColor;
             if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
             cachedButton = buttonImage;
+            
+            EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFocus, rectTransformDisplayFocus);
+            viewCam.targetTexture = viewFocusRT;
+            displayCam.targetTexture = displayFocusRT;
         
             fullView.SetActive(false);
             focusView.SetActive(true);
@@ -105,7 +126,6 @@ namespace UI
 
         public void OnBrushSizeChanged(bool sliderChanged)
         {
-            Debug.Log($"value changed");
             if (sliderChanged)
             {
                 brushSizeInput.text = brushSizeSlider.value.ToString(CultureInfo.CurrentCulture);
