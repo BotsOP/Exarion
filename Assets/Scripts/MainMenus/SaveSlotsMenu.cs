@@ -64,7 +64,7 @@ namespace MainMenus
             // save the game anytime before loading a new scene
             DataPersistenceManager.instance.SaveTool();
             // load the scene
-            SceneManager.LoadSceneAsync("MainScene");
+            SceneManager.LoadSceneAsync("DrawScene");
         }
 
         public void OnClearClicked(SaveSlot saveSlot) 

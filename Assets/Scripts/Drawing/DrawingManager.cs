@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using Undo;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace Drawing
 {
@@ -35,7 +34,7 @@ namespace Drawing
         private Vector4 resetBox;
         private CommandManager commandManager;
 
-        private float time => (Time.time / 10) % 1;
+        private float time;
 
         void OnEnable()
         {
@@ -47,20 +46,33 @@ namespace Drawing
 
             collisionBox = resetBox;
             
-            EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
             EventSystem.Subscribe(EventType.FINISHED_STROKE, StoppedDrawing);
-            EventSystem<int, float, float>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
+            EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
             EventSystem<float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
+            EventSystem<float>.Subscribe(EventType.TIME, SetTime);
+            EventSystem<float>.Subscribe(EventType.TIME_SHOWCASE, SetShowcaseTime);
+            EventSystem<int, float, float>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
 
             resetBox = new Vector4(imageWidth, imageHeight, 0, 0);
         }
 
         private void OnDisable()
         {
-            EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
             EventSystem.Unsubscribe(EventType.FINISHED_STROKE, StoppedDrawing);
-            EventSystem<int, float, float>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
+            EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
             EventSystem<float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
+            EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
+            EventSystem<float>.Unsubscribe(EventType.TIME_SHOWCASE, SetShowcaseTime);
+            EventSystem<int, float, float>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
+        }
+
+        private void SetTime(float time)
+        {
+            this.time = time;
+        }
+        private void SetShowcaseTime(float time)
+        {
+            displayMat.SetFloat("_TimeSpeed", time);
         }
 
         private void SetBrushSize(float brushSize)
@@ -103,7 +115,7 @@ namespace Drawing
             drawer.FinishedStroke(collisionBox, paintType, startBrushStrokeTime, time);
             EventSystem<int, float, float>.RaiseEvent(EventType.FINISHED_STROKE, drawer.brushStrokesID.Count - 1, startBrushStrokeTime, time);
             ICommand draw = new DrawCommand(ref drawer, collisionBox, paintType,drawer.brushStrokesID.Count - 1, startBrushStrokeTime, time);
-            commandManager.Execute(draw, false);
+            commandManager.Execute(draw);
 
             collisionBox = resetBox;
             firstUse = true;

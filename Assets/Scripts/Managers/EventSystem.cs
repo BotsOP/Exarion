@@ -9,6 +9,9 @@ public enum EventType
     REDRAW_STROKE,
     CHANGE_BRUSH_SIZE,
     REMOVE_CLIP,
+    UPDATE_CLIP,
+    TIME,
+    TIME_SHOWCASE,
     UIINTERACTING
 }
 

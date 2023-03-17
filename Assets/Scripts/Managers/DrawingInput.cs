@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using Drawing;
+using TMPro;
 using UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DrawingInput : MonoBehaviour
 {
@@ -10,11 +12,9 @@ public class DrawingInput : MonoBehaviour
     [SerializeField] private int brushStrokeToRedraw;
     [SerializeField] private float startTime;
     [SerializeField] private float endTime;
-    [SerializeField] private float brushSize;
     private Vector3[] drawAreaCorners;
     private bool mouseWasDrawing;
-    
-    
+   
 
     void Update()
     {
@@ -50,8 +50,9 @@ public class DrawingInput : MonoBehaviour
             EventSystem<int, float, float>.RaiseEvent(EventType.REDRAW_STROKE, brushStrokeToRedraw, startTime, endTime);
         }
         
-        EventSystem<float>.RaiseEvent(EventType.CHANGE_BRUSH_SIZE, brushSize);
     }
+
+    
 
     
 
