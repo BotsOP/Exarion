@@ -11,7 +11,9 @@ namespace UI
         private Camera displayCam;
         
         private bool mouseIsDrawing;
-        private Vector2 lastMousePos;
+        private Vector2 startPosWhenDragging;
+        private Vector2 startPosViewCam;
+        private Vector2 startPosDisplayCam;
 
         public DrawingInput(Camera viewCam, Camera displayCam, float scrollZoomSensitivity, float moveSensitivity)
         {
@@ -19,22 +21,23 @@ namespace UI
             this.displayCam = displayCam;
             this.scrollZoomSensitivity = scrollZoomSensitivity;
             this.moveSensitivity = moveSensitivity;
+            startPosViewCam = viewCam.transform.position;
+            startPosDisplayCam = displayCam.transform.position;
         }
         
         public void UpdateDrawingInput(Vector3[] drawAreaCorners, Vector3[] displayAreaCorners, Vector2 camPos, float camZoom)
         {
-            Vector2 mousePos = Input.mousePosition;
             bool isMouseInsideDrawArea = IsMouseInsideDrawArea(drawAreaCorners);
             bool isMouseInsideDisplayArea = IsMouseInsideDrawArea(displayAreaCorners);
             
             if (isMouseInsideDrawArea)
             {
-                DrawInput(drawAreaCorners, camPos, camZoom, mousePos);
-                MoveCamera(viewCam);
+                DrawInput(drawAreaCorners, camPos, camZoom);
+                MoveCamera(viewCam, drawAreaCorners, startPosViewCam);
             }
             else if (isMouseInsideDisplayArea)
             {
-                MoveCamera(displayCam);
+                MoveCamera(displayCam, displayAreaCorners, startPosDisplayCam);
             }
             
             if(Input.GetMouseButtonUp(0) && mouseIsDrawing || !isMouseInsideDrawArea && mouseIsDrawing)
@@ -42,36 +45,48 @@ namespace UI
                 EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
                 mouseIsDrawing = false;
             }
-
-            lastMousePos = Input.mousePosition;
         }
-        private void DrawInput(Vector3[] drawAreaCorners, Vector2 camPos, float camZoom, Vector2 mousePos)
+        private void DrawInput(Vector3[] drawAreaCorners, Vector2 camPos, float camZoom)
         {
             if (Input.GetMouseButton(0))
             {
                 Vector4 drawCorners = GetScaledDrawingCorners(camPos, camZoom, drawAreaCorners);
-                float mousePosX = mousePos.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);
-                float mousePosY = mousePos.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
-                mousePos = new Vector2(mousePosX, mousePosY);
+                float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);
+                float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
+                Vector2 mousePos = new Vector2(mousePosX, mousePosY);
                 EventSystem<Vector2>.RaiseEvent(EventType.DRAW, mousePos);
 
                 mouseIsDrawing = true;
             }
         }
-        private void MoveCamera(Camera cam)
+        private void MoveCamera(Camera cam, Vector3[] corners, Vector2 draggingBounds)
         {
-
             if (Input.mouseScrollDelta.y != 0)
             {
                 cam.orthographicSize -= Input.mouseScrollDelta.y * scrollZoomSensitivity;
+                cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, 0.01f, 0.5f);
+            }
+            if (Input.GetMouseButtonDown(1))
+            {
+                Vector4 drawCorners = GetScaledDrawingCorners(cam.transform.position, cam.orthographicSize, corners);
+                float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, -0.5f, 0.5f);
+                float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, -0.5f, 0.5f);
+                startPosWhenDragging = new Vector2(mousePosX, mousePosY);
             }
             if (Input.GetMouseButton(1))
             {
-                Vector3 pos = new Vector3(
-                    (Input.mousePosition.x - lastMousePos.x) / Screen.width * moveSensitivity,
-                    (Input.mousePosition.y - lastMousePos.y) / Screen.width * moveSensitivity,
-                    0);
-                cam.transform.position -= pos;
+                var position = cam.transform.position;
+                Vector4 drawCorners = GetScaledDrawingCorners(position, cam.orthographicSize, corners);
+                float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, -0.5f, 0.5f);
+                float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, -0.5f, 0.5f);
+                Vector2 mousePos = new Vector2(mousePosX, mousePosY);
+                mousePos -= startPosWhenDragging;
+
+                mousePos = (Vector2)position - mousePos;
+                mousePos.x = Mathf.Clamp(mousePos.x, draggingBounds.x - 0.5f, draggingBounds.x + 0.5f);
+                mousePos.y = Mathf.Clamp(mousePos.y, draggingBounds.y -0.5f, draggingBounds.y + 0.5f);
+                position = new Vector3(mousePos.x, mousePos.y, position.z);
+                cam.transform.position = position;
             }
         }
 

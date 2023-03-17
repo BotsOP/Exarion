@@ -178,17 +178,14 @@ namespace UI
                     if (ClampResizeLeft(mousePos))
                         return;
 
-                    
                     rect.sizeDelta -= new Vector2(mouseDeltaX, 0);
                     break;
                 case MouseAction.ResizeClipRight:
                     if (ClampResizeRight(mousePos))
                         return;
 
-                    Debug.Log($"{corners[2].x - corners[0].x} {(mousePos.x - corners[2].x)}");
                     float newWidth = corners[2].x - corners[0].x + (mousePos.x - corners[2].x);
                     rect.sizeDelta = new Vector2(newWidth, rect.sizeDelta.y);
-                    //rect.sizeDelta += new Vector2(mouseDeltaX, 0);
                     break;
             }
         }
