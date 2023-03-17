@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Managers;
 using TMPro;
 using Undo;
 using UnityEngine;
@@ -70,6 +71,7 @@ namespace UI
             position = new Vector3(xPos, position.y, position.z);
             timelineScrollRect.position = position;
 
+            //If you are already interacting with a timelineclip check that one first
             if (Input.GetMouseButton(0) && selectedTimelineClip != null)
             {
                 selectedTimelineClip.UpdateUI(Input.mousePosition, previousMousePos);
@@ -90,6 +92,7 @@ namespace UI
                         EventType.REDRAW_STROKE, selectedTimelineClip.brushStrokeID, selectedTimelineClip.leftSideScaled, selectedTimelineClip.rightSideScaled);
                 }
             }
+            //Otherwise check if you are interacting with any other timeline clips
             else if (Input.GetMouseButton(0))
             {
                 foreach (TimelineClip clip in clips)
@@ -116,11 +119,12 @@ namespace UI
                     break;
                 }
             }
+            //Reset once 
             else if (Input.GetMouseButtonUp(0))
             {
-                for (int i = 0; i < clips.Count; i++)
+                foreach (TimelineClip clip in clips)
                 {
-                    clips[i].mouseAction = MouseAction.Nothing;
+                    clip.mouseAction = MouseAction.Nothing;
                 }
                 if (selectedTimelineClip != null)
                 {

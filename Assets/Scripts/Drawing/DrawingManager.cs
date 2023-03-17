@@ -11,8 +11,8 @@ namespace Drawing
         [SerializeField] private Camera cam;
         [SerializeField] private Material drawingMat;
         [SerializeField] private Material displayMat;
-        [SerializeField] private int imageWidth;
-        [SerializeField] private int imageHeight;
+        public int imageWidth = 2048;
+        public int imageHeight = 2048;
     
         [SerializeField] private PaintType paintType;
         public Transform ball1;
@@ -44,6 +44,7 @@ namespace Drawing
             drawingMat.SetTexture("_MainTex", drawer.rt);
             displayMat.SetTexture("_MainTex", drawer.rt);
 
+            resetBox = new Vector4(imageWidth, imageHeight, 0, 0);
             collisionBox = resetBox;
             
             EventSystem.Subscribe(EventType.FINISHED_STROKE, StoppedDrawing);
@@ -53,7 +54,6 @@ namespace Drawing
             EventSystem<float>.Subscribe(EventType.TIME_SHOWCASE, SetShowcaseTime);
             EventSystem<int, float, float>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
 
-            resetBox = new Vector4(imageWidth, imageHeight, 0, 0);
         }
 
         private void OnDisable()
@@ -106,8 +106,8 @@ namespace Drawing
             if (collisionBox.y > mousePos.y) { collisionBox.y = mousePos.y; }
             if (collisionBox.z < mousePos.x) { collisionBox.z = mousePos.x; }
             if (collisionBox.w < mousePos.y) { collisionBox.w = mousePos.y; }
-            ball1.position = new Vector3(collisionBox.x / imageWidth, collisionBox.y / imageHeight, 0);
-            ball2.position = new Vector3(collisionBox.z / imageWidth, collisionBox.w / imageHeight, 0);
+            // ball1.position = new Vector3(collisionBox.x / imageWidth, collisionBox.y / imageHeight, 0);
+            // ball2.position = new Vector3(collisionBox.z / imageWidth, collisionBox.w / imageHeight, 0);
         }
         
         private void StoppedDrawing()
