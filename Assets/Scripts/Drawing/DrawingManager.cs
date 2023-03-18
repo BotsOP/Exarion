@@ -11,6 +11,7 @@ namespace Drawing
         [SerializeField] private Camera cam;
         [SerializeField] private Material drawingMat;
         [SerializeField] private Material displayMat;
+        [SerializeField] private Material selectMat;
         public int imageWidth = 2048;
         public int imageHeight = 2048;
     
@@ -27,7 +28,7 @@ namespace Drawing
         private bool firstUse = true;
 
         private float brushSize;
-        private int brushStrokeID;
+        private int newBrushStrokeID;
         private float cachedTime;
         private float startBrushStrokeTime;
         private Vector4 collisionBox;
@@ -43,26 +44,30 @@ namespace Drawing
 
             drawingMat.SetTexture("_MainTex", drawer.rt);
             displayMat.SetTexture("_MainTex", drawer.rt);
+            selectMat.SetTexture("_MainTex", drawer.rtSelect);
 
             resetBox = new Vector4(imageWidth, imageHeight, 0, 0);
             collisionBox = resetBox;
             
             EventSystem.Subscribe(EventType.FINISHED_STROKE, StoppedDrawing);
+            EventSystem.Subscribe(EventType.CLEAR_HIGHLIGHT, ClearHighlightStroke);
             EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
             EventSystem<float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
             EventSystem<float>.Subscribe(EventType.TIME, SetTime);
             EventSystem<float>.Subscribe(EventType.TIME_SHOWCASE, SetShowcaseTime);
+            EventSystem<int>.Subscribe(EventType.HIGHLIGHT, HighlightStroke);
             EventSystem<int, float, float>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
-
         }
 
         private void OnDisable()
         {
             EventSystem.Unsubscribe(EventType.FINISHED_STROKE, StoppedDrawing);
+            EventSystem.Unsubscribe(EventType.CLEAR_HIGHLIGHT, ClearHighlightStroke);
             EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
             EventSystem<float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
             EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
             EventSystem<float>.Unsubscribe(EventType.TIME_SHOWCASE, SetShowcaseTime);
+            EventSystem<int>.Unsubscribe(EventType.HIGHLIGHT, HighlightStroke);
             EventSystem<int, float, float>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
         }
 
@@ -80,6 +85,25 @@ namespace Drawing
             this.brushSize = brushSize;
         }
 
+        public void HighlightStroke(int brushstrokStartID)
+        {
+            BrushStrokeID brushStrokeID = drawer.brushStrokesID[brushstrokStartID];
+            int startID = brushStrokeID.startID;
+            int endID = brushStrokeID.endID;
+            
+            for (int i = startID; i < endID; i++)
+            {
+                BrushStroke stroke = drawer.brushStrokes[i];
+
+                drawer.DrawHighlight(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, stroke.strokeBrushSize / 2);
+            }
+        }
+        public void ClearHighlightStroke()
+        {
+            Graphics.SetRenderTarget(drawer.rtSelect);
+            GL.Clear(false, true, Color.white);
+        }
+
         private void Draw(Vector2 mousePos)
         {
             bool firstDraw = firstUse;
@@ -92,13 +116,13 @@ namespace Drawing
             if (firstUse)
             {
                 startBrushStrokeTime = time;
-                brushStrokeID = drawer.GetNewID();
+                newBrushStrokeID = drawer.GetNewID();
                 lastCursorPos = mousePos;
                 firstUse = false;
             }
 
-            drawer.Draw(lastCursorPos, mousePos, brushSize, paintType, cachedTime, time, firstDraw, brushStrokeID);
-            drawer.AddBrushDraw(new BrushStroke(lastCursorPos, mousePos, brushSize, time, cachedTime));
+            drawer.Draw(lastCursorPos, mousePos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
+            drawer.brushStrokes.Add(new BrushStroke(lastCursorPos, mousePos, brushSize, time, cachedTime));
 
             lastCursorPos = mousePos;
                 
@@ -123,7 +147,16 @@ namespace Drawing
         
         private void RedrawStroke(int brushStrokeIDToRedraw, float brushStartTime, float brushEndTime)
         {
-            drawer.Redraw(brushStrokeIDToRedraw, brushStartTime, brushEndTime);
+            for (int i = 0; i < drawer.brushStrokesID.Count; i++)
+            {
+                if (i == brushStrokeIDToRedraw)
+                {
+                    drawer.RedrawStroke(brushStrokeIDToRedraw, brushStartTime, brushEndTime);
+                    continue;
+                }
+                
+                drawer.RedrawStroke(i);
+            }
         }
 
         void Update()
@@ -136,7 +169,12 @@ namespace Drawing
             drawer.brushStrokes = data.brushStrokes;
             drawer.brushStrokesID = data.brushStrokesID;
             drawer.RedrawAll();
-            drawer.RedrawAllTimelineClips();
+            
+            for (int i = 0; i < drawer.brushStrokesID.Count; i++)
+            {
+                BrushStrokeID brushStrokeID = drawer.brushStrokesID[i];
+                EventSystem<int, float, float>.RaiseEvent(EventType.FINISHED_STROKE, i, brushStrokeID.lastTime, brushStrokeID.currentTime);
+            }
         }
 
         public void SaveData(ToolData data)

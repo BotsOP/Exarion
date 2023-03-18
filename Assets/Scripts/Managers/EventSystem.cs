@@ -13,6 +13,8 @@ public enum EventType
     TIME,
     TIME_SHOWCASE,
     VIEW_CHANGED,
+    HIGHLIGHT,
+    CLEAR_HIGHLIGHT,
     UIINTERACTING
 }
 

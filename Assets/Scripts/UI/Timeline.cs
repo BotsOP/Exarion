@@ -3,7 +3,6 @@ using Managers;
 using TMPro;
 using Undo;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace UI
 {
@@ -12,7 +11,6 @@ namespace UI
         [SerializeField] private GameObject timelineBarObject;
         [SerializeField] private GameObject timelineClipObject;
         [SerializeField] private GameObject timelineScrollBar;
-        [SerializeField] private Slider timelineSpeedSlider;
         [SerializeField] private List<GameObject> timelineBars;
         [SerializeField] private TMP_InputField clipLeftInput;
         [SerializeField] private TMP_InputField clipRightInput;
@@ -20,16 +18,17 @@ namespace UI
         private RectTransform timelineRect;
         private RectTransform timelineAreaRect;
         private RectTransform timelineScrollRect;
+        private bool selectedInput;
+        private bool startTimelineClip;
         private float time;
-        private Drawing.Drawing drawer;
-        private Vector3[] corners;
-        private Vector2 previousMousePos;
-        private TimelineClip selectedTimelineClip;
         private float lastTimelineLeft;
         private float lastTimelineRight;
+        private Vector2 previousMousePos;
         private Vector2 oldClipTime;
-        private bool selectedInput;
+        private Vector3[] corners;
+        private TimelineClip selectedTimelineClip;
         private CommandManager commandManager;
+        private Drawing.Drawing drawer;
 
         private void Awake()
         {
@@ -74,6 +73,11 @@ namespace UI
             //If you are already interacting with a timelineclip check that one first
             if (Input.GetMouseButton(0) && selectedTimelineClip != null)
             {
+                if (startTimelineClip)
+                {
+                    EventSystem<int>.RaiseEvent(EventType.HIGHLIGHT, selectedTimelineClip.brushStrokeID);
+                    startTimelineClip = false;
+                }
                 selectedTimelineClip.UpdateUI(Input.mousePosition, previousMousePos);
                 if (selectedTimelineClip.mouseAction != MouseAction.Nothing)
                 {
@@ -122,17 +126,22 @@ namespace UI
             //Reset once 
             else if (Input.GetMouseButtonUp(0))
             {
-                foreach (TimelineClip clip in clips)
-                {
-                    clip.mouseAction = MouseAction.Nothing;
-                }
+                // foreach (TimelineClip clip in clips)
+                // {
+                //     clip.mouseAction = MouseAction.Nothing;
+                // }
+                startTimelineClip = true;
                 if (selectedTimelineClip != null)
                 {
-                    ICommand clipCommand = new RedrawCommand(selectedTimelineClip.brushStrokeID, selectedTimelineClip.leftSideScaled, selectedTimelineClip.rightSideScaled, 
-                                                             oldClipTime.x, oldClipTime.y);
+                    ICommand clipCommand = new RedrawCommand(selectedTimelineClip.brushStrokeID, selectedTimelineClip.leftSideScaled, 
+                                                             selectedTimelineClip.rightSideScaled, oldClipTime.x, oldClipTime.y);
                     commandManager.Execute(clipCommand);
+                    
                     oldClipTime.x = -1;
                     oldClipTime.y = -1;
+                    selectedTimelineClip.mouseAction = MouseAction.Nothing;
+                    
+                    EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
                 }
                 selectedTimelineClip = null;
             }

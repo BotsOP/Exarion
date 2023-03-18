@@ -11,6 +11,7 @@ namespace Drawing
     {
         public CustomRenderTexture rt;
         public CustomRenderTexture rtID;
+        public CustomRenderTexture rtSelect;
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
         public List<BrushStroke> brushStrokes = new List<BrushStroke>();
 
@@ -34,6 +35,7 @@ namespace Drawing
         private int paintOverEverythingKernelID;
         private int paintOverOwnLineKernelID;
         private int eraseKernelID;
+        private int highlightKernelID;
         private Vector3 threadGroupSizeOut;
         private Vector3 threadGroupSize;
 
@@ -50,6 +52,7 @@ namespace Drawing
             paintOverEverythingKernelID = paintShader.FindKernel("PaintOverEverything");
             paintOverOwnLineKernelID = paintShader.FindKernel("PaintOverOwnLine");
             eraseKernelID = paintShader.FindKernel("Erase");
+            highlightKernelID = paintShader.FindKernel("HighlightSelection");
         
             paintShader.GetKernelThreadGroupSizes(paintUnderOwnLineKernelID, out uint threadGroupSizeX, out uint threadGroupSizeY, out _);
             threadGroupSizeOut.x = threadGroupSizeX;
@@ -57,20 +60,30 @@ namespace Drawing
 
             rt = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
             {
+                filterMode = FilterMode.Point,
                 enableRandomWrite = true,
+                name = "rt",
             };
             rtID = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RInt, RenderTextureReadWrite.Linear)
             {
                 enableRandomWrite = true,
+                name = "rtID",
+            };
+            rtSelect = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
+            {
+                enableRandomWrite = true,
+                name = "rtSelect",
             };
 
-            
             Graphics.SetRenderTarget(rt);
             GL.Clear(false, true, Color.white);
             
             Graphics.SetRenderTarget(rtID);
             Color idColor = new Color(-1, -1, -1);
             GL.Clear(false, true, idColor);
+            
+            Graphics.SetRenderTarget(rtSelect);
+            GL.Clear(false, true, Color.white);
             
             Graphics.SetRenderTarget(null);
 
@@ -114,22 +127,26 @@ namespace Drawing
             paintShader.SetFloat("_PreviousTimeColor", lastTime);
             paintShader.SetInt("_StrokeID", strokeID);
             paintShader.SetTexture(kernelID, "_IdTex", rtID);
-            paintShader.SetTexture(kernelID, "_Result", rt);
+            paintShader.SetTexture(kernelID, "_ResultTex", rt);
 
             paintShader.Dispatch(kernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
         }
-
-        public void Redraw(int brushstrokStartID, float startTime, float endTime)
+        
+        public void DrawHighlight(Vector2 lastPos, Vector2 currentPos, float strokeBrushSize, float borderThickness)
         {
-            for (int i = 0; i < brushStrokesID.Count; i++)
-            {
-                if (i == brushstrokStartID)
-                {
-                    RedrawStroke(brushstrokStartID, startTime, endTime);
-                    continue;
-                }
-                RedrawStroke(i);
-            }
+            strokeBrushSize += borderThickness;
+            threadGroupSize.x = Mathf.CeilToInt((math.abs(lastPos.x - currentPos.x) + strokeBrushSize * 2) / threadGroupSizeOut.x);
+            threadGroupSize.y = Mathf.CeilToInt((math.abs(lastPos.y - currentPos.y) + strokeBrushSize * 2) / threadGroupSizeOut.y);
+        
+            Vector2 startPos = GetStartPos(lastPos, currentPos, strokeBrushSize);
+
+            paintShader.SetVector("_CursorPos", currentPos);
+            paintShader.SetVector("_LastCursorPos", lastPos);
+            paintShader.SetVector("_StartPos", startPos);
+            paintShader.SetFloat("_BrushSize", strokeBrushSize);
+            paintShader.SetTexture(highlightKernelID, "_SelectTex", rtSelect);
+
+            paintShader.Dispatch(highlightKernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
         }
 
         private Vector2 GetStartPos(Vector2 a, Vector2 b, float brushSize)
@@ -139,7 +156,7 @@ namespace Drawing
             return new Vector2(lowestX, lowestY);
         }
 
-        private void RedrawStroke(int brushstrokStartID)
+        public void RedrawStroke(int brushstrokStartID)
         {
             BrushStrokeID brushStrokeID = brushStrokesID[brushstrokStartID];
             int startID = brushStrokeID.startID;
@@ -208,7 +225,7 @@ namespace Drawing
             }
         }
 
-        private void RedrawStroke(int brushstrokStartID, float lastTime, float currentTime)
+        public void RedrawStroke(int brushstrokStartID, float lastTime, float currentTime)
         {
             BrushStrokeID brushStrokeID = brushStrokesID[brushstrokStartID];
             int startID = brushStrokeID.startID;
@@ -305,26 +322,12 @@ namespace Drawing
             }
         }
 
-
         public void RedrawAll()
         {
             for (int i = 0; i < brushStrokesID.Count; i++)
             {
                 RedrawStroke(i);
             }
-        }
-        public void RedrawAllTimelineClips()
-        {
-            for (int i = 0; i < brushStrokesID.Count; i++)
-            {
-                BrushStrokeID brushStrokeID = brushStrokesID[i];
-                EventSystem<int, float, float>.RaiseEvent(EventType.FINISHED_STROKE, i, brushStrokeID.lastTime, brushStrokeID.currentTime);
-            }
-        }
-
-        public void AddBrushDraw(BrushStroke brushStroke)
-        {
-            brushStrokes.Add(brushStroke);
         }
 
         public void FinishedStroke(Vector4 collisionBox, PaintType paintType, float lastTime, float currentTime)
