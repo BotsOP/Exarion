@@ -85,7 +85,7 @@ namespace Drawing
             this.brushSize = brushSize;
         }
 
-        public void HighlightStroke(int brushstrokStartID)
+        private void HighlightStroke(int brushstrokStartID)
         {
             BrushStrokeID brushStrokeID = drawer.brushStrokesID[brushstrokStartID];
             int startID = brushStrokeID.startID;
@@ -98,7 +98,7 @@ namespace Drawing
                 drawer.DrawHighlight(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, stroke.strokeBrushSize / 2);
             }
         }
-        public void ClearHighlightStroke()
+        private void ClearHighlightStroke()
         {
             Graphics.SetRenderTarget(drawer.rtSelect);
             GL.Clear(false, true, Color.white);

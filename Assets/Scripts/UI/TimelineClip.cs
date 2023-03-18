@@ -90,6 +90,7 @@ namespace UI
         public int brushStrokeID;
         public RectTransform rect;
         public MouseAction mouseAction;
+        public int currentTimeBar;
         private RectTransform timelineBarRect;
         private RectTransform timelineAreaRect;
     
@@ -170,7 +171,7 @@ namespace UI
                         xPos = Mathf.Clamp(xPos, timelineBarCorners[0].x + clipLength, timelineBarCorners[2].x);
                     }
                 
-
+                    Debug.Log(currentTimeBar);
                     position = new Vector3(xPos, yPos, position.z);
                     rect.position = position;
                     break;
@@ -184,8 +185,7 @@ namespace UI
                     if (ClampResizeRight(mousePos))
                         return;
 
-                    float newWidth = corners[2].x - corners[0].x + (mousePos.x - corners[2].x);
-                    rect.sizeDelta = new Vector2(newWidth, rect.sizeDelta.y);
+                    rect.sizeDelta += new Vector2(mouseDeltaX, 0);
                     break;
             }
         }
@@ -237,10 +237,12 @@ namespace UI
         
             if (mousePos.y < corners[0].y - (spacing))
             {
+                currentTimeBar++;
                 return yPos - timelineBarHeight;
             }
             if (mousePos.y > corners[2].y + (spacing))
             {
+                currentTimeBar--;
                 return yPos + timelineBarHeight;
             }
             return yPos;
