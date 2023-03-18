@@ -71,23 +71,23 @@ namespace Drawing
             EventSystem<int, float, float>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
         }
 
-        private void SetTime(float time)
+        private void SetTime(float _time)
         {
-            this.time = time;
+            time = _time;
         }
-        private void SetShowcaseTime(float time)
+        private void SetShowcaseTime(float _time)
         {
-            displayMat.SetFloat("_TimeSpeed", time);
-        }
-
-        private void SetBrushSize(float brushSize)
-        {
-            this.brushSize = brushSize;
+            displayMat.SetFloat("_TimeSpeed", _time);
         }
 
-        private void HighlightStroke(int brushstrokStartID)
+        private void SetBrushSize(float _brushSize)
         {
-            BrushStrokeID brushStrokeID = drawer.brushStrokesID[brushstrokStartID];
+            brushSize = _brushSize;
+        }
+
+        private void HighlightStroke(int _brushstrokStartID)
+        {
+            BrushStrokeID brushStrokeID = drawer.brushStrokesID[_brushstrokStartID];
             int startID = brushStrokeID.startID;
             int endID = brushStrokeID.endID;
             
@@ -104,11 +104,11 @@ namespace Drawing
             GL.Clear(false, true, Color.white);
         }
 
-        private void Draw(Vector2 mousePos)
+        private void Draw(Vector2 _mousePos)
         {
             bool firstDraw = firstUse;
 
-            if (lastCursorPos == mousePos)
+            if (lastCursorPos == _mousePos)
             {
                 return;
             }
@@ -117,19 +117,19 @@ namespace Drawing
             {
                 startBrushStrokeTime = time;
                 newBrushStrokeID = drawer.GetNewID();
-                lastCursorPos = mousePos;
+                lastCursorPos = _mousePos;
                 firstUse = false;
             }
 
-            drawer.Draw(lastCursorPos, mousePos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
-            drawer.brushStrokes.Add(new BrushStroke(lastCursorPos, mousePos, brushSize, time, cachedTime));
+            drawer.Draw(lastCursorPos, _mousePos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
+            drawer.brushStrokes.Add(new BrushStroke(lastCursorPos, _mousePos, brushSize, time, cachedTime));
 
-            lastCursorPos = mousePos;
+            lastCursorPos = _mousePos;
                 
-            if (collisionBox.x > mousePos.x) { collisionBox.x = mousePos.x; }
-            if (collisionBox.y > mousePos.y) { collisionBox.y = mousePos.y; }
-            if (collisionBox.z < mousePos.x) { collisionBox.z = mousePos.x; }
-            if (collisionBox.w < mousePos.y) { collisionBox.w = mousePos.y; }
+            if (collisionBox.x > _mousePos.x) { collisionBox.x = _mousePos.x; }
+            if (collisionBox.y > _mousePos.y) { collisionBox.y = _mousePos.y; }
+            if (collisionBox.z < _mousePos.x) { collisionBox.z = _mousePos.x; }
+            if (collisionBox.w < _mousePos.y) { collisionBox.w = _mousePos.y; }
             // ball1.position = new Vector3(collisionBox.x / imageWidth, collisionBox.y / imageHeight, 0);
             // ball2.position = new Vector3(collisionBox.z / imageWidth, collisionBox.w / imageHeight, 0);
         }
@@ -145,13 +145,13 @@ namespace Drawing
             firstUse = true;
         }
         
-        private void RedrawStroke(int brushStrokeIDToRedraw, float brushStartTime, float brushEndTime)
+        private void RedrawStroke(int _brushStrokeIDToRedraw, float _brushStartTime, float _brushEndTime)
         {
             for (int i = 0; i < drawer.brushStrokesID.Count; i++)
             {
-                if (i == brushStrokeIDToRedraw)
+                if (i == _brushStrokeIDToRedraw)
                 {
-                    drawer.RedrawStroke(brushStrokeIDToRedraw, brushStartTime, brushEndTime);
+                    drawer.RedrawStroke(_brushStrokeIDToRedraw, _brushStartTime, _brushEndTime);
                     continue;
                 }
                 
@@ -164,10 +164,10 @@ namespace Drawing
             cachedTime = time;
         }
 
-        public void LoadData(ToolData data)
+        public void LoadData(ToolData _data)
         {
-            drawer.brushStrokes = data.brushStrokes;
-            drawer.brushStrokesID = data.brushStrokesID;
+            drawer.brushStrokes = _data.brushStrokes;
+            drawer.brushStrokesID = _data.brushStrokesID;
             drawer.RedrawAll();
             
             for (int i = 0; i < drawer.brushStrokesID.Count; i++)
@@ -177,10 +177,10 @@ namespace Drawing
             }
         }
 
-        public void SaveData(ToolData data)
+        public void SaveData(ToolData _data)
         {
-            data.brushStrokes = drawer.brushStrokes;
-            data.brushStrokesID = drawer.brushStrokesID;
+            _data.brushStrokes = drawer.brushStrokes;
+            _data.brushStrokesID = drawer.brushStrokesID;
         }
     }
 

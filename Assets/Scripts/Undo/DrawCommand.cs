@@ -15,14 +15,14 @@ namespace Undo
         private float currentTime;
         private int brushStokeID;
     
-        public DrawCommand(ref Drawing.Drawing drawer, Vector4 collisionBox, PaintType paintType, int brushStokeID, float lastTime, float currentTime)
+        public DrawCommand(ref Drawing.Drawing _drawer, Vector4 _collisionBox, PaintType _paintType, int _brushStokeID, float _lastTime, float _currentTime)
         {
-            this.paintType = paintType;
-            this.collisionBox = collisionBox;
-            this.drawer = drawer;
-            this.lastTime = lastTime;
-            this.currentTime = currentTime;
-            this.brushStokeID = brushStokeID;
+            paintType = _paintType;
+            collisionBox = _collisionBox;
+            drawer = _drawer;
+            lastTime = _lastTime;
+            currentTime = _currentTime;
+            brushStokeID = _brushStokeID;
             brushstrokStartID = drawer.brushStrokesID.Count - 1;
 
             int startID = drawer.brushStrokesID[brushstrokStartID].startID;

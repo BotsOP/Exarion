@@ -24,10 +24,10 @@ public class InputManager : MonoBehaviour
         EventSystem<RectTransform, RectTransform>.Unsubscribe(EventType.VIEW_CHANGED, SetDrawArea);
     }
 
-    private void SetDrawArea(RectTransform currentDrawArea, RectTransform currentDisplayArea)
+    private void SetDrawArea(RectTransform _currentDrawArea, RectTransform _currentDisplayArea)
     {
-        this.currentDrawArea = currentDrawArea;
-        this.currentDisplayArea = currentDisplayArea;
+        currentDrawArea = _currentDrawArea;
+        currentDisplayArea = _currentDisplayArea;
     }
 
     private void Update()

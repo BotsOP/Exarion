@@ -9,14 +9,14 @@ public class SetProjectName : MonoBehaviour, IDataPersistence
     public string projectName ="";
     public GameObject inputField;
 
-    public void LoadData(ToolData data)
+    public void LoadData(ToolData _data)
     {
-        this.projectName = data.projectName;
+        this.projectName = _data.projectName;
     }
 
-    public void SaveData(ToolData data)
+    public void SaveData(ToolData _data)
     {
-        data.projectName = this.projectName;
+        _data.projectName = this.projectName;
     }
 
     public void StoreProjectName()

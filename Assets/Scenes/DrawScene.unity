@@ -9430,7 +9430,7 @@ MonoBehaviour:
   timelineClipObject: {fileID: 1941609014158486028, guid: 90c95145647323f4a916dfe7fbf7d98e,
     type: 3}
   timelineScrollBar: {fileID: 1992386506}
-  amountTimelineBars: 0
+  amountTimelineBars: 7
   clipLeftInput: {fileID: 152474444}
   clipRightInput: {fileID: 236215534}
   clipColor: {r: 0.85098046, g: 0.7568628, b: 0.105882354, a: 1}
