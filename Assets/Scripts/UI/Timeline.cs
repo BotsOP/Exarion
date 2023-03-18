@@ -18,7 +18,6 @@ namespace UI
         [SerializeField] private Color clipColor;
         [SerializeField] private Color selectedClipColor;
         
-        //replace clips with clipsOrderderd
         private List<List<TimelineClip>> clipsOrderderd;
         private RectTransform timelineRect;
         private RectTransform timelineAreaRect;
@@ -38,17 +37,21 @@ namespace UI
 
         private void Awake()
         {
+            
             commandManager = FindObjectOfType<CommandManager>();
             corners = new Vector3[4];
             timelineRect = GetComponent<RectTransform>();
             timelineScrollRect = timelineScrollBar.GetComponent<RectTransform>();
             oldClipTime.x = -1;
             oldClipTime.y = -1;
+            
             clipsOrderderd = new List<List<TimelineClip>>();
             for (int i = 0; i < amountTimelineBars; i++)
             {
                 clipsOrderderd.Add(new List<TimelineClip>());
             }
+            
+            amountTimelineBars = clipsOrderderd.Count - 1;
         }
 
         private void OnEnable()
@@ -163,12 +166,7 @@ namespace UI
                     commandManager.Execute(clipCommand);
                     
                     selectedTimelineClip.mouseAction = MouseAction.Nothing;
-                    if (selectedClipIndex.bar != selectedTimelineClip.currentBar)
-                    {
-                        Debug.Log(IsClipCollidingInBar(GetClip(selectedClipIndex), selectedTimelineClip.currentBar));
-                        clipsOrderderd[selectedTimelineClip.currentBar].Add(GetClip(selectedClipIndex));
-                        clipsOrderderd[selectedClipIndex.bar].RemoveAt(selectedClipIndex.barIndex);
-                    }
+                    CheckClipCollisions(selectedTimelineClip, selectedClipIndex);
 
                     oldClipTime.x = -1;
                     oldClipTime.y = -1;
@@ -192,17 +190,59 @@ namespace UI
                 }
             }
         }
-
-        private TimelineClip GetClip(ClipIndex _clipIndex)
+        private void CheckClipCollisions(TimelineClip _clip, ClipIndex _index)
         {
-            return clipsOrderderd[_clipIndex.bar][_clipIndex.barIndex];
+            int currentBar = _clip.currentBar;
+            int previousBar = _index.bar;
+
+            if (!IsClipCollidingInBar(GetClip(_index), currentBar))
+            {
+                Debug.Log($"no checks {currentBar} {_index.bar}");
+                clipsOrderderd[currentBar].Add(GetClip(_index));
+                clipsOrderderd[previousBar].RemoveAt(_index.barIndex);
+                return;
+            }
+            for (int i = 1; i < Mathf.CeilToInt(amountTimelineBars); i++)
+            {
+                int upperBar = currentBar - i;
+                int underBar = currentBar + i;
+
+                if (underBar <= amountTimelineBars)
+                {
+                    if (!IsClipCollidingInBar(GetClip(_index), underBar))
+                    {
+                        Debug.Log($"true {underBar}");
+                        GetClip(_index).SetBar(underBar);
+                        clipsOrderderd[underBar].Add(GetClip(_index));
+                        clipsOrderderd[previousBar].RemoveAt(_index.barIndex);
+                        return;
+                    }
+                }
+
+                if (upperBar >= 0)
+                {
+                    if (!IsClipCollidingInBar(GetClip(_index), upperBar))
+                    {
+                        Debug.Log($"true {upperBar}");
+                        GetClip(_index).SetBar(upperBar);
+                        clipsOrderderd[upperBar].Add(GetClip(_index));
+                        clipsOrderderd[previousBar].RemoveAt(_index.barIndex);
+                        return;
+                    }
+                }
+            }
         }
+
 
         private bool IsClipCollidingInBar(TimelineClip _clip, int bar)
         {
-            foreach (var otherClip in clipsOrderderd[bar])
+            for (int i = 0; i < clipsOrderderd[bar].Count; i++)
             {
-                if(otherClip == _clip) { continue;}
+                TimelineClip otherClip = clipsOrderderd[bar][i];
+                if (otherClip == _clip)
+                {
+                    continue;
+                }
                 if (IsClipColliding(_clip, otherClip))
                 {
                     return true;
@@ -212,13 +252,20 @@ namespace UI
         }
         private bool IsClipColliding(TimelineClip _clip, TimelineClip _clip2)
         {
-            Vector3[] clipCorners = new Vector3[4];
-            _clip.rect.GetWorldCorners(clipCorners);
-            Vector4 collisionBox = new Vector4(clipCorners[0].x, clipCorners[0].y, clipCorners[2].x, clipCorners[2].y);
-            _clip2.rect.GetWorldCorners(clipCorners);
-            Vector4 collisionBox2 = new Vector4(clipCorners[0].x, clipCorners[0].y, clipCorners[2].x, clipCorners[2].y);
-            
-            return collisionBox.x <= collisionBox2.z && collisionBox.z >= collisionBox2.x && collisionBox.y <= collisionBox2.w && collisionBox.w >= collisionBox2.y;
+            if (_clip.leftSideScaled > _clip2.leftSideScaled && _clip.leftSideScaled < _clip2.rightSideScaled)
+            {
+                return true;
+            }
+            if (_clip.rightSideScaled > _clip2.leftSideScaled && _clip.rightSideScaled < _clip2.rightSideScaled)
+            {
+                return true;
+            }
+            return false;
+        }
+        
+        private TimelineClip GetClip(ClipIndex _clipIndex)
+        {
+            return clipsOrderderd[_clipIndex.bar][_clipIndex.barIndex];
         }
 
         public void ChangedInput(TMP_InputField _input)
@@ -262,6 +309,7 @@ namespace UI
                 rightSideScaled = _currentTime,
             };
             clipsOrderderd[0].Add(timelineClip);
+            CheckClipCollisions(timelineClip, new ClipIndex(0, clipsOrderderd[0].Count - 1));
         }
 
         private void RemoveClip(int _brushStrokeID)

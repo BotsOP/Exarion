@@ -99,6 +99,7 @@ namespace UI
         private Vector3[] timelineAreaCorners;
         private Vector2 mouseOffset;
         private float minumunWidth = 10;
+        private float spacing = 10;
 
         public TimelineClip(int _brushStrokeID, RectTransform _rect, RectTransform _timelineBarRect, RectTransform _timelineAreaRect)
         {
@@ -158,8 +159,7 @@ namespace UI
                 case MouseAction.GrabbedClip:
                     float clipLength = rect.sizeDelta.x;
                     Vector3 position = rect.position;
-                    float spacing = 10;
-                    float yPos = GetYPos(_mousePos, spacing, _mousePos.y);
+                    float yPos = GetYPos(_mousePos.y);
                     float xPos = _mousePos.x - mouseOffset.x;
                 
                     if (rect.pivot.x == 0)
@@ -225,26 +225,35 @@ namespace UI
             return false;
         }
 
-        private float GetYPos(Vector2 _mousePos, float _spacing, float _mousePosY)
+        private float GetYPos(float _mousePosY)
         {
             float yPos = rect.position.y;
-            float timelineBarHeight = corners[2].y - corners[0].y + _spacing;
+            float timelineBarHeight = corners[2].y - corners[0].y + spacing;
             if (_mousePosY < timelineAreaCorners[0].y || _mousePosY > timelineAreaCorners[2].y)
             {
                 return yPos;
             }
         
-            if (_mousePos.y < corners[0].y - (_spacing))
+            if (_mousePosY < corners[0].y - spacing)
             {
                 currentBar++;
                 return yPos - timelineBarHeight;
             }
-            if (_mousePos.y > corners[2].y + (_spacing))
+            if (_mousePosY > corners[2].y + spacing)
             {
                 currentBar--;
                 return yPos + timelineBarHeight;
             }
             return yPos;
+        }
+        public void SetBar(int newBar)
+        {
+            float timelineBarHeight = corners[2].y - corners[0].y + spacing;
+            int amountToMove = newBar - currentBar;
+            timelineBarHeight *= amountToMove;
+
+            rect.position -= new Vector3(0, timelineBarHeight, 0);
+            currentBar = newBar;
         }
 
         private bool IsMouseOver(Vector2 _mousePos)
