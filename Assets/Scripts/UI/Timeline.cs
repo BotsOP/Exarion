@@ -287,7 +287,7 @@ namespace UI
                 }
             }
             
-            //There is no space anywhere create a new one
+            //There is no space anywhere create a new one timeline bar
             amountTimelineBars++;
             Instantiate(timelineBarObject, timelineRect).transform.SetAsFirstSibling();
             clipsOrderderd.Add(new List<TimelineClip>());
