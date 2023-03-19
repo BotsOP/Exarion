@@ -47,6 +47,8 @@ namespace UI
                 if(Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || Math.Abs(time - 1.1) < 0.1)
                 {
                     EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
+                    EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
+
                     mouseIsDrawing = false;
                 }
             }
@@ -72,6 +74,7 @@ namespace UI
                 float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
                 Vector2 mousePos = new Vector2(mousePosX, mousePosY);
                 EventSystem<Vector2>.RaiseEvent(EventType.DRAW, mousePos);
+                EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
 
                 mouseIsDrawing = true;
             }

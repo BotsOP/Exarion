@@ -22,8 +22,6 @@ namespace UI
         [SerializeField] private Image cachedButton;
         [SerializeField] private TMP_InputField brushSizeInput;
         [SerializeField] private Slider brushSizeSlider;
-        [SerializeField] private Slider speedSliderTimeline;
-        [SerializeField] private Slider speedSliderShowcase;
         private CustomRenderTexture viewFullRT;
         private CustomRenderTexture viewFocusRT;
         private CustomRenderTexture displayFullRT;
@@ -32,8 +30,6 @@ namespace UI
         private RectTransform rectTransformDisplayFull;
         private RectTransform rectTransformViewFocus;
         private RectTransform rectTransformDisplayFocus;
-        private float timeIncrease;
-        private float time;
 
         private void Awake()
         {
@@ -82,21 +78,7 @@ namespace UI
             displayImageFocus.texture = displayFocusRT;
             
             EventSystem<float>.RaiseEvent(EventType.CHANGE_BRUSH_SIZE, brushSizeSlider.value);
-            EventSystem<float>.RaiseEvent(EventType.TIME_SHOWCASE, speedSliderShowcase.value);
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
-        }
-
-        private void Update()
-        {
-            timeIncrease = (Time.timeSinceLevelLoad - timeIncrease) / Mathf.Pow(speedSliderTimeline.value, 1.5f);
-            time += timeIncrease;
-            EventSystem<float>.RaiseEvent(EventType.TIME, time  % 1.1f);
-            timeIncrease = Time.timeSinceLevelLoad;
-        }
-
-        public void SpeedSliderShowcaseChanged()
-        {
-            EventSystem<float>.RaiseEvent(EventType.TIME_SHOWCASE, speedSliderShowcase.value);
         }
 
         public void StartInteracting()

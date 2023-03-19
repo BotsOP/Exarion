@@ -9,14 +9,19 @@ namespace UI
 {
     public class Timeline : MonoBehaviour
     {
+        [SerializeField] private RectTransform timelineBarToInsantiateTo;
         [SerializeField] private GameObject timelineBarObject;
         [SerializeField] private GameObject timelineClipObject;
         [SerializeField] private GameObject timelineScrollBar;
+        [SerializeField] private GameObject timelineObject;
         [SerializeField] private int amountTimelineBars;
         [SerializeField] private TMP_InputField clipLeftInput;
         [SerializeField] private TMP_InputField clipRightInput;
-        [SerializeField] private Color clipColor;
-        [SerializeField] private Color selectedClipColor;
+        [SerializeField] private Color notSelectedColor;
+        [SerializeField] private Color selectedColor;
+        [SerializeField] private Sprite pauseSprite;
+        [SerializeField] private Sprite playSprite;
+        [SerializeField] private Slider speedSliderTimeline;
         
         private List<List<TimelineClip>> clipsOrderderd;
         private RectTransform timelineRect;
@@ -33,12 +38,15 @@ namespace UI
         private TimelineClip selectedTimelineClip;
         private CommandManager commandManager;
         private Drawing.Drawing drawer;
+        private float timeIncrease;
+        private bool shouldTimelinePause;
+        private bool timelinePauseButton;
 
         private void Awake()
         {
-            commandManager = FindObjectOfType<CommandManager>();
             corners = new Vector3[4];
-            timelineRect = GetComponent<RectTransform>();
+            commandManager = FindObjectOfType<CommandManager>();
+            timelineRect = timelineObject.GetComponent<RectTransform>();
             timelineScrollRect = timelineScrollBar.GetComponent<RectTransform>();
             oldClipTime.x = -1;
             oldClipTime.y = -1;
@@ -55,7 +63,8 @@ namespace UI
         private void OnEnable()
         {
             EventSystem<int>.Subscribe(EventType.REMOVE_CLIP, RemoveClip);
-            EventSystem<float>.Subscribe(EventType.TIME, SetTime);
+            EventSystem<bool>.Subscribe(EventType.DRAW, SetTimlinePause);
+            EventSystem<bool>.Subscribe(EventType.FINISHED_STROKE, SetTimlinePause);
             EventSystem<int, float, float>.Subscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
             EventSystem<int, float, float, int>.Subscribe(EventType.UPDATE_CLIP, UpdateClip);
         }
@@ -63,32 +72,81 @@ namespace UI
         private void OnDisable()
         {
             EventSystem<int>.Unsubscribe(EventType.REMOVE_CLIP, RemoveClip);
-            EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
+            EventSystem<bool>.Unsubscribe(EventType.DRAW, SetTimlinePause);
+            EventSystem<bool>.Unsubscribe(EventType.FINISHED_STROKE, SetTimlinePause);
             EventSystem<int, float, float>.Unsubscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
             EventSystem<int, float, float, int>.Unsubscribe(EventType.UPDATE_CLIP, UpdateClip);
         }
 
-        private void SetTime(float _time)
-        {
-            time = _time;
-        }
-
         private void Update()
         {
-            MoveTimelineTimIndicator(time);
+            MoveTimelineIndicator();
 
             TimelineClipsInput();
 
             previousMousePos = Input.mousePosition;
         }
+        public void SetTimelinePauseButton(Image _image)
+        {
+            if (timelinePauseButton)
+            {
+                shouldTimelinePause = false;
+                _image.sprite = pauseSprite;
+                _image.color = notSelectedColor;
+            }
+            else
+            {
+                shouldTimelinePause = true;
+                _image.sprite = playSprite;
+                _image.color = selectedColor;
+            }
+            
+            timelinePauseButton = !timelinePauseButton;
+        }
+        private void SetTimlinePause(bool pause)
+        {
+            if (timelinePauseButton)
+            {
+                shouldTimelinePause = pause;
+            }
+        }
+        private void MoveTimelineIndicator()
+        {
+
+            timelineRect.GetWorldCorners(corners);
+            if (IsMouseOver(corners) && Input.GetMouseButton(1))
+            {
+                var position = timelineScrollRect.position;
+                timelineScrollRect.position = new Vector3(Input.mousePosition.x, position.y, position.z);
+                time = Input.mousePosition.x.Remap(corners[0].x, corners[2].x, 0, 1);
+                timeIncrease = Time.timeSinceLevelLoad;
+                EventSystem<float>.RaiseEvent(EventType.TIME, time);
+                return;
+            }
+
+            if (shouldTimelinePause)
+            {
+                timeIncrease = Time.timeSinceLevelLoad;
+                return;
+            }
+            
+            timeIncrease = (Time.timeSinceLevelLoad - timeIncrease) / Mathf.Pow(speedSliderTimeline.value, 1.5f);
+            time += timeIncrease;
+            time %= 1.1f;
+            MoveTimelineTimIndicator(time);
+            EventSystem<float>.RaiseEvent(EventType.TIME, time);
+            
+            timeIncrease = Time.timeSinceLevelLoad;
+        }
         private void MoveTimelineTimIndicator(float _time)
         {
-            timelineRect.GetWorldCorners(corners);
             float xPos = _time.Remap(0, 1, corners[0].x, corners[2].x);
             var position = timelineScrollRect.position;
             position = new Vector3(xPos, position.y, position.z);
             timelineScrollRect.position = position;
         }
+
+        #region ClipInput
         private void TimelineClipsInput()
         {
             //If you are already interacting with a timelineclip check that one first
@@ -140,7 +198,7 @@ namespace UI
                             oldClipTime.y = clipsOrderderd[i][j].rightSideScaled;
                         }
 
-                        clipsOrderderd[i][j].rect.GetComponent<RawImage>().color = selectedClipColor;
+                        clipsOrderderd[i][j].rect.GetComponent<RawImage>().color = selectedColor;
                         EventSystem<int>.RaiseEvent(EventType.HIGHLIGHT, clipsOrderderd[i][j].brushStrokeID);
                         
                         selectedClipIndex = new ClipIndex(i, j);
@@ -177,7 +235,7 @@ namespace UI
                 selectedTimelineClip.rect.GetWorldCorners(clipCorners);
                 if (!IsMouseOver(clipCorners))
                 {
-                    selectedTimelineClip.rect.GetComponent<RawImage>().color = clipColor;
+                    selectedTimelineClip.rect.GetComponent<RawImage>().color = notSelectedColor;
                     selectedTimelineClip = null;
 
                     clipLeftInput.text = "";
@@ -192,13 +250,16 @@ namespace UI
             int currentBar = _clip.currentBar;
             int previousBar = _index.bar;
 
+            //Check if there is a collision on its current bar
             if (!IsClipCollidingInBar(GetClip(_index), currentBar))
             {
                 clipsOrderderd[currentBar].Add(GetClip(_index));
                 clipsOrderderd[previousBar].RemoveAt(_index.barIndex);
                 return;
             }
-            for (int i = 1; i < Mathf.CeilToInt(amountTimelineBars); i++)
+            
+            //Check other bars in an increasing alternating order if there is space
+            for (int i = 1; i < Mathf.CeilToInt(amountTimelineBars) + 1; i++)
             {
                 int upperBar = currentBar - i;
                 int underBar = currentBar + i;
@@ -225,6 +286,16 @@ namespace UI
                     }
                 }
             }
+            
+            //There is no space anywhere create a new one
+            amountTimelineBars++;
+            Instantiate(timelineBarObject, timelineRect).transform.SetAsFirstSibling();
+            clipsOrderderd.Add(new List<TimelineClip>());
+            
+            int lowestBar = clipsOrderderd.Count - 1;
+            GetClip(_index).SetBar(lowestBar);
+            clipsOrderderd[lowestBar].Add(GetClip(_index));
+            clipsOrderderd[previousBar].RemoveAt(_index.barIndex);
         }
 
         private bool IsClipCollidingInBar(TimelineClip _clip, int bar)
@@ -258,7 +329,8 @@ namespace UI
             }
             return false;
         }
-        
+        #endregion
+
         private TimelineClip GetClip(ClipIndex _clipIndex)
         {
             return clipsOrderderd[_clipIndex.bar][_clipIndex.barIndex];
@@ -297,9 +369,9 @@ namespace UI
 
         private void AddNewBrushClip(int _brushStrokeID, float _lastTime, float _currentTime)
         {
-            RectTransform rect = Instantiate(timelineClipObject, timelineBarObject.transform).GetComponent<RectTransform>();
-            rect.GetComponent<RawImage>().color = clipColor;
-            TimelineClip timelineClip = new TimelineClip(_brushStrokeID, rect, timelineBarObject.GetComponent<RectTransform>(), timelineRect)
+            RectTransform rect = Instantiate(timelineClipObject, timelineBarToInsantiateTo).GetComponent<RectTransform>();
+            rect.GetComponent<RawImage>().color = notSelectedColor;
+            TimelineClip timelineClip = new TimelineClip(_brushStrokeID, rect, timelineBarToInsantiateTo, timelineRect)
             {
                 leftSideScaled = _lastTime,
                 rightSideScaled = _currentTime,
