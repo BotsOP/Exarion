@@ -56,11 +56,11 @@ public class FileBrowserUpdate : MonoBehaviour, IDataPersistence
 
     public void LoadData(ToolData _data)
     {
-        imgData = _data.imgBytes;
+        imgData = _data.overlayImg;
     }
 
     public void SaveData(ToolData _data)
     {
-        _data.imgBytes = imgData;
+        _data.overlayImg = imgData;
     }
 }

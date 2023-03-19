@@ -42,6 +42,7 @@ namespace Undo
         public void Undo()
         {
             EventSystem<int>.RaiseEvent(EventType.REMOVE_CLIP, brushStokeID);
+            EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
             drawer.RemoveStroke(brushstrokStartID);
         }
     }

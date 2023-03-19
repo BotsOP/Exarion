@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-448867112054219809
+--- !u!114 &-2467896130392122471
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -20,8 +20,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: DisplayIDShowcase
-  m_Shader: {fileID: -6465566751694194690, guid: 7ae91c33b203388418cdefd66ce0ae8c,
+  m_Name: Overlay
+  m_Shader: {fileID: -6465566751694194690, guid: 36413cbe0c085c445ad9039449a1cbfb,
     type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -55,6 +55,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Alpha: 0.5
     - _QueueControl: 0
     - _QueueOffset: 0
     m_Colors: []

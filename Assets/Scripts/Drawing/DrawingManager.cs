@@ -74,6 +74,7 @@ namespace Drawing
         private void SetTime(float _time)
         {
             time = _time;
+            displayMat.SetFloat("_CustomTime", time);
         }
         private void SetShowcaseTime(float _time)
         {

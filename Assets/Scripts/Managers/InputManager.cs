@@ -16,7 +16,7 @@ public class InputManager : MonoBehaviour
 
     private void OnEnable()
     {
-        drawingInput = new DrawingInput(viewCam, displayCam, scrollZoomSensitivity, moveSensitivity);
+        drawingInput = new DrawingInput(viewCam, displayCam, scrollZoomSensitivity);
         EventSystem<RectTransform, RectTransform>.Subscribe(EventType.VIEW_CHANGED, SetDrawArea);
     }
     private void OnDisable()
@@ -39,7 +39,6 @@ public class InputManager : MonoBehaviour
         currentDisplayArea.GetWorldCorners(displayAreaCorners);
         
         drawingInput.scrollZoomSensitivity = scrollZoomSensitivity;
-        drawingInput.moveSensitivity = moveSensitivity;
         drawingInput.UpdateDrawingInput(drawAreaCorners, displayAreaCorners, viewCam.transform.position, viewCam.orthographicSize);
     }
 }

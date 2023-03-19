@@ -1,3 +1,4 @@
+using System;
 using Managers;
 using UnityEngine;
 
@@ -6,7 +7,6 @@ namespace UI
     public class DrawingInput
     {
         public float scrollZoomSensitivity;
-        public float moveSensitivity;
         private Camera viewCam;
         private Camera displayCam;
         
@@ -14,21 +14,42 @@ namespace UI
         private Vector2 startPosWhenDragging;
         private Vector2 startPosViewCam;
         private Vector2 startPosDisplayCam;
+        private float time;
 
-        public DrawingInput(Camera _viewCam, Camera _displayCam, float _scrollZoomSensitivity, float _moveSensitivity)
+        public DrawingInput(Camera _viewCam, Camera _displayCam, float _scrollZoomSensitivity)
         {
             viewCam = _viewCam;
             displayCam = _displayCam;
             scrollZoomSensitivity = _scrollZoomSensitivity;
-            moveSensitivity = _moveSensitivity;
             startPosViewCam = _viewCam.transform.position;
             startPosDisplayCam = _displayCam.transform.position;
+            
+            EventSystem<float>.Subscribe(EventType.TIME, SetTime);
+        }
+
+        ~DrawingInput()
+        {
+            EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
+        }
+
+        private void SetTime(float _time)
+        {
+            time = _time;
         }
         
         public void UpdateDrawingInput(Vector3[] _drawAreaCorners, Vector3[] _displayAreaCorners, Vector2 _camPos, float _camZoom)
         {
             bool isMouseInsideDrawArea = IsMouseInsideDrawArea(_drawAreaCorners);
             bool isMouseInsideDisplayArea = IsMouseInsideDrawArea(_displayAreaCorners);
+            
+            if (mouseIsDrawing)
+            {
+                if(Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || Math.Abs(time - 1.1) < 0.1)
+                {
+                    EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
+                    mouseIsDrawing = false;
+                }
+            }
             
             if (isMouseInsideDrawArea)
             {
@@ -39,16 +60,12 @@ namespace UI
             {
                 MoveCamera(displayCam, _displayAreaCorners, startPosDisplayCam);
             }
+
             
-            if(Input.GetMouseButtonUp(0) && mouseIsDrawing || !isMouseInsideDrawArea && mouseIsDrawing)
-            {
-                EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
-                mouseIsDrawing = false;
-            }
         }
         private void DrawInput(Vector3[] _drawAreaCorners, Vector2 _camPos, float _camZoom)
         {
-            if (Input.GetMouseButton(0))
+            if (Input.GetMouseButton(0) && !(Math.Abs(time - 1.1) < 0.1))
             {
                 Vector4 drawCorners = GetScaledDrawingCorners(_camPos, _camZoom, _drawAreaCorners);
                 float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);

@@ -15,14 +15,14 @@ public class ToolData
     public List<BrushStroke> brushStrokes;
     public List<BrushStrokeID> brushStrokesID;
 
-    public byte[] imgBytes;
+    public byte[] overlayImg;
 
     // the values defined in this constructor will be the default values
     // the tool starts with when there's no data to load
     public ToolData() 
     {
         projectName = "";
-        imgBytes = null;
+        overlayImg = null;
         brushStrokes = new List<BrushStroke>();
         brushStrokesID = new List<BrushStrokeID>();
     }

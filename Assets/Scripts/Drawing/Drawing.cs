@@ -9,9 +9,9 @@ namespace Drawing
 {
     public class Drawing
     {
-        public CustomRenderTexture rt;
-        public CustomRenderTexture rtID;
-        public CustomRenderTexture rtSelect;
+        public readonly CustomRenderTexture rt;
+        public readonly CustomRenderTexture rtID;
+        public readonly CustomRenderTexture rtSelect;
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
         public List<BrushStroke> brushStrokes = new List<BrushStroke>();
 
@@ -23,7 +23,7 @@ namespace Drawing
                 int lastID = 0;
                 if (brushStrokesID.Count > 0)
                 {
-                    lastID = brushStrokesID[^1].endID + 1;
+                    lastID = brushStrokesID[^1].endID;
                 }
                 return lastID;
             }
@@ -114,6 +114,10 @@ namespace Drawing
                     kernelID = paintUnderOwnLineKernelID;
                     break;
                 case PaintType.Erase:
+                    if (_firstStroke)
+                    {
+                        _strokeBrushSize += 1;
+                    }
                     kernelID = eraseKernelID;
                     break;
             }
@@ -254,6 +258,21 @@ namespace Drawing
                     RedrawStrokeOptimized(i, collisionBox);
                     continue;
                 }
+                
+                //If the brush stroke only has 1 stroke then just redraw that one
+                // if (startID == endID)
+                // {
+                //     BrushStroke stroke = brushStrokes[startID - 1];
+                //
+                //     stroke.brushTime = _currentTime;
+                //     stroke.lastTime = _lastTime;
+                //
+                //     brushStrokes[startID - 1] = stroke;
+                //
+                //     Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
+                //     return;
+                // }
+                
                 //If stroke is the one you want to redraw then redo it using the new time variables
                 float previousTime = _lastTime;
                 for (int j = startID; j < endID; j++)
@@ -301,7 +320,7 @@ namespace Drawing
 
             if (startID > 0)
             {
-                brushStrokes.RemoveRange(startID - 1, amountToRemove + 1);
+                brushStrokes.RemoveRange(startID, amountToRemove);
             }
             else
             {

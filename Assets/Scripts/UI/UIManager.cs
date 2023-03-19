@@ -8,6 +8,7 @@ namespace UI
 {
     public class UIManager : MonoBehaviour
     {
+        public static bool IsInteracting;
         [SerializeField] private RawImage viewImageFull;
         [SerializeField] private RawImage viewImageFocus;
         [SerializeField] private RawImage displayImageFull;
@@ -31,7 +32,8 @@ namespace UI
         private RectTransform rectTransformDisplayFull;
         private RectTransform rectTransformViewFocus;
         private RectTransform rectTransformDisplayFocus;
-        private bool isFullView;
+        private float timeIncrease;
+        private float time;
 
         private void Awake()
         {
@@ -86,7 +88,10 @@ namespace UI
 
         private void Update()
         {
-            EventSystem<float>.RaiseEvent(EventType.TIME, Time.time / speedSliderTimeline.value % 1);
+            timeIncrease = (Time.timeSinceLevelLoad - timeIncrease) / Mathf.Pow(speedSliderTimeline.value, 1.5f);
+            time += timeIncrease;
+            EventSystem<float>.RaiseEvent(EventType.TIME, time  % 1.1f);
+            timeIncrease = Time.timeSinceLevelLoad;
         }
 
         public void SpeedSliderShowcaseChanged()
@@ -94,9 +99,17 @@ namespace UI
             EventSystem<float>.RaiseEvent(EventType.TIME_SHOWCASE, speedSliderShowcase.value);
         }
 
+        public void StartInteracting()
+        {
+            IsInteracting = true;
+        }
+        public void StopInteracting()
+        {
+            IsInteracting = false;
+        }
+
         public void SwitchToFullView(Image buttonImage)
         {
-            isFullView = true;
             buttonImage.GetComponent<Image>().color = selectedColor;
             if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
             cachedButton = buttonImage;
@@ -111,7 +124,6 @@ namespace UI
     
         public void SwitchToFocusView(Image buttonImage)
         {
-            isFullView = false;
             buttonImage.GetComponent<Image>().color = selectedColor;
             if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
             cachedButton = buttonImage;
