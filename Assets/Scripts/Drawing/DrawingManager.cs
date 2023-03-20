@@ -51,6 +51,7 @@ namespace Drawing
             
             EventSystem.Subscribe(EventType.FINISHED_STROKE, StoppedDrawing);
             EventSystem.Subscribe(EventType.CLEAR_HIGHLIGHT, ClearHighlightStroke);
+            EventSystem<int>.Subscribe(EventType.ERASE_STROKE, EraseStroke);
             EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
             EventSystem<float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
             EventSystem<float>.Subscribe(EventType.TIME, SetTime);
@@ -63,6 +64,7 @@ namespace Drawing
         {
             EventSystem.Unsubscribe(EventType.FINISHED_STROKE, StoppedDrawing);
             EventSystem.Unsubscribe(EventType.CLEAR_HIGHLIGHT, ClearHighlightStroke);
+            EventSystem<int>.Unsubscribe(EventType.ERASE_STROKE, EraseStroke);
             EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
             EventSystem<float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
             EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
@@ -165,6 +167,10 @@ namespace Drawing
         {
             Graphics.SetRenderTarget(drawer.rtSelect);
             GL.Clear(false, true, Color.white);
+        }
+        private void EraseStroke(int _brushStrokeID)
+        {
+            drawer.RemoveStroke(_brushStrokeID);
         }
 
         void Update()

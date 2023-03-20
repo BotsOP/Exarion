@@ -506,8 +506,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   viewCam: {fileID: 1364678088}
   displayCam: {fileID: 330585545}
-  scrollZoomSensitivity: 0.1
-  moveSensitivity: 4
+  scrollZoomSensitivity: 0.3
 --- !u!4 &82158989
 Transform:
   m_ObjectHideFlags: 0

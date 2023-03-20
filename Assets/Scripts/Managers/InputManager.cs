@@ -11,8 +11,7 @@ public class InputManager : MonoBehaviour
     private DrawingInput drawingInput;
     [SerializeField] private Camera viewCam;
     [SerializeField] private Camera displayCam;
-    [SerializeField, Range(0.01f, 0.1f)] private float scrollZoomSensitivity;
-    [SerializeField] private float moveSensitivity;
+    [SerializeField, Range(0.01f, 1f)] private float scrollZoomSensitivity;
 
     private void OnEnable()
     {

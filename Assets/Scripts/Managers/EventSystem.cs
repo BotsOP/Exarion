@@ -15,7 +15,7 @@ public enum EventType
     VIEW_CHANGED,
     HIGHLIGHT,
     CLEAR_HIGHLIGHT,
-    UI_INTERACTING
+    ERASE_STROKE
 }
 
 

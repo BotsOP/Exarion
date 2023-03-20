@@ -83,7 +83,7 @@ namespace UI
         {
             if (Input.mouseScrollDelta.y != 0)
             {
-                _cam.orthographicSize -= Input.mouseScrollDelta.y * scrollZoomSensitivity;
+                _cam.orthographicSize -= Mathf.Pow(_cam.orthographicSize * scrollZoomSensitivity, 1.3f) * Input.mouseScrollDelta.y;
                 _cam.orthographicSize = Mathf.Clamp(_cam.orthographicSize, 0.01f, 0.5f);
             }
             if (Input.GetMouseButtonDown(1))

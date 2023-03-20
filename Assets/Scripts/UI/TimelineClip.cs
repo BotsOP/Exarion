@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Managers;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace UI
 {
@@ -90,6 +91,7 @@ namespace UI
         public int brushStrokeID;
         public RectTransform rect;
         public MouseAction mouseAction;
+        public RawImage rawImage;
         public int currentBar;
         public int barOffset;
         private RectTransform timelineBarRect;
@@ -102,16 +104,18 @@ namespace UI
         private float minumunWidth = 10;
         private float spacing = 10;
 
-        public TimelineClip(int _brushStrokeID, RectTransform _rect, RectTransform _timelineBarRect, RectTransform _timelineAreaRect)
+        public TimelineClip(int _brushStrokeID, RectTransform _rect, RectTransform _timelineBarRect, RectTransform _timelineAreaRect, RawImage _rawImage)
         {
             brushStrokeID = _brushStrokeID;
             rect = _rect;
             timelineBarRect = _timelineBarRect;
             timelineAreaRect = _timelineAreaRect;
+            rawImage = _rawImage;
+            
+            mouseAction = MouseAction.Nothing;
             corners = new Vector3[4];
             timelineBarCorners = new Vector3[4];
             timelineAreaCorners = new Vector3[4];
-            mouseAction = MouseAction.Nothing;
         }
 
         public void UpdateUI(Vector2 _previousMousePos)
@@ -141,7 +145,6 @@ namespace UI
         }
         public void SetMouseOffset()
         {
-            Debug.Log($"set mouse offset");
             mouseOffset = Input.mousePosition.x - rect.position.x;
         }
         private void SetResizeLeft()
@@ -152,6 +155,7 @@ namespace UI
                 rect.position += new Vector3(clipLength, 0, 0);
                 rect.pivot = new Vector2(1, 1);
             }
+            mouseOffset = Input.mousePosition.x - rect.position.x + rect.sizeDelta.x;
         }
         private void SetResizeRight()
         {
@@ -161,6 +165,7 @@ namespace UI
                 rect.position -= new Vector3(clipLength, 0, 0);
                 rect.pivot = new Vector2(0, 1);
             }
+            mouseOffset = Input.mousePosition.x - rect.position.x - rect.sizeDelta.x;
         }
         public MouseAction GetMouseAction()
         {
@@ -239,37 +244,33 @@ namespace UI
             }
         }
 
-        private bool ClampResizeRight(Vector2 _mousePos)
-        {
-
-            if (corners[2].x > timelineBarCorners[2].x || _mousePos.x > timelineBarCorners[2].x)
-            {
-                float width = timelineBarCorners[2].x - corners[0].x;
-                rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
-                Debug.Log($"true {brushStrokeID}");
-                return true;
-            }
-
-            if (_mousePos.x < corners[0].x + 20)
-            {
-                rect.sizeDelta = new Vector2(minumunWidth, rect.sizeDelta.y);
-                Debug.Log($"true {brushStrokeID}");
-                return true;
-            }
-            return false;
-        }
-        
         private bool ClampResizeLeft(Vector2 _mousePos)
         {
-
-            if (corners[0].x < timelineBarCorners[0].x || _mousePos.x < timelineBarCorners[0].x)
+            if (corners[0].x < timelineBarCorners[0].x || (_mousePos.x - mouseOffset) < timelineBarCorners[0].x)
             {
                 float width = corners[2].x - timelineBarCorners[0].x;
                 rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
                 return true;
             }
 
-            if (_mousePos.x > corners[2].x - 20)
+            if ((_mousePos.x - mouseOffset) > corners[2].x - 20)
+            {
+                rect.sizeDelta = new Vector2(minumunWidth, rect.sizeDelta.y);
+                return true;
+            }
+            return false;
+        }
+        private bool ClampResizeRight(Vector2 _mousePos)
+        {
+
+            if (corners[2].x > timelineBarCorners[2].x || (_mousePos.x - mouseOffset) > timelineBarCorners[2].x)
+            {
+                float width = timelineBarCorners[2].x - corners[0].x;
+                rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
+                return true;
+            }
+
+            if ((_mousePos.x - mouseOffset) < corners[0].x + 20)
             {
                 rect.sizeDelta = new Vector2(minumunWidth, rect.sizeDelta.y);
                 return true;
