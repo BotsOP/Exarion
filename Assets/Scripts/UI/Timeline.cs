@@ -24,6 +24,9 @@ namespace UI
         [SerializeField] private Slider speedSliderTimeline;
         
         private List<List<TimelineClip>> clipsOrderderd;
+        private List<TimelineClip> selectedClips;
+        private List<int> selectedClipPreviousBar;
+        private List<Vector2> selectedClipsOriginalTime;
         private RectTransform timelineRect;
         private RectTransform timelineAreaRect;
         private RectTransform timelineScrollRect;
@@ -32,24 +35,29 @@ namespace UI
         private float lastTimelineLeft;
         private float lastTimelineRight;
         private Vector2 previousMousePos;
-        private Vector2 oldClipTime;
         private Vector3[] corners;
-        private ClipIndex selectedClipIndex;
-        private TimelineClip selectedTimelineClip;
         private CommandManager commandManager;
         private Drawing.Drawing drawer;
         private float timeIncrease;
         private bool shouldTimelinePause;
         private bool timelinePauseButton;
+        private MouseAction lastMouseAction;
+        private bool firstTimeSelected;
+
+        private bool isMouseInsideTimeline => IsMouseOver(corners);
 
         private void Awake()
         {
-            corners = new Vector3[4];
             commandManager = FindObjectOfType<CommandManager>();
             timelineRect = timelineObject.GetComponent<RectTransform>();
             timelineScrollRect = timelineScrollBar.GetComponent<RectTransform>();
-            oldClipTime.x = -1;
-            oldClipTime.y = -1;
+
+            selectedClips = new List<TimelineClip>();
+            selectedClipPreviousBar = new List<int>();
+            selectedClipsOriginalTime = new List<Vector2>();
+            
+            corners = new Vector3[4];
+            timelineRect.GetWorldCorners(corners);
             
             clipsOrderderd = new List<List<TimelineClip>>();
             for (int i = 0; i < amountTimelineBars; i++)
@@ -81,8 +89,10 @@ namespace UI
         private void Update()
         {
             MoveTimelineIndicator();
-
-            TimelineClipsInput();
+            if (UIManager.isFullView)
+            {
+                TimelineClipsInput();
+            }
 
             previousMousePos = Input.mousePosition;
         }
@@ -112,17 +122,8 @@ namespace UI
         }
         private void MoveTimelineIndicator()
         {
-
-            timelineRect.GetWorldCorners(corners);
-            if (IsMouseOver(corners) && Input.GetMouseButton(1))
-            {
-                var position = timelineScrollRect.position;
-                timelineScrollRect.position = new Vector3(Input.mousePosition.x, position.y, position.z);
-                time = Input.mousePosition.x.Remap(corners[0].x, corners[2].x, 0, 1);
-                timeIncrease = Time.timeSinceLevelLoad;
-                EventSystem<float>.RaiseEvent(EventType.TIME, time);
+            if (PlaceTimelineIndicator())
                 return;
-            }
 
             if (shouldTimelinePause)
             {
@@ -138,6 +139,19 @@ namespace UI
             
             timeIncrease = Time.timeSinceLevelLoad;
         }
+        private bool PlaceTimelineIndicator()
+        {
+            if (IsMouseOver(corners) && Input.GetMouseButton(1) && UIManager.isFullView)
+            {
+                var position = timelineScrollRect.position;
+                timelineScrollRect.position = new Vector3(Input.mousePosition.x, position.y, position.z);
+                time = Input.mousePosition.x.Remap(corners[0].x, corners[2].x, 0, 1);
+                timeIncrease = Time.timeSinceLevelLoad;
+                EventSystem<float>.RaiseEvent(EventType.TIME, time);
+                return true;
+            }
+            return false;
+        }
         private void MoveTimelineTimIndicator(float _time)
         {
             float xPos = _time.Remap(0, 1, corners[0].x, corners[2].x);
@@ -150,111 +164,144 @@ namespace UI
         private void TimelineClipsInput()
         {
             //If you are already interacting with a timelineclip check that one first
-            if (Input.GetMouseButton(0) && selectedTimelineClip is not null)
+            if (Input.GetMouseButton(0) && selectedClips.Count > 0)
             {
-                if (Input.GetMouseButtonDown(0))
+                TimelineClip selectedClip = null;
+                foreach (var clip in selectedClips)
                 {
-                    selectedClipIndex = new ClipIndex(selectedTimelineClip.currentBar, clipsOrderderd[selectedTimelineClip.currentBar].Count - 1);
-                }
-                
-                selectedTimelineClip.UpdateUI(Input.mousePosition, previousMousePos);
-                if (selectedTimelineClip.mouseAction != MouseAction.Nothing)
-                {
-                    if (oldClipTime.x < 0)
+                    MouseAction mouseAction = clip.GetMouseAction();
+                    if (mouseAction != MouseAction.Nothing)
                     {
-                        oldClipTime.x = selectedTimelineClip.leftSideScaled;
+                        lastMouseAction = mouseAction;
+                        selectedClip = clip;
+                        selectedClip.mouseAction = mouseAction;
                     }
-                    if (oldClipTime.y < 0)
+                }
+                if (selectedClip != null)
+                {
+                    if (firstTimeSelected)
                     {
-                        oldClipTime.y = selectedTimelineClip.rightSideScaled;
+                        Debug.Log(selectedClip.mouseAction);
+                        foreach (var clip in selectedClips)
+                        {
+                            clip.barOffset = clip.currentBar - selectedClip.currentBar;
+                            clip.SetupMovement(selectedClip.mouseAction);
+                        }
+                        firstTimeSelected = false;
                     }
 
-                    clipLeftInput.text = selectedTimelineClip.leftSideScaled.ToString("0.###");
-                    clipRightInput.text = selectedTimelineClip.rightSideScaled.ToString("0.###");
-                    EventSystem<int, float, float>.RaiseEvent(
-                        EventType.REDRAW_STROKE, selectedTimelineClip.brushStrokeID, selectedTimelineClip.leftSideScaled, selectedTimelineClip.rightSideScaled);
+                    foreach (var clip in selectedClips)
+                    {
+                        clip.mouseAction = selectedClip.mouseAction;
+                        clip.UpdateTransform(previousMousePos);
+                        // clipLeftInput.text = clip.leftSideScaled.ToString("0.###");
+                        // clipRightInput.text = clip.rightSideScaled.ToString("0.###");
+                        
+                        //Look into doing this more efficiently
+                        EventSystem<int, float, float>.RaiseEvent(
+                            EventType.REDRAW_STROKE, clip.brushStrokeID, clip.leftSideScaled, clip.rightSideScaled);
+                    }
                 }
             }
             //Otherwise check if you are interacting with any other timeline clips
-            else if (Input.GetMouseButton(0))
+            if (Input.GetMouseButton(0) && isMouseInsideTimeline)
             {
                 for (int i = 0; i < clipsOrderderd.Count; i++)
                 {
-                    
                     for (int j = 0; j < clipsOrderderd[i].Count; j++)
                     {
-                        clipsOrderderd[i][j].UpdateUI(Input.mousePosition, previousMousePos);
-                        if (clipsOrderderd[i][j].mouseAction == MouseAction.Nothing)
+                        if (selectedClips.Contains(clipsOrderderd[i][j]))
+                        {
+                            continue;
+                        }
+                        
+                        MouseAction mouseAction = clipsOrderderd[i][j].GetMouseAction();
+                        if (mouseAction == MouseAction.Nothing)
                         {
                             continue;
                         }
 
-                        if (oldClipTime.x < 0)
+                        if (selectedClips.Count == 0 || Input.GetKey(KeyCode.LeftShift))
                         {
-                            oldClipTime.x = clipsOrderderd[i][j].leftSideScaled;
-                        }
-                        if (oldClipTime.y < 0)
-                        {
-                            oldClipTime.y = clipsOrderderd[i][j].rightSideScaled;
-                        }
-
-                        clipsOrderderd[i][j].rect.GetComponent<RawImage>().color = selectedColor;
-                        EventSystem<int>.RaiseEvent(EventType.HIGHLIGHT, clipsOrderderd[i][j].brushStrokeID);
+                            Debug.Log($"added to selection");
+                            clipsOrderderd[i][j].SetupMovement(mouseAction);
+                            clipsOrderderd[i][j].rect.GetComponent<RawImage>().color = selectedColor;
+                            EventSystem<int>.RaiseEvent(EventType.HIGHLIGHT, clipsOrderderd[i][j].brushStrokeID);
                         
-                        selectedClipIndex = new ClipIndex(i, j);
-                        selectedTimelineClip = clipsOrderderd[i][j];
-                        clipLeftInput.text = clipsOrderderd[i][j].leftSideScaled.ToString("0.###");
-                        clipRightInput.text = clipsOrderderd[i][j].rightSideScaled.ToString("0.###");
-                        EventSystem<int, float, float>.RaiseEvent(EventType.REDRAW_STROKE, clipsOrderderd[i][j].brushStrokeID, 
-                                                                  clipsOrderderd[i][j].leftSideScaled, clipsOrderderd[i][j].rightSideScaled);
-                        break;
+                            selectedClipPreviousBar.Add(0);
+                            selectedClips.Add(clipsOrderderd[i][j]);
+                            selectedClipsOriginalTime.Add(new Vector2(clipsOrderderd[i][j].leftSideScaled, clipsOrderderd[i][j].rightSideScaled));
+                            // clipLeftInput.text = clipsOrderderd[i][j].leftSideScaled.ToString("0.###");
+                            // clipRightInput.text = clipsOrderderd[i][j].rightSideScaled.ToString("0.###");
+                            // EventSystem<int, float, float>.RaiseEvent(EventType.REDRAW_STROKE, clipsOrderderd[i][j].brushStrokeID, 
+                            //                                           clipsOrderderd[i][j].leftSideScaled, clipsOrderderd[i][j].rightSideScaled);
+                            return;
+                        }
                     }
                 }
             }
             //Once you are done making changes 
             else if (Input.GetMouseButtonUp(0))
             {
-                if (selectedTimelineClip is not null)
+                Debug.Log($"done making changes");
+                lastMouseAction = MouseAction.Nothing;
+                firstTimeSelected = true;
+                if (selectedClips.Count > 0)
                 {
-                    selectedTimelineClip.mouseAction = MouseAction.Nothing;
-                    CheckClipCollisions(selectedTimelineClip, selectedClipIndex);
+                    for (int i = 0; i < selectedClips.Count; i++)
+                    {
+                        selectedClips[i].mouseAction = MouseAction.Nothing;
+                        CheckClipCollisions(selectedClips[i], selectedClipPreviousBar[i]);
                     
-                    ICommand clipCommand = new RedrawCommand(
-                        selectedTimelineClip.brushStrokeID, selectedTimelineClip.leftSideScaled, selectedTimelineClip.rightSideScaled, 
-                        oldClipTime.x, oldClipTime.y, selectedClipIndex.bar);
-                    commandManager.Execute(clipCommand);
-
-                    oldClipTime.x = -1;
-                    oldClipTime.y = -1;
+                        ICommand clipCommand = new RedrawCommand(
+                            selectedClips[i].brushStrokeID, selectedClips[i].leftSideScaled, selectedClips[i].rightSideScaled, 
+                            selectedClipsOriginalTime[i].x, selectedClipsOriginalTime[i].y, selectedClipPreviousBar[i]);
+                        commandManager.Execute(clipCommand);
+                    }
                 }
             }
-            //once you have clicked somewhere else
-            if (Input.GetMouseButtonDown(0) && selectedTimelineClip is not null && !selectedInput)
+            //once you have clicked somewhere else unselect everything
+            if (Input.GetMouseButtonDown(0) && selectedClips.Count > 0 && !selectedInput)
             {
                 Vector3[] clipCorners = new Vector3[4];
-                selectedTimelineClip.rect.GetWorldCorners(clipCorners);
-                if (!IsMouseOver(clipCorners))
+                bool clickedOnSelectedClip = false;
+                
+                foreach (var clip in selectedClips)
                 {
-                    selectedTimelineClip.rect.GetComponent<RawImage>().color = notSelectedColor;
-                    selectedTimelineClip = null;
-
+                    clip.rect.GetWorldCorners(clipCorners);
+                    if (IsMouseOver(clipCorners))
+                    {
+                        clickedOnSelectedClip = true;
+                    }
+                }
+                
+                if (!clickedOnSelectedClip)
+                {
+                    for (int i = 0; i < selectedClips.Count; i++)
+                    {
+                        selectedClips[i].rect.GetComponent<RawImage>().color = notSelectedColor;
+                    }
+                    
+                    EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
                     clipLeftInput.text = "";
                     clipRightInput.text = "";
-
-                    EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
                 }
+                
+                selectedClips.Clear();
+                selectedClipPreviousBar.Clear();
+                selectedClipsOriginalTime.Clear();
             }
         }
-        private void CheckClipCollisions(TimelineClip _clip, ClipIndex _index)
+
+        private void CheckClipCollisions(TimelineClip _clip, int _previousBar)
         {
             int currentBar = _clip.currentBar;
-            int previousBar = _index.bar;
-
+        
             //Check if there is a collision on its current bar
-            if (!IsClipCollidingInBar(GetClip(_index), currentBar))
+            if (!IsClipCollidingInBar(_clip, currentBar))
             {
-                clipsOrderderd[currentBar].Add(GetClip(_index));
-                clipsOrderderd[previousBar].RemoveAt(_index.barIndex);
+                clipsOrderderd[currentBar].Add(_clip);
+                clipsOrderderd[_previousBar].Remove(_clip);
                 return;
             }
             
@@ -263,25 +310,25 @@ namespace UI
             {
                 int upperBar = currentBar - i;
                 int underBar = currentBar + i;
-
+        
                 if (underBar <= amountTimelineBars)
                 {
-                    if (!IsClipCollidingInBar(GetClip(_index), underBar))
+                    if (!IsClipCollidingInBar(_clip, underBar))
                     {
-                        GetClip(_index).SetBar(underBar);
-                        clipsOrderderd[underBar].Add(GetClip(_index));
-                        clipsOrderderd[previousBar].RemoveAt(_index.barIndex);
+                        _clip.SetBar(underBar);
+                        clipsOrderderd[underBar].Add(_clip);
+                        clipsOrderderd[_previousBar].Remove(_clip);
                         return;
                     }
                 }
-
+        
                 if (upperBar >= 0)
                 {
-                    if (!IsClipCollidingInBar(GetClip(_index), upperBar))
+                    if (!IsClipCollidingInBar(_clip, upperBar))
                     {
-                        GetClip(_index).SetBar(upperBar);
-                        clipsOrderderd[upperBar].Add(GetClip(_index));
-                        clipsOrderderd[previousBar].RemoveAt(_index.barIndex);
+                        _clip.SetBar(upperBar);
+                        clipsOrderderd[upperBar].Add(_clip);
+                        clipsOrderderd[_previousBar].Remove(_clip);
                         return;
                     }
                 }
@@ -293,9 +340,9 @@ namespace UI
             clipsOrderderd.Add(new List<TimelineClip>());
             
             int lowestBar = clipsOrderderd.Count - 1;
-            GetClip(_index).SetBar(lowestBar);
-            clipsOrderderd[lowestBar].Add(GetClip(_index));
-            clipsOrderderd[previousBar].RemoveAt(_index.barIndex);
+            _clip.SetBar(lowestBar);
+            clipsOrderderd[lowestBar].Add(_clip);
+            clipsOrderderd[_previousBar].Remove(_clip);
         }
 
         private bool IsClipCollidingInBar(TimelineClip _clip, int bar)
@@ -330,18 +377,13 @@ namespace UI
             return false;
         }
         #endregion
-
-        private TimelineClip GetClip(ClipIndex _clipIndex)
-        {
-            return clipsOrderderd[_clipIndex.bar][_clipIndex.barIndex];
-        }
-
+        
         public void ChangedInput(TMP_InputField _input)
         {
-            if (selectedTimelineClip != null && selectedInput)
+            if (selectedClips.Count == 1 && selectedInput)
             {
                 Debug.Log($"changed input {selectedInput}");
-                if (selectedTimelineClip.mouseAction == MouseAction.Nothing)
+                if (selectedClips[0].mouseAction == MouseAction.Nothing)
                 {
                     float leftSide = float.Parse(clipLeftInput.text);
                     float rightSide = float.Parse(clipRightInput.text);
@@ -349,14 +391,14 @@ namespace UI
                     {
                         if (_input == clipLeftInput)
                         {
-                            selectedTimelineClip.leftSideScaled = Mathf.Clamp01(leftSide);
+                            selectedClips[0].leftSideScaled = Mathf.Clamp01(leftSide);
                         }
                         else
                         {
-                            selectedTimelineClip.rightSideScaled = Mathf.Clamp01(rightSide);
+                            selectedClips[0].rightSideScaled = Mathf.Clamp01(rightSide);
                         }
-                        EventSystem<int, float, float>.RaiseEvent(EventType.REDRAW_STROKE, selectedTimelineClip.brushStrokeID, 
-                                                                  selectedTimelineClip.leftSideScaled, selectedTimelineClip.rightSideScaled);
+                        EventSystem<int, float, float>.RaiseEvent(EventType.REDRAW_STROKE, selectedClips[0].brushStrokeID, 
+                                                                  selectedClips[0].leftSideScaled, selectedClips[0].rightSideScaled);
                     }
                 }
             }
@@ -377,7 +419,7 @@ namespace UI
                 rightSideScaled = _currentTime,
             };
             clipsOrderderd[0].Add(timelineClip);
-            CheckClipCollisions(timelineClip, new ClipIndex(0, clipsOrderderd[0].Count - 1));
+            CheckClipCollisions(timelineClip, 0);
         }
 
         private void RemoveClip(int _brushStrokeID)
@@ -390,7 +432,14 @@ namespace UI
                     {
                         Destroy(clipsOrderderd[i][j].rect.gameObject);
                         clipsOrderderd[i].RemoveAt(j);
-                        selectedTimelineClip = null;
+                        
+                        if (selectedClips.Count > 0)
+                        {
+                            if (selectedClips.Contains(clipsOrderderd[i][j]))
+                            {
+                                selectedClips.Remove(clipsOrderderd[i][j]);
+                            }
+                        }
                         return;
                     }
                 }
@@ -417,18 +466,6 @@ namespace UI
         {
             return Input.mousePosition.x > _corners[0].x && Input.mousePosition.x < _corners[2].x && 
                    Input.mousePosition.y > _corners[0].y && Input.mousePosition.y < _corners[2].y;
-        }
-    }
-
-    internal struct ClipIndex
-    {
-        public int bar;
-        public int barIndex;
-
-        public ClipIndex(int _bar, int _barIndex)
-        {
-            bar = _bar;
-            barIndex = _barIndex;
         }
     }
 }

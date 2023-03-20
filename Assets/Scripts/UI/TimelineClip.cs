@@ -91,13 +91,14 @@ namespace UI
         public RectTransform rect;
         public MouseAction mouseAction;
         public int currentBar;
+        public int barOffset;
         private RectTransform timelineBarRect;
         private RectTransform timelineAreaRect;
     
         private Vector3[] corners;
         private Vector3[] timelineBarCorners;
         private Vector3[] timelineAreaCorners;
-        private Vector2 mouseOffset;
+        private float mouseOffset;
         private float minumunWidth = 10;
         private float spacing = 10;
 
@@ -113,19 +114,60 @@ namespace UI
             mouseAction = MouseAction.Nothing;
         }
 
-        public void UpdateUI(Vector2 _mousePos, Vector2 _previousMousePos)
+        public void UpdateUI(Vector2 _previousMousePos)
         {
             rect.GetWorldCorners(corners);
-            timelineBarRect.GetWorldCorners(timelineBarCorners);
-            timelineAreaRect.GetWorldCorners(timelineAreaCorners);
 
-            float mouseDeltaX = _mousePos.x - _previousMousePos.x;
+            mouseAction = GetMouseAction();
 
-            if (IsMouseOver(_mousePos) && mouseAction == MouseAction.Nothing)
+            UpdateTransform(_previousMousePos);
+        }
+        public void SetupMovement(MouseAction _mouseAction)
+        {
+            switch (_mouseAction)
             {
-                mouseOffset = new Vector2(_mousePos.x - rect.position.x, _mousePos.y - rect.position.y) ;
-
-                if (_mousePos.x > corners[0].x && _mousePos.x < corners[0].x + 10)
+                case MouseAction.Nothing:
+                    break;
+                case MouseAction.GrabbedClip:
+                    SetMouseOffset();
+                    break;
+                case MouseAction.ResizeClipLeft:
+                    SetResizeLeft();
+                    break;
+                case MouseAction.ResizeClipRight:
+                    SetResizeRight();
+                    break;
+            }
+        }
+        public void SetMouseOffset()
+        {
+            Debug.Log($"set mouse offset");
+            mouseOffset = Input.mousePosition.x - rect.position.x;
+        }
+        private void SetResizeLeft()
+        {
+            if (rect.pivot.x < 1)
+            {
+                float clipLength = rect.sizeDelta.x;
+                rect.position += new Vector3(clipLength, 0, 0);
+                rect.pivot = new Vector2(1, 1);
+            }
+        }
+        private void SetResizeRight()
+        {
+            if (rect.pivot.x > 0)
+            {
+                float clipLength = rect.sizeDelta.x;
+                rect.position -= new Vector3(clipLength, 0, 0);
+                rect.pivot = new Vector2(0, 1);
+            }
+        }
+        public MouseAction GetMouseAction()
+        {
+            rect.GetWorldCorners(corners);
+            if (IsMouseOver() && mouseAction == MouseAction.Nothing)
+            {
+                if (Input.mousePosition.x > corners[0].x && Input.mousePosition.x < corners[0].x + 10)
                 {
                     if (rect.pivot.x < 1)
                     {
@@ -133,9 +175,9 @@ namespace UI
                         rect.position += new Vector3(clipLength, 0, 0);
                         rect.pivot = new Vector2(1, 1);
                     }
-                    mouseAction = MouseAction.ResizeClipLeft;
+                    return MouseAction.ResizeClipLeft;
                 }
-                else if (_mousePos.x < corners[2].x && _mousePos.x > corners[2].x - 10)
+                if (Input.mousePosition.x < corners[2].x && Input.mousePosition.x > corners[2].x - 10)
                 {
                     if (rect.pivot.x > 0)
                     {
@@ -143,25 +185,31 @@ namespace UI
                         rect.position -= new Vector3(clipLength, 0, 0);
                         rect.pivot = new Vector2(0, 1);
                     }
-                    mouseAction = MouseAction.ResizeClipRight;
+                    return MouseAction.ResizeClipRight;
                 }
-                else
-                {
-                    mouseAction = MouseAction.GrabbedClip;
-                }
+                return MouseAction.GrabbedClip;
             }
-
-
+            return mouseAction;
+        }
+        
+        public void UpdateTransform(Vector2 _previousMousePos)
+        {
+            timelineBarRect.GetWorldCorners(timelineBarCorners);
+            timelineAreaRect.GetWorldCorners(timelineAreaCorners);
+            
+            float mouseDeltaX = Input.mousePosition.x - _previousMousePos.x;
+            
             switch (mouseAction)
             {
                 case MouseAction.Nothing:
                     break;
+
                 case MouseAction.GrabbedClip:
                     float clipLength = rect.sizeDelta.x;
                     Vector3 position = rect.position;
-                    float yPos = GetYPos(_mousePos.y);
-                    float xPos = _mousePos.x - mouseOffset.x;
-                
+                    float yPos = GetYPos();
+                    float xPos = Input.mousePosition.x - mouseOffset;
+
                     if (rect.pivot.x == 0)
                     {
                         xPos = Mathf.Clamp(xPos, timelineBarCorners[0].x, timelineBarCorners[2].x - clipLength);
@@ -170,25 +218,27 @@ namespace UI
                     {
                         xPos = Mathf.Clamp(xPos, timelineBarCorners[0].x + clipLength, timelineBarCorners[2].x);
                     }
-                
+
                     position = new Vector3(xPos, yPos, position.z);
                     rect.position = position;
                     break;
+
                 case MouseAction.ResizeClipLeft:
-                    if (ClampResizeLeft(_mousePos))
+                    if (ClampResizeLeft(Input.mousePosition))
                         return;
 
                     rect.sizeDelta -= new Vector2(mouseDeltaX, 0);
                     break;
+
                 case MouseAction.ResizeClipRight:
-                    if (ClampResizeRight(_mousePos))
+                    if (ClampResizeRight(Input.mousePosition))
                         return;
 
                     rect.sizeDelta += new Vector2(mouseDeltaX, 0);
                     break;
             }
         }
-        
+
         private bool ClampResizeRight(Vector2 _mousePos)
         {
 
@@ -196,12 +246,14 @@ namespace UI
             {
                 float width = timelineBarCorners[2].x - corners[0].x;
                 rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
+                Debug.Log($"true {brushStrokeID}");
                 return true;
             }
 
             if (_mousePos.x < corners[0].x + 20)
             {
                 rect.sizeDelta = new Vector2(minumunWidth, rect.sizeDelta.y);
+                Debug.Log($"true {brushStrokeID}");
                 return true;
             }
             return false;
@@ -225,21 +277,22 @@ namespace UI
             return false;
         }
 
-        private float GetYPos(float _mousePosY)
+        private float GetYPos()
         {
             float yPos = rect.position.y;
             float timelineBarHeight = corners[2].y - corners[0].y + spacing;
-            if (_mousePosY < timelineAreaCorners[0].y || _mousePosY > timelineAreaCorners[2].y)
+            float inputOffset = Input.mousePosition.y - timelineBarHeight * barOffset;
+            if (inputOffset < timelineAreaCorners[0].y || inputOffset > timelineAreaCorners[2].y)
             {
                 return yPos;
             }
         
-            if (_mousePosY < corners[0].y - spacing)
+            if (inputOffset < corners[0].y - spacing)
             {
                 currentBar++;
                 return yPos - timelineBarHeight;
             }
-            if (_mousePosY > corners[2].y + spacing)
+            if (inputOffset > corners[2].y + spacing)
             {
                 currentBar--;
                 return yPos + timelineBarHeight;
@@ -256,10 +309,10 @@ namespace UI
             currentBar = newBar;
         }
 
-        private bool IsMouseOver(Vector2 _mousePos)
+        private bool IsMouseOver()
         {
-            return _mousePos.x > corners[0].x && _mousePos.x < corners[2].x && _mousePos.y > corners[0].y &&
-                   _mousePos.y < corners[2].y;
+            return Input.mousePosition.x > corners[0].x && Input.mousePosition.x < corners[2].x && Input.mousePosition.y > corners[0].y &&
+                   Input.mousePosition.y < corners[2].y;
         }
     }
 }

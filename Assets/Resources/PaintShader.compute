@@ -4,6 +4,7 @@
 #pragma kernel PaintOverOwnLine
 #pragma kernel Erase
 #pragma kernel HighlightSelection
+#pragma kernel EraseHighlight
 
 RWTexture2D<float4> _ResultTex;
 RWTexture2D<int> _IdTex;
@@ -113,16 +114,7 @@ void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
     paintColor = CalculatePaintColor(paintPos);
 
     _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
-    // if(distance(paintPos, _LastCursorPos) < _BrushSize + 1)
-    // {
-    //     float2 BtoA = _LastCursorPos - _CursorPos;
-    //     float2 paintPosToB = _CursorPos - paintPos;
-    //     
-    //     if(dot(BtoA, paintPosToB) > 0.0 && !_FirstStroke)
-    //     {
-    //         return;
-    //     }
-    // }
+
     _IdTex[paintPos] = _StrokeID;
 }
 
@@ -214,6 +206,20 @@ void HighlightSelection (uint3 id : SV_DispatchThreadID)
     if(paintColor <= 0) { return; }
 
     _SelectTex[paintPos] = 0;
+}
+
+[numthreads(32,32,1)]
+void EraseHighlight (uint3 id : SV_DispatchThreadID)
+{
+    float2 paintPos = _StartPos.xy + id.xy;
+    _LastCursorPos -= float2(0.01, 0.01);
+
+    float paintColor = LineSegment2DSDF(paintPos, _LastCursorPos, _CursorPos);
+    paintColor = 1 - smoothstep(_BrushSize, _BrushSize, paintColor);
+
+    if(paintColor <= 0) { return; }
+
+    _SelectTex[paintPos] = float4(1, 1, 1, 1);
 }
 
 

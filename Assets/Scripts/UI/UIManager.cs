@@ -9,6 +9,7 @@ namespace UI
     public class UIManager : MonoBehaviour
     {
         public static bool IsInteracting;
+        public static bool isFullView = true;
         [SerializeField] private RawImage viewImageFull;
         [SerializeField] private RawImage viewImageFocus;
         [SerializeField] private RawImage displayImageFull;
@@ -92,6 +93,7 @@ namespace UI
 
         public void SwitchToFullView(Image buttonImage)
         {
+            isFullView = true;
             buttonImage.GetComponent<Image>().color = selectedColor;
             if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
             cachedButton = buttonImage;
@@ -106,6 +108,7 @@ namespace UI
     
         public void SwitchToFocusView(Image buttonImage)
         {
+            isFullView = false;
             buttonImage.GetComponent<Image>().color = selectedColor;
             if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
             cachedButton = buttonImage;

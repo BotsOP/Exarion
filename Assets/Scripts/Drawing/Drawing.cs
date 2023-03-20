@@ -5,6 +5,21 @@ using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+
+public enum PaintType
+{
+    PaintUnderOwnLine,
+    PaintUnderEverything,
+    PaintOverOwnLine,
+    PaintOverEverything,
+    Erase
+}
+public enum HighlightType
+{
+    Paint,
+    Erase
+}
+
 namespace Drawing
 {
     public class Drawing
@@ -36,6 +51,7 @@ namespace Drawing
         private int paintOverOwnLineKernelID;
         private int eraseKernelID;
         private int highlightKernelID;
+        private int highlightEraseKernelID;
         private Vector3 threadGroupSizeOut;
         private Vector3 threadGroupSize;
 
@@ -53,6 +69,7 @@ namespace Drawing
             paintOverOwnLineKernelID = paintShader.FindKernel("PaintOverOwnLine");
             eraseKernelID = paintShader.FindKernel("Erase");
             highlightKernelID = paintShader.FindKernel("HighlightSelection");
+            highlightEraseKernelID = paintShader.FindKernel("EraseHighlight");
         
             paintShader.GetKernelThreadGroupSizes(paintUnderOwnLineKernelID, out uint threadGroupSizeX, out uint threadGroupSizeY, out _);
             threadGroupSizeOut.x = threadGroupSizeX;
@@ -136,21 +153,32 @@ namespace Drawing
             paintShader.Dispatch(kernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
         }
         
-        public void DrawHighlight(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, float _borderThickness)
+        public void DrawHighlight(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, HighlightType _highlightType, float _borderThickness = 0)
         {
             _strokeBrushSize += _borderThickness;
             threadGroupSize.x = Mathf.CeilToInt((math.abs(_lastPos.x - _currentPos.x) + _strokeBrushSize * 2) / threadGroupSizeOut.x);
             threadGroupSize.y = Mathf.CeilToInt((math.abs(_lastPos.y - _currentPos.y) + _strokeBrushSize * 2) / threadGroupSizeOut.y);
         
             Vector2 startPos = GetStartPos(_lastPos, _currentPos, _strokeBrushSize);
+            
+            int kernelID = 0;
+            switch (_highlightType)
+            {
+                case HighlightType.Paint:
+                    kernelID = highlightKernelID;
+                    break;
+                case HighlightType.Erase:
+                    kernelID = highlightEraseKernelID;
+                    break;
+            }
 
             paintShader.SetVector("_CursorPos", _currentPos);
             paintShader.SetVector("_LastCursorPos", _lastPos);
             paintShader.SetVector("_StartPos", startPos);
             paintShader.SetFloat("_BrushSize", _strokeBrushSize);
-            paintShader.SetTexture(highlightKernelID, "_SelectTex", rtSelect);
+            paintShader.SetTexture(kernelID, "_SelectTex", rtSelect);
 
-            paintShader.Dispatch(highlightKernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+            paintShader.Dispatch(kernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
         }
 
         private Vector2 GetStartPos(Vector2 a, Vector2 b, float _brushSize)
@@ -206,6 +234,7 @@ namespace Drawing
             int newStrokeID = GetNewID();
             bool firstLoop = true;
             PaintType paintType = brushStrokeID.paintType;
+
             
             Vector4 collisionBoxReset = _collisionBox;
             for (int i = startID; i < endID; i++)
@@ -258,21 +287,7 @@ namespace Drawing
                     RedrawStrokeOptimized(i, collisionBox);
                     continue;
                 }
-                
-                //If the brush stroke only has 1 stroke then just redraw that one
-                // if (startID == endID)
-                // {
-                //     BrushStroke stroke = brushStrokes[startID - 1];
-                //
-                //     stroke.brushTime = _currentTime;
-                //     stroke.lastTime = _lastTime;
-                //
-                //     brushStrokes[startID - 1] = stroke;
-                //
-                //     Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
-                //     return;
-                // }
-                
+
                 //If stroke is the one you want to redraw then redo it using the new time variables
                 float previousTime = _lastTime;
                 for (int j = startID; j < endID; j++)
@@ -395,14 +410,6 @@ namespace Drawing
         }
     }
 
-    public enum PaintType
-    {
-        PaintUnderOwnLine,
-        PaintUnderEverything,
-        PaintOverOwnLine,
-        PaintOverEverything,
-        Erase
-    }
 
     public struct BrushStrokeID
     {

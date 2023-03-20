@@ -86,24 +86,6 @@ namespace Drawing
             brushSize = _brushSize;
         }
 
-        private void HighlightStroke(int _brushstrokStartID)
-        {
-            BrushStrokeID brushStrokeID = drawer.brushStrokesID[_brushstrokStartID];
-            int startID = brushStrokeID.startID;
-            int endID = brushStrokeID.endID;
-            
-            for (int i = startID; i < endID; i++)
-            {
-                BrushStroke stroke = drawer.brushStrokes[i];
-
-                drawer.DrawHighlight(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, stroke.strokeBrushSize / 2);
-            }
-        }
-        private void ClearHighlightStroke()
-        {
-            Graphics.SetRenderTarget(drawer.rtSelect);
-            GL.Clear(false, true, Color.white);
-        }
 
         private void Draw(Vector2 _mousePos)
         {
@@ -158,6 +140,31 @@ namespace Drawing
                 
                 drawer.RedrawStroke(i);
             }
+        }
+        private void HighlightStroke(int _brushstrokStartID)
+        {
+            BrushStrokeID brushStrokeID = drawer.brushStrokesID[_brushstrokStartID];
+            int startID = brushStrokeID.startID;
+            int endID = brushStrokeID.endID;
+            
+            for (int i = startID; i < endID; i++)
+            {
+                BrushStroke stroke = drawer.brushStrokes[i];
+
+                drawer.DrawHighlight(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, HighlightType.Paint, stroke.strokeBrushSize / 2);
+            }
+            
+            for (int i = startID; i < endID; i++)
+            {
+                BrushStroke stroke = drawer.brushStrokes[i];
+
+                drawer.DrawHighlight(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, HighlightType.Erase, -5);
+            }
+        }
+        private void ClearHighlightStroke()
+        {
+            Graphics.SetRenderTarget(drawer.rtSelect);
+            GL.Clear(false, true, Color.white);
         }
 
         void Update()
