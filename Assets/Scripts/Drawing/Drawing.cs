@@ -30,19 +30,20 @@ namespace Drawing
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
         public List<BrushStroke> brushStrokes = new List<BrushStroke>();
 
-        private int brushDrawID => brushStrokes.Count;
+        public int brushDrawID => brushStrokes.Count;
 
-        private int lastBrushDrawID
+        public int lastBrushDrawID
         {
             get {
                 int lastID = 0;
-                if (brushStrokesID.Count > 0)
+                if (lastDrawnStrokes.Count > 0)
                 {
-                    lastID = brushStrokesID[^1].endID;
+                    lastID = lastDrawnStrokes[^1].endID;
                 }
                 return lastID;
             }
         }
+        public List<BrushStrokeID> lastDrawnStrokes = new List<BrushStrokeID>();
 
         private ComputeShader paintShader;
         private int paintUnderOwnLineKernelID;
@@ -188,14 +189,13 @@ namespace Drawing
             return new Vector2(lowestX, lowestY);
         }
 
-        public void RedrawStroke(int _brushstrokStartID)
+        public void RedrawStroke(BrushStrokeID _brushstrokStartID)
         {
-            BrushStrokeID brushStrokeID = brushStrokesID[_brushstrokStartID];
-            int startID = brushStrokeID.startID;
-            int endID = brushStrokeID.endID;
+            int startID = _brushstrokStartID.startID;
+            int endID = _brushstrokStartID.endID;
             int newStrokeID = GetNewID();
             bool firstLoop = true;
-            PaintType paintType = brushStrokeID.paintType;
+            PaintType paintType = _brushstrokStartID.paintType;
             
             for (int i = startID; i < endID; i++)
             {
@@ -207,11 +207,10 @@ namespace Drawing
             }
         }
 
-        private void RedrawStroke(int _brushstrokStartID, PaintType _newPaintType)
+        private void RedrawStroke(BrushStrokeID _brushstrokStartID, PaintType _newPaintType)
         {
-            BrushStrokeID brushStrokeID = brushStrokesID[_brushstrokStartID];
-            int startID = brushStrokeID.startID;
-            int endID = brushStrokeID.endID;
+            int startID = _brushstrokStartID.startID;
+            int endID = _brushstrokStartID.endID;
             int newStrokeID = GetNewID();
             bool firstLoop = true;
             PaintType paintType = _newPaintType;
@@ -226,14 +225,13 @@ namespace Drawing
             }
         }
 
-        private void RedrawStrokeOptimized(int _brushstrokStartID, Vector4 _collisionBox)
+        private void RedrawStrokeOptimized(BrushStrokeID _brushstrokStartID, Vector4 _collisionBox)
         {
-            BrushStrokeID brushStrokeID = brushStrokesID[_brushstrokStartID];
-            int startID = brushStrokeID.startID;
-            int endID = brushStrokeID.endID;
+            int startID = _brushstrokStartID.startID;
+            int endID = _brushstrokStartID.endID;
             int newStrokeID = GetNewID();
             bool firstLoop = true;
-            PaintType paintType = brushStrokeID.paintType;
+            PaintType paintType = _brushstrokStartID.paintType;
 
             
             Vector4 collisionBoxReset = _collisionBox;
@@ -258,33 +256,31 @@ namespace Drawing
             }
         }
 
-        public void RedrawStroke(int _brushstrokStartID, float _lastTime, float _currentTime)
+        public void RedrawStroke(BrushStrokeID _brushstrokID, float _lastTime, float _currentTime)
         {
-            BrushStrokeID brushStrokeID = brushStrokesID[_brushstrokStartID];
-            int startID = brushStrokeID.startID;
-            int endID = brushStrokeID.endID;
+            int startID = _brushstrokID.startID;
+            int endID = _brushstrokID.endID;
             int newStrokeID = GetNewID();
-            brushStrokeID.lastTime = _lastTime;
-            brushStrokeID.currentTime = _currentTime;
+            _brushstrokID.lastTime = _lastTime;
+            _brushstrokID.currentTime = _currentTime;
             bool firstLoop = true;
-            PaintType paintType = brushStrokeID.paintType;
+            PaintType paintType = _brushstrokID.paintType;
 
-            brushStrokesID[_brushstrokStartID] = brushStrokeID;
 
             //First erase the stroke you want to redraw
             if (paintType is PaintType.PaintUnderEverything or PaintType.PaintOverOwnLine)
             {
-                RedrawStroke(_brushstrokStartID, PaintType.Erase);
+                RedrawStroke(_brushstrokID, PaintType.Erase);
             }
 
-            Vector4 collisionBox = brushStrokesID[_brushstrokStartID].GetCollisionBox();
+            Vector4 collisionBox = _brushstrokID.GetCollisionBox();
 
             for (int i = 0; i < brushStrokesID.Count; i++)
             {
                 //If stroke is not the stroke you want to redraw. Redraw it optimized
-                if (i != _brushstrokStartID)
+                if (brushStrokesID[i] != _brushstrokID)
                 {
-                    RedrawStrokeOptimized(i, collisionBox);
+                    RedrawStrokeOptimized(brushStrokesID[i], collisionBox);
                     continue;
                 }
 
@@ -314,61 +310,14 @@ namespace Drawing
             }
         }
 
-        public void RemoveStroke(int _brushstrokStartID)
-        {
-            BrushStrokeID brushStrokeID = brushStrokesID[_brushstrokStartID];
-            int startID = brushStrokeID.startID;
-            int endID = brushStrokeID.endID;
-            
-            for (int i = startID; i < endID; i++)
-            {
-                BrushStroke stroke = brushStrokes[i];
-        
-                Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, PaintType.Erase);
-            }
-
-            int amountToRemove = endID - startID;
-            if (_brushstrokStartID + 1 < brushStrokesID.Count)
-            {
-                AdjustBrushStrokeIDs(_brushstrokStartID, amountToRemove);
-            }
-
-            if (startID > 0)
-            {
-                brushStrokes.RemoveRange(startID, amountToRemove);
-            }
-            else
-            {
-                brushStrokes.Clear();
-            }
-            brushStrokesID.RemoveAt(_brushstrokStartID);
-            RedrawAll();
-        }
-        
-        private void AdjustBrushStrokeIDs(int _brushstrokStartID, int _amountToRemove)
-        {
-            Debug.Log($"Adjusting brushstroke start and end IDs");
-            for (int i = _brushstrokStartID + 1; i < brushStrokesID.Count; i++)
-            {
-                BrushStrokeID brushStrokeID = brushStrokesID[_brushstrokStartID];
-                brushStrokeID.startID -= _amountToRemove;
-                brushStrokeID.endID -= _amountToRemove;
-            }
-        }
-
         public void RedrawAll()
         {
             for (int i = 0; i < brushStrokesID.Count; i++)
             {
-                RedrawStroke(i);
+                RedrawStroke(brushStrokesID[i]);
             }
         }
 
-        public void FinishedStroke(Vector4 _collisionBox, PaintType _paintType, float _lastTime, float _currentTime)
-        {
-            brushStrokesID.Add(new BrushStrokeID(lastBrushDrawID, brushDrawID, _paintType, _lastTime, _currentTime, _collisionBox));
-        }
-        
         private bool CheckCollision(Vector4 _box1, Vector4 _box2)
         {
             return _box1.x <= _box2.z && _box1.z >= _box2.x && _box1.y <= _box2.w && _box1.w >= _box2.y;
@@ -409,36 +358,5 @@ namespace Drawing
             return new Vector4(lastPosX, lastPosY, currentPosX, currentPosY);
         }
     }
-
-
-    public struct BrushStrokeID
-    {
-        public int startID;
-        public int endID;
-        public float collisionBoxX;
-        public float collisionBoxY;
-        public float collisionBoxZ;
-        public float collisionBoxW;
-        public PaintType paintType;
-        public float lastTime;
-        public float currentTime;
-
-        public BrushStrokeID(int _startID, int _endID, PaintType _paintType, float _lastTime, float _currentTime, Vector4 _collisionBox) : this()
-        {
-            startID = _startID;
-            endID = _endID;
-            paintType = _paintType;
-            lastTime = _lastTime;
-            currentTime = _currentTime;
-            collisionBoxX = _collisionBox.x;
-            collisionBoxY = _collisionBox.y;
-            collisionBoxZ = _collisionBox.z;
-            collisionBoxW = _collisionBox.w;
-        }
-
-        public Vector4 GetCollisionBox()
-        {
-            return new Vector4(collisionBoxX, collisionBoxY, collisionBoxZ, collisionBoxW);
-        }
-    }
+    
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Drawing;
 using Managers;
 using UnityEngine;
 using UnityEngine.UI;
@@ -88,7 +89,7 @@ namespace UI
             }
         }
 
-        public int brushStrokeID;
+        public BrushStrokeID brushStrokeID;
         public RectTransform rect;
         public MouseAction mouseAction;
         public RawImage rawImage;
@@ -104,7 +105,7 @@ namespace UI
         private float minumunWidth = 10;
         private float spacing = 10;
 
-        public TimelineClip(int _brushStrokeID, RectTransform _rect, RectTransform _timelineBarRect, RectTransform _timelineAreaRect, RawImage _rawImage)
+        public TimelineClip(BrushStrokeID _brushStrokeID, RectTransform _rect, RectTransform _timelineBarRect, RectTransform _timelineAreaRect, RawImage _rawImage)
         {
             brushStrokeID = _brushStrokeID;
             rect = _rect;

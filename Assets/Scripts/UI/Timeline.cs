@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Drawing;
 using Managers;
 using TMPro;
 using Undo;
@@ -70,20 +71,20 @@ namespace UI
 
         private void OnEnable()
         {
-            EventSystem<int>.Subscribe(EventType.REMOVE_CLIP, RemoveClip);
+            EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<bool>.Subscribe(EventType.DRAW, SetTimlinePause);
             EventSystem<bool>.Subscribe(EventType.FINISHED_STROKE, SetTimlinePause);
-            EventSystem<int, float, float>.Subscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
-            EventSystem<int, float, float, int>.Subscribe(EventType.UPDATE_CLIP, UpdateClip);
+            EventSystem<BrushStrokeID, float, float>.Subscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
+            EventSystem<BrushStrokeID, float, float, int>.Subscribe(EventType.UPDATE_CLIP, UpdateClip);
         }
 
         private void OnDisable()
         {
-            EventSystem<int>.Unsubscribe(EventType.REMOVE_CLIP, RemoveClip);
+            EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<bool>.Unsubscribe(EventType.DRAW, SetTimlinePause);
             EventSystem<bool>.Unsubscribe(EventType.FINISHED_STROKE, SetTimlinePause);
-            EventSystem<int, float, float>.Unsubscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
-            EventSystem<int, float, float, int>.Unsubscribe(EventType.UPDATE_CLIP, UpdateClip);
+            EventSystem<BrushStrokeID, float, float>.Unsubscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
+            EventSystem<BrushStrokeID, float, float, int>.Unsubscribe(EventType.UPDATE_CLIP, UpdateClip);
         }
 
         private void Update()
@@ -199,7 +200,7 @@ namespace UI
                         // clipRightInput.text = clip.rightSideScaled.ToString("0.###");
                         
                         //Look into doing this more efficiently
-                        EventSystem<int, float, float>.RaiseEvent(
+                        EventSystem<BrushStrokeID, float, float>.RaiseEvent(
                             EventType.REDRAW_STROKE, clip.brushStrokeID, clip.leftSideScaled, clip.rightSideScaled);
                     }
                 }
@@ -224,10 +225,9 @@ namespace UI
 
                         if (selectedClips.Count == 0 || Input.GetKey(KeyCode.LeftShift))
                         {
-                            Debug.Log($"added to selection");
                             clipsOrderderd[i][j].SetupMovement(mouseAction);
                             clipsOrderderd[i][j].rawImage.color = selectedColor;
-                            EventSystem<int>.RaiseEvent(EventType.HIGHLIGHT, clipsOrderderd[i][j].brushStrokeID);
+                            EventSystem<BrushStrokeID>.RaiseEvent(EventType.HIGHLIGHT, clipsOrderderd[i][j].brushStrokeID);
                         
                             selectedClipPreviousBar.Add(0);
                             selectedClips.Add(clipsOrderderd[i][j]);
@@ -240,7 +240,6 @@ namespace UI
             //Once you are done making changes 
             else if (Input.GetMouseButtonUp(0))
             {
-                Debug.Log($"done making changes");
                 lastMouseAction = MouseAction.Nothing;
                 firstTimeSelected = true;
                 if (selectedClips.Count > 0)
@@ -257,7 +256,7 @@ namespace UI
                         redraws.Add(clipCommand);
                     }
                     ICommand redrawCommand = new RedrawMultipleCommand(redraws);
-                    commandManager.Execute(redrawCommand);
+                    commandManager.AddCommand(redrawCommand);
                 }
             }
             //once you have clicked somewhere else unselect everything
@@ -285,48 +284,32 @@ namespace UI
                         selectedClips[i].rawImage.color = notSelectedColor;
                     }
                     
-                    EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
-                    clipLeftInput.text = "";
-                    clipRightInput.text = "";
-                    
-                    Debug.Log($"unfocesed clips");
-                    selectedClips.Clear();
-                    selectedClipPreviousBar.Clear();
-                    selectedClipsOriginalTime.Clear();
+                    ClearSelectedClips();
                 }
 
                 if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
                 {
-                    Vector3[] clipCorners = new Vector3[4];
-                    bool clickedOnSelectedClip = false;
-                
                     foreach (var clip in selectedClips)
                     {
-                        clip.rect.GetWorldCorners(clipCorners);
-                        if (IsMouseOver(clipCorners))
-                        {
-                            clickedOnSelectedClip = true;
-                        }
-                    }
-                    if (clickedOnSelectedClip)
-                        return;
-
-
-                    foreach (var clip in selectedClips)
-                    {
-                        
+                        Destroy(clip.rect.gameObject);
+                        clipsOrderderd[clip.currentBar].Remove(clip);
                     }
                     
-                    EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
-                    clipLeftInput.text = "";
-                    clipRightInput.text = "";
-                    
-                    Debug.Log($"unfocesed clips");
-                    selectedClips.Clear();
-                    selectedClipPreviousBar.Clear();
-                    selectedClipsOriginalTime.Clear();
+                    EventSystem<BrushStrokeID>.RaiseEvent(EventType.DELETE_CLIP, selectedClips[0].brushStrokeID);
+
+                    ClearSelectedClips();
                 }
             }
+        }
+        private void ClearSelectedClips()
+        {
+            EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
+            clipLeftInput.text = "";
+            clipRightInput.text = "";
+
+            selectedClips.Clear();
+            selectedClipPreviousBar.Clear();
+            selectedClipsOriginalTime.Clear();
         }
 
         private void CheckClipCollisions(TimelineClip _clip, int _previousBar)
@@ -338,7 +321,6 @@ namespace UI
             {
                 clipsOrderderd[currentBar].Add(_clip);
                 clipsOrderderd[_previousBar].Remove(_clip);
-                Debug.Log($"room on same bar");
                 return;
             }
             
@@ -355,7 +337,6 @@ namespace UI
                         _clip.SetBar(lowerBar);
                         clipsOrderderd[lowerBar].Add(_clip);
                         clipsOrderderd[_previousBar].Remove(_clip);
-                        Debug.Log($"room on lower bar");
                         return;
                     }
                 }
@@ -367,7 +348,6 @@ namespace UI
                         _clip.SetBar(upperBar);
                         clipsOrderderd[upperBar].Add(_clip);
                         clipsOrderderd[_previousBar].Remove(_clip);
-                        Debug.Log($"room on lower bar");
                         return;
                     }
                 }
@@ -382,7 +362,6 @@ namespace UI
             _clip.SetBar(lowestBar);
             clipsOrderderd[lowestBar].Add(_clip);
             clipsOrderderd[_previousBar].Remove(_clip);
-            Debug.Log($"made room on new bar");
         }
 
         private bool IsClipCollidingInBar(TimelineClip _clip, int bar)
@@ -437,7 +416,7 @@ namespace UI
                         {
                             selectedClips[0].rightSideScaled = Mathf.Clamp01(rightSide);
                         }
-                        EventSystem<int, float, float>.RaiseEvent(EventType.REDRAW_STROKE, selectedClips[0].brushStrokeID, 
+                        EventSystem<BrushStrokeID, float, float>.RaiseEvent(EventType.REDRAW_STROKE, selectedClips[0].brushStrokeID, 
                                                                   selectedClips[0].leftSideScaled, selectedClips[0].rightSideScaled);
                     }
                 }
@@ -449,7 +428,7 @@ namespace UI
             selectedInput = _select;
         }
 
-        private void AddNewBrushClip(int _brushStrokeID, float _lastTime, float _currentTime)
+        private void AddNewBrushClip(BrushStrokeID _brushStrokeID, float _lastTime, float _currentTime)
         {
             RectTransform rect = Instantiate(timelineClipObject, timelineBarToInsantiateTo).GetComponent<RectTransform>();
             RawImage clipImage = rect.GetComponent<RawImage>();
@@ -463,7 +442,7 @@ namespace UI
             CheckClipCollisions(timelineClip, 0);
         }
 
-        private void RemoveClip(int _brushStrokeID)
+        private void RemoveClip(BrushStrokeID _brushStrokeID)
         {
             for (int i = 0; i < clipsOrderderd.Count; i++)
             {
@@ -487,7 +466,7 @@ namespace UI
             }
         }
 
-        private void UpdateClip(int _brushStrokeID, float _lastTime, float _currentTime, int _setBar)
+        private void UpdateClip(BrushStrokeID _brushStrokeID, float _lastTime, float _currentTime, int _setBar)
         {
             for (int i = 0; i < clipsOrderderd.Count; i++)
             {
