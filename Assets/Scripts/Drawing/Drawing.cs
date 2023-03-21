@@ -84,11 +84,13 @@ namespace Drawing
             };
             rtID = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RInt, RenderTextureReadWrite.Linear)
             {
+                filterMode = FilterMode.Point,
                 enableRandomWrite = true,
                 name = "rtID",
             };
             rtSelect = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
             {
+                filterMode = FilterMode.Point,
                 enableRandomWrite = true,
                 name = "rtSelect",
             };
@@ -157,6 +159,7 @@ namespace Drawing
         public void DrawHighlight(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, HighlightType _highlightType, float _borderThickness = 0)
         {
             _strokeBrushSize += _borderThickness;
+            _strokeBrushSize = Mathf.Clamp(_strokeBrushSize, 1, 1024);
             threadGroupSize.x = Mathf.CeilToInt((math.abs(_lastPos.x - _currentPos.x) + _strokeBrushSize * 2) / threadGroupSizeOut.x);
             threadGroupSize.y = Mathf.CeilToInt((math.abs(_lastPos.y - _currentPos.y) + _strokeBrushSize * 2) / threadGroupSizeOut.y);
         
@@ -215,6 +218,7 @@ namespace Drawing
             bool firstLoop = true;
             PaintType paintType = _newPaintType;
             
+            //Add first removing the id
             for (int i = startID; i < endID; i++)
             {
                 BrushStroke stroke = brushStrokes[i];
@@ -225,24 +229,21 @@ namespace Drawing
             }
         }
 
-        private void RedrawStrokeOptimized(BrushStrokeID _brushstrokStartID, Vector4 _collisionBox)
+        public void RedrawStrokeOptimized(BrushStrokeID _brushstrokID, Vector4 _collisionBox)
         {
-            int startID = _brushstrokStartID.startID;
-            int endID = _brushstrokStartID.endID;
+            int startID = _brushstrokID.startID;
+            int endID = _brushstrokID.endID;
             int newStrokeID = GetNewID();
             bool firstLoop = true;
-            PaintType paintType = _brushstrokStartID.paintType;
+            PaintType paintType = _brushstrokID.paintType;
 
-            
+            if (!CheckCollision(_brushstrokID.GetCollisionBox(), _collisionBox))
+                return;
+
             Vector4 collisionBoxReset = _collisionBox;
             for (int i = startID; i < endID; i++)
             {
                 BrushStroke stroke = brushStrokes[i];
-                
-                _collisionBox.x -= stroke.strokeBrushSize;
-                _collisionBox.y -= stroke.strokeBrushSize;
-                _collisionBox.z += stroke.strokeBrushSize;
-                _collisionBox.w += stroke.strokeBrushSize;
 
                 if (!CheckCollision(_collisionBox, stroke.GetCollisionBox()))
                 {
@@ -312,9 +313,33 @@ namespace Drawing
 
         public void RedrawAll()
         {
+            
+            Graphics.SetRenderTarget(rtID);
+            Color idColor = new Color(-1, -1, -1);
+            GL.Clear(false, true, idColor);
+            Graphics.SetRenderTarget(null);
+
             for (int i = 0; i < brushStrokesID.Count; i++)
             {
                 RedrawStroke(brushStrokesID[i]);
+            }
+        }
+        
+        public void RedrawAllOptimized(BrushStrokeID _brushStrokeID)
+        {
+            
+            Graphics.SetRenderTarget(rtID);
+            Color idColor = new Color(-1, -1, -1);
+            GL.Clear(false, true, idColor);
+            Graphics.SetRenderTarget(null);
+
+            for (int i = 0; i < brushStrokesID.Count; i++)
+            {
+                if (brushStrokesID[i] == _brushStrokeID)
+                {
+                    RedrawStroke(brushStrokesID[i]);
+                }
+                RedrawStrokeOptimized(brushStrokesID[i], _brushStrokeID.GetCollisionBox());
             }
         }
 
