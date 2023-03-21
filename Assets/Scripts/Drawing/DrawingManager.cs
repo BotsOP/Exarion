@@ -52,11 +52,14 @@ namespace Drawing
             EventSystem.Subscribe(EventType.FINISHED_STROKE, StoppedDrawing);
             EventSystem.Subscribe(EventType.CLEAR_HIGHLIGHT, ClearHighlightStroke);
             EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
+            //Include the change brush size in the draw event
             EventSystem<float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
             EventSystem<float>.Subscribe(EventType.TIME, SetTime);
-            EventSystem<float>.Subscribe(EventType.TIME_SHOWCASE, SetShowcaseTime);
-            EventSystem<int>.Subscribe(EventType.HIGHLIGHT, HighlightStroke);
-            EventSystem<int, float, float>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
+            EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
+            EventSystem<BrushStrokeID>.Subscribe(EventType.HIGHLIGHT, HighlightStroke);
+            EventSystem<BrushStrokeID>.Subscribe(EventType.DELETE_CLIP, DeleteStroke);
+            EventSystem<List<BrushStroke>, BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
+            EventSystem<BrushStrokeID, float, float>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
         }
 
         private void OnDisable()
@@ -66,9 +69,11 @@ namespace Drawing
             EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
             EventSystem<float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
             EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
-            EventSystem<float>.Unsubscribe(EventType.TIME_SHOWCASE, SetShowcaseTime);
-            EventSystem<int>.Unsubscribe(EventType.HIGHLIGHT, HighlightStroke);
-            EventSystem<int, float, float>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
+            EventSystem<BrushStrokeID>.Unsubscribe(EventType.HIGHLIGHT, HighlightStroke);
+            EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
+            EventSystem<BrushStrokeID>.Unsubscribe(EventType.DELETE_CLIP, DeleteStroke);
+            EventSystem<List<BrushStroke>, BrushStrokeID>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
+            EventSystem<BrushStrokeID, float, float>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
         }
 
         private void SetTime(float _time)
@@ -86,24 +91,6 @@ namespace Drawing
             brushSize = _brushSize;
         }
 
-        private void HighlightStroke(int _brushstrokStartID)
-        {
-            BrushStrokeID brushStrokeID = drawer.brushStrokesID[_brushstrokStartID];
-            int startID = brushStrokeID.startID;
-            int endID = brushStrokeID.endID;
-            
-            for (int i = startID; i < endID; i++)
-            {
-                BrushStroke stroke = drawer.brushStrokes[i];
-
-                drawer.DrawHighlight(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, stroke.strokeBrushSize / 2);
-            }
-        }
-        private void ClearHighlightStroke()
-        {
-            Graphics.SetRenderTarget(drawer.rtSelect);
-            GL.Clear(false, true, Color.white);
-        }
 
         private void Draw(Vector2 _mousePos)
         {
@@ -137,27 +124,133 @@ namespace Drawing
         
         private void StoppedDrawing()
         {
-            drawer.FinishedStroke(collisionBox, paintType, startBrushStrokeTime, time);
-            EventSystem<int, float, float>.RaiseEvent(EventType.FINISHED_STROKE, drawer.brushStrokesID.Count - 1, startBrushStrokeTime, time);
-            ICommand draw = new DrawCommand(ref drawer, collisionBox, paintType,drawer.brushStrokesID.Count - 1, startBrushStrokeTime, time);
-            commandManager.Execute(draw);
+            BrushStrokeID brushStrokeID = new BrushStrokeID(
+                drawer.lastBrushDrawID, drawer.brushDrawID, paintType, startBrushStrokeTime,
+                time, collisionBox, drawer.brushStrokesID.Count);
+            
+            drawer.brushStrokesID.Add(brushStrokeID);
+            drawer.lastDrawnStrokes.Add(brushStrokeID);
+            
+            int startID = drawer.brushStrokesID[^1].startID;
+            int count = drawer.brushStrokesID[^1].endID - startID;
+            List<BrushStroke> brushStrokes = drawer.brushStrokes.GetRange(startID, count);
+            ICommand draw = new DrawCommand(brushStrokes, drawer.brushStrokesID[^1]);
+            commandManager.AddCommand(draw);
 
+            EventSystem<BrushStrokeID, float, float>.RaiseEvent(EventType.FINISHED_STROKE, drawer.brushStrokesID[^1], startBrushStrokeTime, time);
             collisionBox = resetBox;
             firstUse = true;
         }
         
-        private void RedrawStroke(int _brushStrokeIDToRedraw, float _brushStartTime, float _brushEndTime)
+        private void RedrawStroke(BrushStrokeID _brushStrokeID, float _brushStartTime, float _brushEndTime)
         {
             for (int i = 0; i < drawer.brushStrokesID.Count; i++)
             {
-                if (i == _brushStrokeIDToRedraw)
+                if (drawer.brushStrokesID[i] == _brushStrokeID)
                 {
-                    drawer.RedrawStroke(_brushStrokeIDToRedraw, _brushStartTime, _brushEndTime);
+                    drawer.RedrawStroke(_brushStrokeID, _brushStartTime, _brushEndTime);
                     continue;
                 }
                 
-                drawer.RedrawStroke(i);
+                drawer.RedrawStroke(_brushStrokeID);
             }
+        }
+
+        private void AddStroke(List<BrushStroke> _brushStrokes, BrushStrokeID _brushStrokeID)
+        {
+            drawer.brushStrokes.AddRange(_brushStrokes);
+            _brushStrokeID.startID = drawer.lastBrushDrawID;
+            _brushStrokeID.endID = drawer.brushDrawID;
+            drawer.brushStrokesID.Insert(_brushStrokeID.indexWhenDrawn, _brushStrokeID);
+            drawer.lastDrawnStrokes.Add(_brushStrokeID);
+            
+            EventSystem<BrushStrokeID, float, float>.RaiseEvent(EventType.FINISHED_STROKE, _brushStrokeID, _brushStrokeID.lastTime, _brushStrokeID.currentTime);
+            drawer.RedrawAll();
+        }
+        private void DeleteStroke(BrushStrokeID _brushStrokeID)
+        {
+            int startID = _brushStrokeID.startID;
+            int count = _brushStrokeID.endID - startID;
+            List<BrushStroke> brushStrokes = drawer.brushStrokes.GetRange(startID, count);
+            
+            for (int i = startID; i < _brushStrokeID.endID; i++)
+            {
+                BrushStroke stroke = drawer.brushStrokes[i];
+        
+                drawer.Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, PaintType.Erase);
+            }
+            
+            if (startID > 0)
+            {
+                drawer.brushStrokes.RemoveRange(startID, count);
+            }
+            else
+            {
+                drawer.brushStrokes.Clear();
+            }
+            
+            int index = drawer.brushStrokesID.FindIndex(a => a == _brushStrokeID);
+            for (int i = index + 1; i < drawer.brushStrokesID.Count; i++)
+            {
+                drawer.brushStrokesID[i].startID -= count;
+                drawer.brushStrokesID[i].endID -= count;
+            }
+            
+            drawer.brushStrokesID.Remove(_brushStrokeID);
+            drawer.lastDrawnStrokes.Remove(_brushStrokeID);
+
+            ICommand deleteStroke = new DeleteClipCommand(brushStrokes, _brushStrokeID);
+            commandManager.AddCommand(deleteStroke);
+        }
+        private void RemoveStroke(BrushStrokeID _brushStrokeID)
+        {
+            int startID = _brushStrokeID.startID;
+            int endID = _brushStrokeID.endID;
+            
+            for (int i = startID; i < endID; i++)
+            {
+                BrushStroke stroke = drawer.brushStrokes[i];
+        
+                drawer.Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, PaintType.Erase);
+            }
+
+            int amountToRemove = endID - startID;
+            if (startID > 0)
+            {
+                drawer.brushStrokes.RemoveRange(startID, amountToRemove);
+            }
+            else
+            {
+                drawer.brushStrokes.Clear();
+            }
+            drawer.brushStrokesID.Remove(_brushStrokeID);
+            drawer.lastDrawnStrokes.Remove(_brushStrokeID);
+            drawer.RedrawAll();
+        }
+        
+        private void HighlightStroke(BrushStrokeID _brushstrokStartID)
+        {
+            int startID = _brushstrokStartID.startID;
+            int endID = _brushstrokStartID.endID;
+            
+            for (int i = startID; i < endID; i++)
+            {
+                BrushStroke stroke = drawer.brushStrokes[i];
+
+                drawer.DrawHighlight(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, HighlightType.Paint, stroke.strokeBrushSize / 2);
+            }
+            
+            for (int i = startID; i < endID; i++)
+            {
+                BrushStroke stroke = drawer.brushStrokes[i];
+
+                drawer.DrawHighlight(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, HighlightType.Erase, -5);
+            }
+        }
+        private void ClearHighlightStroke()
+        {
+            Graphics.SetRenderTarget(drawer.rtSelect);
+            GL.Clear(false, true, Color.white);
         }
 
         void Update()
@@ -174,7 +267,7 @@ namespace Drawing
             for (int i = 0; i < drawer.brushStrokesID.Count; i++)
             {
                 BrushStrokeID brushStrokeID = drawer.brushStrokesID[i];
-                EventSystem<int, float, float>.RaiseEvent(EventType.FINISHED_STROKE, i, brushStrokeID.lastTime, brushStrokeID.currentTime);
+                EventSystem<BrushStrokeID, float, float>.RaiseEvent(EventType.FINISHED_STROKE, drawer.brushStrokesID[i], brushStrokeID.lastTime, brushStrokeID.currentTime);
             }
         }
 

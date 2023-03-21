@@ -47,6 +47,8 @@ namespace UI
                 if(Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || Math.Abs(time - 1.1) < 0.1)
                 {
                     EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
+                    EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
+
                     mouseIsDrawing = false;
                 }
             }
@@ -72,6 +74,7 @@ namespace UI
                 float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
                 Vector2 mousePos = new Vector2(mousePosX, mousePosY);
                 EventSystem<Vector2>.RaiseEvent(EventType.DRAW, mousePos);
+                EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
 
                 mouseIsDrawing = true;
             }
@@ -80,7 +83,7 @@ namespace UI
         {
             if (Input.mouseScrollDelta.y != 0)
             {
-                _cam.orthographicSize -= Input.mouseScrollDelta.y * scrollZoomSensitivity;
+                _cam.orthographicSize -= Mathf.Pow(_cam.orthographicSize * scrollZoomSensitivity, 1.3f) * Input.mouseScrollDelta.y;
                 _cam.orthographicSize = Mathf.Clamp(_cam.orthographicSize, 0.01f, 0.5f);
             }
             if (Input.GetMouseButtonDown(1))

@@ -9,6 +9,7 @@ namespace UI
     public class UIManager : MonoBehaviour
     {
         public static bool IsInteracting;
+        public static bool isFullView = true;
         [SerializeField] private RawImage viewImageFull;
         [SerializeField] private RawImage viewImageFocus;
         [SerializeField] private RawImage displayImageFull;
@@ -22,8 +23,6 @@ namespace UI
         [SerializeField] private Image cachedButton;
         [SerializeField] private TMP_InputField brushSizeInput;
         [SerializeField] private Slider brushSizeSlider;
-        [SerializeField] private Slider speedSliderTimeline;
-        [SerializeField] private Slider speedSliderShowcase;
         private CustomRenderTexture viewFullRT;
         private CustomRenderTexture viewFocusRT;
         private CustomRenderTexture displayFullRT;
@@ -32,8 +31,6 @@ namespace UI
         private RectTransform rectTransformDisplayFull;
         private RectTransform rectTransformViewFocus;
         private RectTransform rectTransformDisplayFocus;
-        private float timeIncrease;
-        private float time;
 
         private void Awake()
         {
@@ -82,21 +79,7 @@ namespace UI
             displayImageFocus.texture = displayFocusRT;
             
             EventSystem<float>.RaiseEvent(EventType.CHANGE_BRUSH_SIZE, brushSizeSlider.value);
-            EventSystem<float>.RaiseEvent(EventType.TIME_SHOWCASE, speedSliderShowcase.value);
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
-        }
-
-        private void Update()
-        {
-            timeIncrease = (Time.timeSinceLevelLoad - timeIncrease) / Mathf.Pow(speedSliderTimeline.value, 1.5f);
-            time += timeIncrease;
-            EventSystem<float>.RaiseEvent(EventType.TIME, time  % 1.1f);
-            timeIncrease = Time.timeSinceLevelLoad;
-        }
-
-        public void SpeedSliderShowcaseChanged()
-        {
-            EventSystem<float>.RaiseEvent(EventType.TIME_SHOWCASE, speedSliderShowcase.value);
         }
 
         public void StartInteracting()
@@ -110,6 +93,7 @@ namespace UI
 
         public void SwitchToFullView(Image buttonImage)
         {
+            isFullView = true;
             buttonImage.GetComponent<Image>().color = selectedColor;
             if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
             cachedButton = buttonImage;
@@ -124,6 +108,7 @@ namespace UI
     
         public void SwitchToFocusView(Image buttonImage)
         {
+            isFullView = false;
             buttonImage.GetComponent<Image>().color = selectedColor;
             if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
             cachedButton = buttonImage;
