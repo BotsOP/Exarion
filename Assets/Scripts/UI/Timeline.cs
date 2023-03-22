@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Drawing;
 using Managers;
@@ -40,8 +41,8 @@ namespace UI
         private CommandManager commandManager;
         private Drawing.Drawing drawer;
         private float timeIncrease;
-        private bool shouldTimelinePause;
-        private bool timelinePauseButton;
+        private bool shouldTimelinePause = true;
+        private bool timelinePauseButton = true;
         private MouseAction lastMouseAction;
         private bool firstTimeSelected;
 
@@ -192,16 +193,21 @@ namespace UI
                         firstTimeSelected = false;
                     }
 
-                    foreach (var clip in selectedClips)
+                    for (int i = 0; i < selectedClips.Count; i++)
                     {
+                        var clip = selectedClips[i];
                         clip.mouseAction = lastMouseAction;
                         clip.UpdateTransform(previousMousePos);
                         // clipLeftInput.text = clip.leftSideScaled.ToString("0.###");
                         // clipRightInput.text = clip.rightSideScaled.ToString("0.###");
-                        
+
                         //Look into doing this more efficiently
-                        EventSystem<BrushStrokeID, float, float>.RaiseEvent(
-                            EventType.REDRAW_STROKE, clip.brushStrokeID, clip.leftSideScaled, clip.rightSideScaled);
+                        if (Math.Abs(selectedClipsOriginalTime[i].x - selectedClips[i].leftSideScaled) > 0.001 ||
+                            Math.Abs(selectedClipsOriginalTime[i].y - selectedClips[i].rightSideScaled) > 0.001)
+                        {
+                            EventSystem<BrushStrokeID, float, float>.RaiseEvent(
+                                EventType.REDRAW_STROKE, clip.brushStrokeID, clip.leftSideScaled, clip.rightSideScaled);
+                        }
                     }
                 }
             }
@@ -249,14 +255,16 @@ namespace UI
                     {
                         selectedClips[i].mouseAction = MouseAction.Nothing;
                         CheckClipCollisions(selectedClips[i], selectedClipPreviousBar[i]);
-                    
-                        RedrawCommand clipCommand = new RedrawCommand(
-                            selectedClips[i].brushStrokeID, selectedClips[i].leftSideScaled, selectedClips[i].rightSideScaled, 
-                            selectedClipsOriginalTime[i].x, selectedClipsOriginalTime[i].y, selectedClipPreviousBar[i]);
-                        redraws.Add(clipCommand);
+
+                        if (Math.Abs(selectedClipsOriginalTime[i].x - selectedClips[i].leftSideScaled) > 0.001 || Math.Abs(selectedClipsOriginalTime[i].y - selectedClips[i].rightSideScaled) > 0.001)
+                        {
+                            RedrawCommand clipCommand = new RedrawCommand(
+                                selectedClips[i].brushStrokeID, selectedClips[i].leftSideScaled, selectedClips[i].rightSideScaled, 
+                                selectedClipsOriginalTime[i].x, selectedClipsOriginalTime[i].y, selectedClipPreviousBar[i]);
+                            redraws.Add(clipCommand);
+                        }
                     }
-                    ICommand redrawCommand = new RedrawMultipleCommand(redraws);
-                    commandManager.AddCommand(redrawCommand);
+                    if(redraws.Count > 0) { commandManager.AddCommand(new RedrawMultipleCommand(redraws)); }
                 }
             }
             //once you have clicked somewhere else unselect everything
@@ -450,9 +458,6 @@ namespace UI
                 {
                     if (clipsOrderderd[i][j].brushStrokeID == _brushStrokeID)
                     {
-                        Destroy(clipsOrderderd[i][j].rect.gameObject);
-                        clipsOrderderd[i].RemoveAt(j);
-                        
                         if (selectedClips.Count > 0)
                         {
                             if (selectedClips.Contains(clipsOrderderd[i][j]))
@@ -460,6 +465,8 @@ namespace UI
                                 selectedClips.Remove(clipsOrderderd[i][j]);
                             }
                         }
+                        Destroy(clipsOrderderd[i][j].rect.gameObject);
+                        clipsOrderderd[i].RemoveAt(j);
                         return;
                     }
                 }
