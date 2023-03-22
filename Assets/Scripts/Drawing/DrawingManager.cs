@@ -246,7 +246,6 @@ namespace Drawing
             int startID = _brushstrokStartID.startID;
             int endID = _brushstrokStartID.endID;
             
-            
             for (int i = startID; i < endID; i++)
             {
                 BrushStroke stroke = drawer.brushStrokes[i];

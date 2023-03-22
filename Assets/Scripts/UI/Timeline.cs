@@ -41,7 +41,7 @@ namespace UI
         private CommandManager commandManager;
         private Drawing.Drawing drawer;
         private float timeIncrease;
-        private bool shouldTimelinePause;
+        private bool shouldTimelinePause = true;
         private bool timelinePauseButton = true;
         private MouseAction lastMouseAction;
         private bool firstTimeSelected;
