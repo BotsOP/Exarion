@@ -40,7 +40,11 @@ namespace Drawing
 
         void OnEnable()
         {
-            drawer = new Drawing(imageWidth, imageHeight);
+            drawer = new Drawing(imageWidth, imageHeight)
+            {
+                ball1 = ball1,
+                ball2 = ball2,
+            };
             commandManager = FindObjectOfType<CommandManager>();
 
             drawingMat.SetTexture("_MainTex", drawer.rt);

@@ -29,6 +29,8 @@ namespace Drawing
         public readonly CustomRenderTexture rtSelect;
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
         public List<BrushStroke> brushStrokes = new List<BrushStroke>();
+        public Transform ball1;
+        public Transform ball2;
 
         public int brushDrawID => brushStrokes.Count;
 
@@ -123,6 +125,15 @@ namespace Drawing
             {
                 case PaintType.PaintUnderEverything:
                     kernelID = paintUnderEverythingKernelID;
+                    Vector2 AtoB = _currentPos - _lastPos;
+                    AtoB = AtoB.normalized;
+                    AtoB.x *= 50;
+                    AtoB.y *= 50;
+
+                    Vector2 lastPos = _lastPos - AtoB;
+                    Vector2 currentPos = _currentPos + AtoB;
+                    paintShader.SetVector("_CursorPosPlusBrushSize", currentPos);
+                    paintShader.SetVector("_LastCursorPosPlusBrushSize", lastPos);
                     break;
                 case PaintType.PaintOverEverything:
                     kernelID = paintOverEverythingKernelID;
@@ -264,6 +275,7 @@ namespace Drawing
             int newStrokeID = GetNewID();
             _brushstrokID.lastTime = _lastTime;
             _brushstrokID.currentTime = _currentTime;
+            Debug.Log($"{_lastTime} {_currentTime}");
             bool firstLoop = true;
             PaintType paintType = _brushstrokID.paintType;
 
@@ -294,12 +306,24 @@ namespace Drawing
                     float newTime = stroke.brushTime;
                     if (_lastTime >= 0 && _currentTime >= 0)
                     {
-                        float idPercentage = ExtensionMethods.Remap(j, startID, endID, 0, 1);
+                        float idPercentage = ExtensionMethods.Remap(j, startID, endID - 1, 0, 1);
                         newTime = (_currentTime - _lastTime) * idPercentage + _lastTime;
                     }
 
+                    Debug.Log($"{newTime} ___ {previousTime}");
                     stroke.brushTime = newTime;
                     stroke.lastTime = previousTime;
+                    
+                    Vector2 AtoB = stroke.GetCurrentPos() - stroke.GetLastPos();
+                    AtoB = AtoB.normalized;
+                    AtoB.x *= 50;
+                    AtoB.y *= 50;
+
+                    Vector2 lastPos = stroke.GetLastPos() - AtoB;
+                    Vector2 currentPos = stroke.GetCurrentPos() + AtoB;
+                    
+                    ball1.position = new Vector3((stroke.GetCurrentPos().x + AtoB.x) / 2048 - 0.5f, (stroke.GetCurrentPos().y + AtoB.y) / 2048 - 0.5f, -0.1f);
+                    ball2.position = new Vector3((stroke.GetLastPos().x - AtoB.x) / 2048 - 0.5f, (stroke.GetLastPos().y - AtoB.y) / 2048 - 0.5f, -0.1f);
 
                     brushStrokes[j] = stroke;
             

@@ -41,10 +41,11 @@ namespace UI
         private CommandManager commandManager;
         private Drawing.Drawing drawer;
         private float timeIncrease;
-        private bool shouldTimelinePause = true;
-        private bool timelinePauseButton = true;
-        private MouseAction lastMouseAction;
+        private bool shouldTimelinePause;
+        private bool timelinePauseButton;
         private bool firstTimeSelected;
+        private bool shouldMoveTimeline;
+        private MouseAction lastMouseAction;
 
         private bool isMouseInsideTimeline => IsMouseOver(corners);
 
@@ -143,16 +144,24 @@ namespace UI
         }
         private bool PlaceTimelineIndicator()
         {
-            if (IsMouseOver(corners) && Input.GetMouseButton(1) && UIManager.isFullView)
+            if (Input.GetMouseButtonDown(1) && IsMouseOver(corners))
             {
-                var position = timelineScrollRect.position;
-                timelineScrollRect.position = new Vector3(Input.mousePosition.x, position.y, position.z);
-                time = Input.mousePosition.x.Remap(corners[0].x, corners[2].x, 0, 1);
-                timeIncrease = Time.timeSinceLevelLoad;
-                EventSystem<float>.RaiseEvent(EventType.TIME, time);
-                return true;
+                shouldMoveTimeline = true;
             }
-            return false;
+            if (Input.GetMouseButtonUp(1))
+            {
+                shouldMoveTimeline = false;
+            }
+            
+            if (!UIManager.isFullView || !shouldMoveTimeline)
+                return false;
+            
+            var position = timelineScrollRect.position;
+            timelineScrollRect.position = new Vector3(Input.mousePosition.x, position.y, position.z);
+            time = Input.mousePosition.x.Remap(corners[0].x, corners[2].x, 0, 1);
+            timeIncrease = Time.timeSinceLevelLoad;
+            EventSystem<float>.RaiseEvent(EventType.TIME, time);
+            return true;
         }
         private void MoveTimelineTimIndicator(float _time)
         {
@@ -212,6 +221,7 @@ namespace UI
                 }
             }
             //Otherwise check if you are interacting with any other timeline clips
+            timelineRect.GetWorldCorners(corners);
             if (Input.GetMouseButton(0) && isMouseInsideTimeline)
             {
                 for (int i = 0; i < clipsOrderderd.Count; i++)

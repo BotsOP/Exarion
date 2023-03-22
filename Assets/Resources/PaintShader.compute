@@ -6,11 +6,15 @@
 #pragma kernel HighlightSelection
 #pragma kernel EraseHighlight
 
+
 RWTexture2D<float4> _ResultTex;
 RWTexture2D<int> _IdTex;
 RWTexture2D<float> _SelectTex;
+
 float2 _CursorPos;
+float2 _CursorPosPlusBrushSize;
 float2 _LastCursorPos;
+float2 _LastCursorPosPlusBrushSize;
 float2 _StartPos;
 float _BrushSize;
 float _TimeColor;
@@ -37,14 +41,30 @@ float2 ClosestPointOnLine(const float2 lineStart, const float2 lineEnd, const fl
 
 float CalculatePaintColor(float2 paintPos)
 {
-    const float2 AtoB = _CursorPos - _LastCursorPos;
-    const float2 BtoA = _LastCursorPos - _CursorPos;
+    float2 AtoB = _CursorPos - _LastCursorPos;
     normalize(AtoB);
-    normalize(BtoA);
+    AtoB.x *= 50;
+    AtoB.y *= 50;
 
-    const float2 paintPosOnLine = ClosestPointOnLine(_LastCursorPos + BtoA * _BrushSize, _CursorPos + AtoB * _BrushSize, paintPos);
+    const float2 paintPosOnLine = ClosestPointOnLine(_LastCursorPos, _CursorPos, paintPos);
     float distanceToPointA = distance(_LastCursorPos, paintPosOnLine);
-    distanceToPointA /= distance(_LastCursorPos + BtoA * _BrushSize, _CursorPos + AtoB * _BrushSize);
+    distanceToPointA /= distance(_LastCursorPos, _CursorPos);
+    
+    float paintColor = lerp(_PreviousTimeColor, _TimeColor, distanceToPointA);
+    paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
+    return paintColor;
+}
+
+float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
+{
+    float2 AtoB = _CursorPos - _LastCursorPos;
+    normalize(AtoB);
+    AtoB.x *= 50;
+    AtoB.y *= 50;
+
+    const float2 paintPosOnLine = ClosestPointOnLine(startPos, endPos, paintPos);
+    float distanceToPointA = distance(startPos, paintPosOnLine);
+    distanceToPointA /= distance(startPos, endPos);
     
     float paintColor = lerp(_PreviousTimeColor, _TimeColor, distanceToPointA);
     paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
@@ -88,7 +108,6 @@ void PaintUnderOwnLine (uint3 id : SV_DispatchThreadID)
 void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
 {
     float2 paintPos = _StartPos.xy + id.xy;
-    _LastCursorPos -= float2(0.01, 0.01);
 
     if(_IdTex[paintPos] != -1)
     {
@@ -111,9 +130,24 @@ void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
 
     if(paintColor <= 0) { return; }
 
-    paintColor = CalculatePaintColor(paintPos);
+    if(_FirstStroke)
+    {
+        paintColor = CalculatePaintColor(paintPos, _LastCursorPosPlusBrushSize, _CursorPos);
+    }
+    else
+    {
+        paintColor = CalculatePaintColor(paintPos);
+    }
 
     _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+
+    float2 BtoA = _LastCursorPos - _CursorPos;
+    float2 paintPosToB = _CursorPos - paintPos;
+        
+    if(dot(BtoA, paintPosToB) > 0.0)
+    {
+        return;
+    }
 
     _IdTex[paintPos] = _StrokeID;
 }
@@ -219,7 +253,7 @@ void EraseHighlight (uint3 id : SV_DispatchThreadID)
 
     if(paintColor <= 0) { return; }
 
-    _SelectTex[paintPos] = float4(1, 1, 1, 1);
+    _SelectTex[paintPos] = 1;
 }
 
 
