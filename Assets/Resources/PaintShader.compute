@@ -20,6 +20,7 @@ float _BrushSize;
 float _TimeColor;
 float _PreviousTimeColor;
 bool _FirstStroke;
+bool _LastStroke;
 bool _DrawOverOwnLine;
 int _StrokeID;
 
@@ -39,35 +40,37 @@ float2 ClosestPointOnLine(const float2 lineStart, const float2 lineEnd, const fl
     return lineStart + projectionDistance * lineDirection;
 }
 
-float CalculatePaintColor(float2 paintPos)
+float cubicBezierCircle(float t)
 {
-    float2 AtoB = _CursorPos - _LastCursorPos;
-    normalize(AtoB);
-    AtoB.x *= 50;
-    AtoB.y *= 50;
-
-    const float2 paintPosOnLine = ClosestPointOnLine(_LastCursorPos, _CursorPos, paintPos);
-    float distanceToPointA = distance(_LastCursorPos, paintPosOnLine);
-    distanceToPointA /= distance(_LastCursorPos, _CursorPos);
+    float t2 = t * t;
+    float t3 = t2 * t;
+    float oneMinusT = 1.0 - t;
+    float oneMinusT2 = oneMinusT * oneMinusT;
+    float oneMinusT3 = oneMinusT2 * oneMinusT;
     
-    float paintColor = lerp(_PreviousTimeColor, _TimeColor, distanceToPointA);
-    paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
-    return paintColor;
+    float2 result = float2(0, 0) * oneMinusT3 +
+                    float2(0, 0) * 3.0 * oneMinusT2 * t +
+                    float2(0, 0) * 3.0 * oneMinusT * t2 +
+                    float2(1, 1) * t3;
+                    
+    return result.x;
 }
 
 float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
 {
-    float2 AtoB = _CursorPos - _LastCursorPos;
-    normalize(AtoB);
-    AtoB.x *= 50;
-    AtoB.y *= 50;
-
     const float2 paintPosOnLine = ClosestPointOnLine(startPos, endPos, paintPos);
-    float distanceToPointA = distance(startPos, paintPosOnLine);
-    distanceToPointA /= distance(startPos, endPos);
-    
+
+    float distLine = distance(startPos, endPos);
+    float distanceToPointA = distance(startPos, paintPosOnLine) / distLine;
     float paintColor = lerp(_PreviousTimeColor, _TimeColor, distanceToPointA);
-    paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
+    
+    float distToLine = distance(paintPosOnLine, paintPos);
+    distToLine = (cubicBezierCircle(distToLine / _BrushSize) * _BrushSize) / distLine;
+    float paintColorOutside = _TimeColor - lerp(_PreviousTimeColor, _TimeColor, distToLine);
+    
+    paintColor -= paintColorOutside;
+    paintColor = clamp(paintColor, _PreviousTimeColor - (_TimeColor - _PreviousTimeColor), _TimeColor);
+    
     return paintColor;
 }
 
@@ -98,7 +101,7 @@ void PaintUnderOwnLine (uint3 id : SV_DispatchThreadID)
 
     if(paintColor <= 0) { return; }
 
-    paintColor = CalculatePaintColor(paintPos);
+    paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
 
     _IdTex[paintPos] = _StrokeID;
     _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
@@ -114,15 +117,12 @@ void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
         return;
     }
 
-    if(distance(paintPos, _LastCursorPos) < _BrushSize + 1)
+    const float2 AtoB = _CursorPos - _LastCursorPos;
+    const float2 paintPosToA = _LastCursorPos - paintPos;
+    
+    if(dot(normalize(AtoB), paintPosToA) > 0.0 && !_FirstStroke)
     {
-        const float2 AtoB = _CursorPos - _LastCursorPos;
-        const float2 paintPosToA = _LastCursorPos - paintPos;
-        
-        if(dot(AtoB, paintPosToA) > 0.0 && !_FirstStroke)
-        {
-            return;
-        }
+        return;
     }
 
     float paintColor = LineSegment2DSDF(paintPos, _LastCursorPos, _CursorPos);
@@ -136,18 +136,10 @@ void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
     }
     else
     {
-        paintColor = CalculatePaintColor(paintPos);
+        paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
     }
 
     _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
-
-    float2 BtoA = _LastCursorPos - _CursorPos;
-    float2 paintPosToB = _CursorPos - paintPos;
-        
-    if(dot(BtoA, paintPosToB) > 0.0)
-    {
-        return;
-    }
 
     _IdTex[paintPos] = _StrokeID;
 }
@@ -179,7 +171,7 @@ void PaintOverOwnLine (uint3 id : SV_DispatchThreadID)
 
     if(paintColor <= 0) { return; }
 
-    paintColor = CalculatePaintColor(paintPos);
+    paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
 
     _IdTex[paintPos] = _StrokeID;
     _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
@@ -207,7 +199,7 @@ void PaintOverEverything (uint3 id : SV_DispatchThreadID)
 
     if(paintColor <= 0) { return; }
 
-    paintColor = CalculatePaintColor(paintPos);
+    paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
 
     _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
     _IdTex[paintPos] = _StrokeID;

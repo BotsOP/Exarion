@@ -113,7 +113,7 @@ namespace Drawing
             threadGroupSize.y = Mathf.CeilToInt(imageHeight / threadGroupSizeOut.y);
         }
     
-        public void Draw(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, PaintType _paintType, float _lastTime = 0, float _brushTime = 0, bool _firstStroke = false, int _strokeID = 0)
+        public void Draw(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, PaintType _paintType, float _lastTime = 0, float _brushTime = 0, bool _firstStroke = false, int _strokeID = 0, bool _lastStroke = false)
         {
             threadGroupSize.x = Mathf.CeilToInt((math.abs(_lastPos.x - _currentPos.x) + _strokeBrushSize * 2) / threadGroupSizeOut.x);
             threadGroupSize.y = Mathf.CeilToInt((math.abs(_lastPos.y - _currentPos.y) + _strokeBrushSize * 2) / threadGroupSizeOut.y);
@@ -154,6 +154,7 @@ namespace Drawing
             }
 
             paintShader.SetBool("_FirstStroke", _firstStroke);
+            paintShader.SetBool("_LastStroke", _lastStroke);
             paintShader.SetVector("_CursorPos", _currentPos);
             paintShader.SetVector("_LastCursorPos", _lastPos);
             paintShader.SetVector("_StartPos", startPos);
@@ -297,7 +298,6 @@ namespace Drawing
                     continue;
                 }
 
-                //If stroke is the one you want to redraw then redo it using the new time variables
                 float previousTime = _lastTime;
                 for (int j = startID; j < endID; j++)
                 {
@@ -306,11 +306,11 @@ namespace Drawing
                     float newTime = stroke.brushTime;
                     if (_lastTime >= 0 && _currentTime >= 0)
                     {
-                        float idPercentage = ExtensionMethods.Remap(j, startID, endID - 1, 0, 1);
+                        float idPercentage = ExtensionMethods.Remap(j + 1, startID, endID + 1, 0, 1);
                         newTime = (_currentTime - _lastTime) * idPercentage + _lastTime;
                     }
 
-                    Debug.Log($"{newTime} ___ {previousTime}");
+                    //Debug.Log($"{newTime} ___ {previousTime}");
                     stroke.brushTime = newTime;
                     stroke.lastTime = previousTime;
                     
@@ -319,15 +319,19 @@ namespace Drawing
                     AtoB.x *= 50;
                     AtoB.y *= 50;
 
-                    Vector2 lastPos = stroke.GetLastPos() - AtoB;
-                    Vector2 currentPos = stroke.GetCurrentPos() + AtoB;
-                    
                     ball1.position = new Vector3((stroke.GetCurrentPos().x + AtoB.x) / 2048 - 0.5f, (stroke.GetCurrentPos().y + AtoB.y) / 2048 - 0.5f, -0.1f);
                     ball2.position = new Vector3((stroke.GetLastPos().x - AtoB.x) / 2048 - 0.5f, (stroke.GetLastPos().y - AtoB.y) / 2048 - 0.5f, -0.1f);
 
                     brushStrokes[j] = stroke;
             
-                    Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
+                    Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, 
+                         stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID, j == endID - 1);
+
+                    if (j == endID - 1)
+                    {
+                        Debug.Log($"{newTime} ___ {previousTime}");
+                        Debug.Log($"last stroke");
+                    }
 
                     firstLoop = false;
                     previousTime = newTime;
