@@ -42,18 +42,8 @@ float2 ClosestPointOnLine(const float2 lineStart, const float2 lineEnd, const fl
 
 float cubicBezierCircle(float t)
 {
-    float t2 = t * t;
-    float t3 = t2 * t;
     float oneMinusT = 1.0 - t;
-    float oneMinusT2 = oneMinusT * oneMinusT;
-    float oneMinusT3 = oneMinusT2 * oneMinusT;
-    
-    float2 result = float2(0, 0) * oneMinusT3 +
-                    float2(0, 0) * 3.0 * oneMinusT2 * t +
-                    float2(0, 0) * 3.0 * oneMinusT * t2 +
-                    float2(1, 1) * t3;
-                    
-    return result.x;
+    return 3.0 * oneMinusT * oneMinusT * t * 0.0 + t * t * t * 1.0;
 }
 
 float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
