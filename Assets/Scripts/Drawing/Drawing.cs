@@ -29,8 +29,6 @@ namespace Drawing
         public readonly CustomRenderTexture rtSelect;
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
         public List<BrushStroke> brushStrokes = new List<BrushStroke>();
-        public Transform ball1;
-        public Transform ball2;
 
         public int brushDrawID => brushStrokes.Count;
 
@@ -297,7 +295,7 @@ namespace Drawing
                     RedrawStrokeOptimized(brushStrokesID[i], collisionBox);
                     continue;
                 }
-
+                
                 float previousTime = _lastTime;
                 for (int j = startID; j < endID; j++)
                 {
@@ -306,7 +304,7 @@ namespace Drawing
                     float newTime = stroke.brushTime;
                     if (_lastTime >= 0 && _currentTime >= 0)
                     {
-                        float idPercentage = ExtensionMethods.Remap(j + 1, startID, endID + 1, 0, 1);
+                        float idPercentage = j.Remap(startID, endID, 0, 1);
                         newTime = (_currentTime - _lastTime) * idPercentage + _lastTime;
                     }
 
@@ -314,14 +312,6 @@ namespace Drawing
                     stroke.brushTime = newTime;
                     stroke.lastTime = previousTime;
                     
-                    Vector2 AtoB = stroke.GetCurrentPos() - stroke.GetLastPos();
-                    AtoB = AtoB.normalized;
-                    AtoB.x *= 50;
-                    AtoB.y *= 50;
-
-                    ball1.position = new Vector3((stroke.GetCurrentPos().x + AtoB.x) / 2048 - 0.5f, (stroke.GetCurrentPos().y + AtoB.y) / 2048 - 0.5f, -0.1f);
-                    ball2.position = new Vector3((stroke.GetLastPos().x - AtoB.x) / 2048 - 0.5f, (stroke.GetLastPos().y - AtoB.y) / 2048 - 0.5f, -0.1f);
-
                     brushStrokes[j] = stroke;
             
                     Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, 

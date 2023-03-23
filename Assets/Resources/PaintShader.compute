@@ -55,7 +55,8 @@ float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
     float paintColor = lerp(_PreviousTimeColor, _TimeColor, distanceToPointA);
     
     float distToLine = distance(paintPosOnLine, paintPos);
-    distToLine = (cubicBezierCircle(distToLine / _BrushSize) * _BrushSize) / distLine;
+    distToLine = saturate((cubicBezierCircle(distToLine / _BrushSize) * _BrushSize) / distLine);
+    
     float paintColorOutside = _TimeColor - lerp(_PreviousTimeColor, _TimeColor, distToLine);
     
     paintColor -= paintColorOutside;
@@ -120,14 +121,7 @@ void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
 
     if(paintColor <= 0) { return; }
 
-    if(_FirstStroke)
-    {
-        paintColor = CalculatePaintColor(paintPos, _LastCursorPosPlusBrushSize, _CursorPos);
-    }
-    else
-    {
-        paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
-    }
+    paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
 
     _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
 
