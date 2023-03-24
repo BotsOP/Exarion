@@ -295,18 +295,25 @@ namespace Drawing
                 
                 float newTimeStart = Mathf.Lerp(_lastTime, _currentTime, (startID).Remap(startID, endID, 0, 1));
                 float newTimeEnd = Mathf.Lerp(_lastTime, _currentTime, (startID + 1).Remap(startID, endID, 0, 1));
-                float extraTime = (newTimeEnd - newTimeStart);
-
+                float extraTime = newTimeEnd - newTimeStart;
                 int strokeCounter = 0;
-                
                 for (int j = startID; j < endID; j++)
                 {
                     BrushStroke stroke = brushStrokes[j];
 
-                    float newTime = _lastTime + extraTime * (1 + extraTime + extraTime / 2) * (strokeCounter + 1);
-                    float lastTime = _lastTime + extraTime * (1 + extraTime + extraTime / 2) * strokeCounter;
+                    float newTime = _lastTime + extraTime * (1 + extraTime) * (strokeCounter + 1);
+                    float lastTime = _lastTime + extraTime * (1 + extraTime) * strokeCounter;
 
-                    //Debug.Log($"{newTime} ___ {previousTime}");
+                    if (!firstLoop)
+                    {
+                        Vector2 lineDir = (stroke.GetCurrentPos() - stroke.GetLastPos()).normalized * stroke.strokeBrushSize;
+                        Vector2 currentPos = stroke.GetCurrentPos() + lineDir;
+                        float distLine = Vector2.Distance(stroke.GetLastPos(), currentPos);
+                        float brushSizeTime = stroke.strokeBrushSize.Remap(0, distLine, 0, newTime - lastTime);
+
+                        lastTime -= brushSizeTime;
+                    }
+
                     stroke.brushTime = newTime;
                     stroke.lastTime = lastTime;
 
@@ -314,12 +321,6 @@ namespace Drawing
             
                     Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, 
                          stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
-
-                    if (j == endID - 1)
-                    {
-                        Debug.Log($"{newTime} ___ {lastTime}");
-                        Debug.Log($"last stroke");
-                    }
 
                     firstLoop = false;
                     strokeCounter++;

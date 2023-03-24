@@ -60,8 +60,7 @@ float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
     
     float paintColorOutside = (_TimeColor - _PreviousTimeColor) * distToLine;
     
-    paintColor -= paintColorOutside - (distanceToPointA) * 0.01;
-    //paintColor = clamp(paintColor, 0, _TimeColor);
+    paintColor -= paintColorOutside;
     
     return paintColor;
 }
@@ -103,7 +102,6 @@ void PaintUnderOwnLine (uint3 id : SV_DispatchThreadID)
 void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
 {
     float2 paintPos = _StartPos.xy + id.xy;
-    //_LastCursorPos -= float2(0.01, 1);
 
     if(_IdTex[paintPos] != -1)
     {
