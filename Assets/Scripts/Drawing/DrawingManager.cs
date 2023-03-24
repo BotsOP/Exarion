@@ -198,8 +198,6 @@ namespace Drawing
                 clip.endID -= count;
             }
             
-            Vector4 collisionBox = _brushStrokeID.GetCollisionBox();
-            
             drawer.brushStrokesID.Remove(_brushStrokeID);
             drawer.lastDrawnStrokes.Remove(_brushStrokeID);
             

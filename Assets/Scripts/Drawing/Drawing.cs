@@ -111,7 +111,7 @@ namespace Drawing
             threadGroupSize.y = Mathf.CeilToInt(imageHeight / threadGroupSizeOut.y);
         }
     
-        public void Draw(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, PaintType _paintType, float _lastTime = 0, float _brushTime = 0, bool _firstStroke = false, int _strokeID = 0, bool _lastStroke = false)
+        public void Draw(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, PaintType _paintType, float _lastTime = 0, float _brushTime = 0, bool _firstStroke = false, int _strokeID = 0)
         {
             threadGroupSize.x = Mathf.CeilToInt((math.abs(_lastPos.x - _currentPos.x) + _strokeBrushSize * 2) / threadGroupSizeOut.x);
             threadGroupSize.y = Mathf.CeilToInt((math.abs(_lastPos.y - _currentPos.y) + _strokeBrushSize * 2) / threadGroupSizeOut.y);
@@ -152,7 +152,6 @@ namespace Drawing
             }
 
             paintShader.SetBool("_FirstStroke", _firstStroke);
-            paintShader.SetBool("_LastStroke", _lastStroke);
             paintShader.SetVector("_CursorPos", _currentPos);
             paintShader.SetVector("_LastCursorPos", _lastPos);
             paintShader.SetVector("_StartPos", startPos);
@@ -202,13 +201,13 @@ namespace Drawing
             return new Vector2(lowestX, lowestY);
         }
 
-        public void RedrawStroke(BrushStrokeID _brushstrokStartID)
+        public void RedrawStroke(BrushStrokeID _brushstrokeID)
         {
-            int startID = _brushstrokStartID.startID;
-            int endID = _brushstrokStartID.endID;
+            int startID = _brushstrokeID.startID;
+            int endID = _brushstrokeID.endID;
             int newStrokeID = GetNewID();
             bool firstLoop = true;
-            PaintType paintType = _brushstrokStartID.paintType;
+            PaintType paintType = _brushstrokeID.paintType;
             
             for (int i = startID; i < endID; i++)
             {
@@ -220,15 +219,14 @@ namespace Drawing
             }
         }
 
-        private void RedrawStroke(BrushStrokeID _brushstrokStartID, PaintType _newPaintType)
+        private void RedrawStroke(BrushStrokeID _brushstrokeID, PaintType _newPaintType)
         {
-            int startID = _brushstrokStartID.startID;
-            int endID = _brushstrokStartID.endID;
+            int startID = _brushstrokeID.startID;
+            int endID = _brushstrokeID.endID;
             int newStrokeID = GetNewID();
             bool firstLoop = true;
             PaintType paintType = _newPaintType;
             
-            //Add first removing the id
             for (int i = startID; i < endID; i++)
             {
                 BrushStroke stroke = brushStrokes[i];
@@ -239,15 +237,15 @@ namespace Drawing
             }
         }
 
-        public void RedrawStrokeOptimized(BrushStrokeID _brushstrokID, Vector4 _collisionBox)
+        public void RedrawStrokeOptimized(BrushStrokeID _brushstrokeID, Vector4 _collisionBox)
         {
-            int startID = _brushstrokID.startID;
-            int endID = _brushstrokID.endID;
+            int startID = _brushstrokeID.startID;
+            int endID = _brushstrokeID.endID;
             int newStrokeID = GetNewID();
             bool firstLoop = true;
-            PaintType paintType = _brushstrokID.paintType;
+            PaintType paintType = _brushstrokeID.paintType;
 
-            if (!CheckCollision(_brushstrokID.GetCollisionBox(), _collisionBox))
+            if (!CheckCollision(_brushstrokeID.GetCollisionBox(), _collisionBox))
                 return;
 
             Vector4 collisionBoxReset = _collisionBox;
@@ -267,71 +265,70 @@ namespace Drawing
             }
         }
 
-        public void RedrawStroke(BrushStrokeID _brushstrokID, float _lastTime, float _currentTime)
+        public void RedrawStroke(BrushStrokeID _brushstrokeID, float _lastTime, float _currentTime)
         {
-            int startID = _brushstrokID.startID;
-            int endID = _brushstrokID.endID;
+            int startID = _brushstrokeID.startID;
+            int endID = _brushstrokeID.endID;
             int newStrokeID = GetNewID();
-            _brushstrokID.lastTime = _lastTime;
-            _brushstrokID.currentTime = _currentTime;
+            _brushstrokeID.lastTime = _lastTime;
+            _brushstrokeID.currentTime = _currentTime;
             Debug.Log($"{_lastTime} {_currentTime}");
             bool firstLoop = true;
-            PaintType paintType = _brushstrokID.paintType;
-
+            PaintType paintType = _brushstrokeID.paintType;
 
             //First erase the stroke you want to redraw
             if (paintType is PaintType.PaintUnderEverything or PaintType.PaintOverOwnLine)
             {
-                RedrawStroke(_brushstrokID, PaintType.Erase);
+                RedrawStroke(_brushstrokeID, PaintType.Erase);
             }
 
-            Vector4 collisionBox = _brushstrokID.GetCollisionBox();
+            Vector4 collisionBox = _brushstrokeID.GetCollisionBox();
 
             for (int i = 0; i < brushStrokesID.Count; i++)
             {
                 //If stroke is not the stroke you want to redraw. Redraw it optimized
-                if (brushStrokesID[i] != _brushstrokID)
+                if (brushStrokesID[i] != _brushstrokeID)
                 {
                     RedrawStrokeOptimized(brushStrokesID[i], collisionBox);
                     continue;
                 }
                 
-                float previousTime = _lastTime;
+                float newTimeStart = Mathf.Lerp(_lastTime, _currentTime, (startID).Remap(startID, endID, 0, 1));
+                float newTimeEnd = Mathf.Lerp(_lastTime, _currentTime, (startID + 1).Remap(startID, endID, 0, 1));
+                float extraTime = (newTimeEnd - newTimeStart);
+
+                int strokeCounter = 0;
+                
                 for (int j = startID; j < endID; j++)
                 {
                     BrushStroke stroke = brushStrokes[j];
-        
-                    float newTime = stroke.brushTime;
-                    if (_lastTime >= 0 && _currentTime >= 0)
-                    {
-                        float idPercentage = j.Remap(startID, endID, 0, 1);
-                        newTime = (_currentTime - _lastTime) * idPercentage + _lastTime;
-                    }
+
+                    float newTime = _lastTime + extraTime * (1 + extraTime + extraTime / 2) * (strokeCounter + 1);
+                    float lastTime = _lastTime + extraTime * (1 + extraTime + extraTime / 2) * strokeCounter;
 
                     //Debug.Log($"{newTime} ___ {previousTime}");
                     stroke.brushTime = newTime;
-                    stroke.lastTime = previousTime;
-                    
+                    stroke.lastTime = lastTime;
+
                     brushStrokes[j] = stroke;
             
                     Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, 
-                         stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID, j == endID - 1);
+                         stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
 
                     if (j == endID - 1)
                     {
-                        Debug.Log($"{newTime} ___ {previousTime}");
+                        Debug.Log($"{newTime} ___ {lastTime}");
                         Debug.Log($"last stroke");
                     }
 
                     firstLoop = false;
-                    previousTime = newTime;
+                    strokeCounter++;
                 }
             }
         }
 
         public void RedrawAll()
         {
-            
             Graphics.SetRenderTarget(rtID);
             Color idColor = new Color(-1, -1, -1);
             GL.Clear(false, true, idColor);
@@ -345,7 +342,6 @@ namespace Drawing
         
         public void RedrawAllOptimized(BrushStrokeID _brushStrokeID)
         {
-            
             Graphics.SetRenderTarget(rtID);
             Color idColor = new Color(-1, -1, -1);
             GL.Clear(false, true, idColor);
