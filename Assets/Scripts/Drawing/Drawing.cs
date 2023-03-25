@@ -273,7 +273,6 @@ namespace Drawing
             _brushstrokeID.lastTime = _lastTime;
             _brushstrokeID.currentTime = _currentTime;
             Debug.Log($"{_lastTime} {_currentTime}");
-            bool firstLoop = true;
             PaintType paintType = _brushstrokeID.paintType;
 
             //First erase the stroke you want to redraw
@@ -293,36 +292,50 @@ namespace Drawing
                     continue;
                 }
                 
-                float newTimeStart = Mathf.Lerp(_lastTime, _currentTime, (startID).Remap(startID, endID, 0, 1));
-                float newTimeEnd = Mathf.Lerp(_lastTime, _currentTime, (startID + 1).Remap(startID, endID, 0, 1));
-                float extraTime = newTimeEnd - newTimeStart;
-                int strokeCounter = 0;
-                for (int j = startID; j < endID; j++)
+                float extraTime = (_currentTime - _lastTime) / (endID - startID);
+                float timePadding;
+
+                {
+                    float newTime = _lastTime + extraTime * (1 + extraTime + extraTime) * 1;
+                    float lastTime = _lastTime;
+                    
+                    BrushStroke strokeStartReference = brushStrokes[startID + 1];
+                    Vector2 lineDir = (strokeStartReference.GetCurrentPos() - strokeStartReference.GetLastPos()).normalized * strokeStartReference.strokeBrushSize;
+                    Vector2 currentPos = strokeStartReference.GetCurrentPos() + lineDir;
+                    float distLine = Vector2.Distance(strokeStartReference.GetLastPos(), currentPos);
+                    timePadding = strokeStartReference.strokeBrushSize.Remap(0, distLine, 0, newTime - lastTime);
+                    
+                    BrushStroke strokeStart = brushStrokes[startID];
+                    strokeStart.brushTime = newTime;
+                    strokeStart.lastTime = lastTime;
+                    
+                    Draw(strokeStart.GetLastPos(), strokeStart.GetCurrentPos(), strokeStart.strokeBrushSize, paintType, 
+                         strokeStart.lastTime, strokeStart.brushTime, true, newStrokeID);
+                }
+                
+                int strokeCounter = 1;
+                for (int j = startID + 1; j < endID; j++)
                 {
                     BrushStroke stroke = brushStrokes[j];
 
-                    float newTime = _lastTime + extraTime * (1 + extraTime) * (strokeCounter + 1);
-                    float lastTime = _lastTime + extraTime * (1 + extraTime) * strokeCounter;
+                    float newTime = _lastTime + extraTime * (1 + extraTime + extraTime) * (strokeCounter + 1);
+                    float lastTime = _lastTime + extraTime * (1 + extraTime + extraTime) * strokeCounter;
 
-                    if (!firstLoop)
-                    {
-                        Vector2 lineDir = (stroke.GetCurrentPos() - stroke.GetLastPos()).normalized * stroke.strokeBrushSize;
-                        Vector2 currentPos = stroke.GetCurrentPos() + lineDir;
-                        float distLine = Vector2.Distance(stroke.GetLastPos(), currentPos);
-                        float brushSizeTime = stroke.strokeBrushSize.Remap(0, distLine, 0, newTime - lastTime);
+                    Vector2 lineDir = (stroke.GetCurrentPos() - stroke.GetLastPos()).normalized * stroke.strokeBrushSize;
+                    Vector2 currentPos = stroke.GetCurrentPos() + lineDir;
+                    float distLine = Vector2.Distance(stroke.GetLastPos(), currentPos);
+                    float brushSizeTime = stroke.strokeBrushSize.Remap(0, distLine, 0, newTime - lastTime);
 
-                        lastTime -= brushSizeTime;
-                    }
+                    lastTime -= brushSizeTime;
 
-                    stroke.brushTime = newTime;
-                    stroke.lastTime = lastTime;
+                    stroke.brushTime = newTime + timePadding;
+                    stroke.lastTime = lastTime + timePadding;
 
                     brushStrokes[j] = stroke;
             
                     Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, 
-                         stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
+                         stroke.lastTime, stroke.brushTime, false, newStrokeID);
 
-                    firstLoop = false;
                     strokeCounter++;
                 }
             }
