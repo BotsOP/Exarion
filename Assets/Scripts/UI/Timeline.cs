@@ -467,6 +467,7 @@ namespace UI
             CheckClipCollisions(timelineClip, 0);
         }
 
+        //TODO Add an overload to accept timelineClips so delete timelineclip is optimized
         private void RemoveClip(BrushStrokeID _brushStrokeID)
         {
             for (int i = 0; i < clipsOrderderd.Count; i++)
