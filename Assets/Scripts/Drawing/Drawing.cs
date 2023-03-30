@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Managers;
 using Unity.Mathematics;
 using UnityEngine;
@@ -55,14 +57,19 @@ namespace Drawing
         private int highlightEraseKernelID;
         private Vector3 threadGroupSizeOut;
         private Vector3 threadGroupSize;
+        private int imageWidth;
+        private int imageHeight;
 
         public int GetNewID()
         {
             return Random.Range(1, 2147483647);
         }
-        public Drawing(int imageWidth, int imageHeight)
+        public Drawing(int _imageWidth, int _imageHeight)
         {
             paintShader = Resources.Load<ComputeShader>("PaintShader");
+
+            imageWidth = _imageWidth;
+            imageHeight = _imageHeight;
 
             paintUnderOwnLineKernelID = paintShader.FindKernel("PaintUnderOwnLine");
             paintUnderEverythingKernelID = paintShader.FindKernel("PaintUnderEverything");
@@ -76,19 +83,19 @@ namespace Drawing
             threadGroupSizeOut.x = threadGroupSizeX;
             threadGroupSizeOut.y = threadGroupSizeY;
 
-            rt = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
+            rt = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
             {
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
                 name = "rt",
             };
-            rtID = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RInt, RenderTextureReadWrite.Linear)
+            rtID = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.RInt, RenderTextureReadWrite.Linear)
             {
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
                 name = "rtID",
             };
-            rtSelect = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
+            rtSelect = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
             {
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
@@ -107,8 +114,8 @@ namespace Drawing
             
             Graphics.SetRenderTarget(null);
 
-            threadGroupSize.x = Mathf.CeilToInt(imageWidth / threadGroupSizeOut.x);
-            threadGroupSize.y = Mathf.CeilToInt(imageHeight / threadGroupSizeOut.y);
+            threadGroupSize.x = Mathf.CeilToInt(_imageWidth / threadGroupSizeOut.x);
+            threadGroupSize.y = Mathf.CeilToInt(_imageHeight / threadGroupSizeOut.y);
         }
     
         public void Draw(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, PaintType _paintType, float _lastTime = 0, float _brushTime = 0, bool _firstStroke = false, int _strokeID = 0)
@@ -265,14 +272,11 @@ namespace Drawing
             }
         }
 
-        public void RedrawStroke(BrushStrokeID _brushstrokeID, float _lastTime, float _currentTime)
+        public void RedrawStrokeInterpolation(BrushStrokeID _brushstrokeID)
         {
             int startID = _brushstrokeID.startID;
             int endID = _brushstrokeID.endID;
             int newStrokeID = GetNewID();
-            _brushstrokeID.lastTime = _lastTime;
-            _brushstrokeID.currentTime = _currentTime;
-            Debug.Log($"{_lastTime} {_currentTime}");
             PaintType paintType = _brushstrokeID.paintType;
 
             //First erase the stroke you want to redraw
@@ -292,12 +296,12 @@ namespace Drawing
                     continue;
                 }
                 
-                float extraTime = (_currentTime - _lastTime) / (endID - startID);
+                float extraTime = (_brushstrokeID.currentTime - _brushstrokeID.lastTime) / (endID - startID);
                 float timePadding;
 
                 {
-                    float newTime = _lastTime + extraTime * (1 + extraTime + extraTime) * 1;
-                    float lastTime = _lastTime;
+                    float newTime = _brushstrokeID.lastTime + extraTime * (1 + extraTime + extraTime) * 1;
+                    float lastTime = _brushstrokeID.lastTime;
                     
                     BrushStroke strokeStartReference = brushStrokes[startID + 1];
                     Vector2 lineDir = (strokeStartReference.GetCurrentPos() - strokeStartReference.GetLastPos()).normalized * strokeStartReference.strokeBrushSize;
@@ -318,8 +322,8 @@ namespace Drawing
                 {
                     BrushStroke stroke = brushStrokes[j];
 
-                    float newTime = _lastTime + extraTime * (1 + extraTime + extraTime) * (strokeCounter + 1);
-                    float lastTime = _lastTime + extraTime * (1 + extraTime + extraTime) * strokeCounter;
+                    float newTime = _brushstrokeID.lastTime + extraTime * (1 + extraTime + extraTime) * (strokeCounter + 1);
+                    float lastTime = _brushstrokeID.lastTime + extraTime * (1 + extraTime + extraTime) * strokeCounter;
 
                     Vector2 lineDir = (stroke.GetCurrentPos() - stroke.GetLastPos()).normalized * stroke.strokeBrushSize;
                     Vector2 currentPos = stroke.GetCurrentPos() + lineDir;
@@ -343,10 +347,7 @@ namespace Drawing
 
         public void RedrawAll()
         {
-            Graphics.SetRenderTarget(rtID);
-            Color idColor = new Color(-1, -1, -1);
-            GL.Clear(false, true, idColor);
-            Graphics.SetRenderTarget(null);
+            ResetIDTex();
 
             for (int i = 0; i < brushStrokesID.Count; i++)
             {
@@ -354,21 +355,90 @@ namespace Drawing
             }
         }
         
+
         public void RedrawAllOptimized(BrushStrokeID _brushStrokeID)
         {
-            Graphics.SetRenderTarget(rtID);
-            Color idColor = new Color(-1, -1, -1);
-            GL.Clear(false, true, idColor);
-            Graphics.SetRenderTarget(null);
+            ResetIDTex();
 
             for (int i = 0; i < brushStrokesID.Count; i++)
             {
+                //Probably not even need to do this check because redraw optimized will still redraw whole stroke
                 if (brushStrokesID[i] == _brushStrokeID)
                 {
                     RedrawStroke(brushStrokesID[i]);
                 }
                 RedrawStrokeOptimized(brushStrokesID[i], _brushStrokeID.GetCollisionBox());
             }
+        }
+        
+        //Redraws everything and if a stroke needs to be interpolated it does so automatically
+        public void RedrawAllSafe(BrushStrokeID _brushStrokeID)
+        {
+            ResetIDTex();
+
+            Vector4 collisionBox = _brushStrokeID.GetCollisionBox();
+
+            for (int i = 0; i < brushStrokesID.Count; i++)
+            {
+                BrushStroke start = brushStrokes[brushStrokesID[i].startID];
+                BrushStroke end = brushStrokes[brushStrokesID[i].endID - 1];
+                float brushStart = start.lastTime;
+                float brushEnd = end.brushTime;
+                float brushIDStart = brushStrokesID[i].lastTime;
+                float brushIDEnd = brushStrokesID[i].currentTime;
+                if (Math.Abs(brushStart - brushIDStart) > 0.01f || Math.Abs(brushEnd - brushIDEnd) > 0.01f)
+                {
+                    RedrawStrokeInterpolation(brushStrokesID[i]);
+                }
+
+                RedrawStrokeOptimized(brushStrokesID[i], collisionBox);
+            }
+        }
+        public void RedrawAllSafe(List<BrushStrokeID> _brushStrokeIDs)
+        {
+            ResetIDTex();
+
+            Vector4 collisionBox = CombineCollisionBox(
+                _brushStrokeIDs.Select(_id => _id.GetCollisionBox()).ToArray());
+
+            for (int i = 0; i < brushStrokesID.Count; i++)
+            {
+                BrushStroke start = brushStrokes[brushStrokesID[i].startID];
+                BrushStroke end = brushStrokes[brushStrokesID[i].endID - 1];
+                float brushStart = start.lastTime;
+                float brushEnd = end.brushTime;
+                float brushIDStart = brushStrokesID[i].lastTime;
+                float brushIDEnd = brushStrokesID[i].currentTime;
+                if (Math.Abs(brushStart - brushIDStart) > 0.01f || Math.Abs(brushEnd - brushIDEnd) > 0.01f)
+                {
+                    RedrawStrokeInterpolation(brushStrokesID[i]);
+                }
+
+                RedrawStrokeOptimized(brushStrokesID[i], collisionBox);
+            }
+        }
+        
+        private void ResetIDTex()
+        {
+            Graphics.SetRenderTarget(rtID);
+            Color idColor = new Color(-1, -1, -1);
+            GL.Clear(false, true, idColor);
+            Graphics.SetRenderTarget(null);
+        }
+
+        private Vector4 CombineCollisionBox(Vector4[] collisionBoxes)
+        {
+            Vector4 collisionBox = new Vector4(imageWidth, imageHeight, 0, 0);
+
+            foreach (Vector4 tempCollisionBox in collisionBoxes)
+            {
+                if (collisionBox.x > tempCollisionBox.x) { collisionBox.x = tempCollisionBox.x; }
+                if (collisionBox.y > tempCollisionBox.y) { collisionBox.y = tempCollisionBox.y; }
+                if (collisionBox.z < tempCollisionBox.z) { collisionBox.z = tempCollisionBox.z; }
+                if (collisionBox.w < tempCollisionBox.w) { collisionBox.w = tempCollisionBox.w; }
+            }
+
+            return collisionBox;
         }
 
         private bool CheckCollision(Vector4 _box1, Vector4 _box2)

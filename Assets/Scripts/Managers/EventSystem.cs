@@ -7,6 +7,7 @@ public enum EventType
     DRAW,
     FINISHED_STROKE,
     REDRAW_STROKE,
+    REDRAW_STROKES,
     CHANGE_BRUSH_SIZE,
     REMOVE_STROKE,
     DELETE_CLIP,

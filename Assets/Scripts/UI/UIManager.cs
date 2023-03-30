@@ -91,12 +91,12 @@ namespace UI
             IsInteracting = false;
         }
 
-        public void SwitchToFullView(Image buttonImage)
+        public void SwitchToFullView(Image _buttonImage)
         {
             isFullView = true;
-            buttonImage.GetComponent<Image>().color = selectedColor;
+            _buttonImage.GetComponent<Image>().color = selectedColor;
             if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
-            cachedButton = buttonImage;
+            cachedButton = _buttonImage;
             
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
             viewCam.targetTexture = viewFullRT;
@@ -106,12 +106,12 @@ namespace UI
             focusView.SetActive(false);
         }
     
-        public void SwitchToFocusView(Image buttonImage)
+        public void SwitchToFocusView(Image _buttonImage)
         {
             isFullView = false;
-            buttonImage.GetComponent<Image>().color = selectedColor;
+            _buttonImage.GetComponent<Image>().color = selectedColor;
             if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
-            cachedButton = buttonImage;
+            cachedButton = _buttonImage;
             
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFocus, rectTransformDisplayFocus);
             viewCam.targetTexture = viewFocusRT;
@@ -121,9 +121,9 @@ namespace UI
             focusView.SetActive(true);
         }
 
-        public void OnBrushSizeChanged(bool sliderChanged)
+        public void OnBrushSizeChanged(bool _sliderChanged)
         {
-            if (sliderChanged)
+            if (_sliderChanged)
             {
                 brushSizeInput.text = brushSizeSlider.value.ToString(CultureInfo.CurrentCulture);
             }

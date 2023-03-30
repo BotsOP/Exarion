@@ -59,8 +59,9 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.HIGHLIGHT, HighlightStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.DELETE_CLIP, DeleteStroke);
+            EventSystem<BrushStrokeID>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
+            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
             EventSystem<List<BrushStroke>, BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
-            EventSystem<BrushStrokeID, float, float>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
         }
 
         private void OnDisable()
@@ -73,8 +74,9 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.HIGHLIGHT, HighlightStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.DELETE_CLIP, DeleteStroke);
+            EventSystem<BrushStrokeID>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
+            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REDRAW_STROKES, RedrawStrokes);
             EventSystem<List<BrushStroke>, BrushStrokeID>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
-            EventSystem<BrushStrokeID, float, float>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
         }
 
         private void SetTime(float _time)
@@ -125,7 +127,6 @@ namespace Drawing
         
         private void StoppedDrawing()
         {
-            int startID2 = drawer.lastBrushDrawID;
             BrushStrokeID brushStrokeID = new BrushStrokeID(
                 drawer.lastBrushDrawID, drawer.brushDrawID, paintType, startBrushStrokeTime,
                 time, collisionBox, drawer.brushStrokesID.Count);
@@ -144,18 +145,14 @@ namespace Drawing
             firstUse = true;
         }
         
-        private void RedrawStroke(BrushStrokeID _brushStrokeID, float _brushStartTime, float _brushEndTime)
+        private void RedrawStroke(BrushStrokeID _brushStrokeID)
         {
-            for (int i = 0; i < drawer.brushStrokesID.Count; i++)
-            {
-                if (drawer.brushStrokesID[i] == _brushStrokeID)
-                {
-                    drawer.RedrawStroke(_brushStrokeID, _brushStartTime, _brushEndTime);
-                    continue;
-                }
-                
-                drawer.RedrawStrokeOptimized(drawer.brushStrokesID[i], _brushStrokeID.GetCollisionBox());
-            }
+            drawer.RedrawAllSafe(_brushStrokeID);
+        }
+        
+        private void RedrawStrokes(List<BrushStrokeID> _brushStrokeIDs)
+        {
+            drawer.RedrawAllSafe(_brushStrokeIDs);
         }
 
         private void AddStroke(List<BrushStroke> _brushStrokes, BrushStrokeID _brushStrokeID)

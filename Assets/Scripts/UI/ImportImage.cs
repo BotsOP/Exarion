@@ -36,9 +36,9 @@ public class ImportImage : MonoBehaviour, IDataPersistence
         displayMat.SetInt("_UseTexture", 0);
     }
 
-    private IEnumerator LoadImage(string path)
+    private IEnumerator LoadImage(string _path)
     {
-        using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(path))
+        using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(_path))
         {
             yield return uwr.SendWebRequest();
 

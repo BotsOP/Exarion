@@ -8,9 +8,9 @@ namespace Undo
         private Stack<ICommand> historyStack     = new Stack<ICommand>();
         private Stack<ICommand> redoHistoryStack = new Stack<ICommand>();
 
-        public void AddCommand(ICommand command)
+        public void AddCommand(ICommand _command)
         {
-            historyStack.Push(command);
+            historyStack.Push(_command);
         }
 
         public void Undo()

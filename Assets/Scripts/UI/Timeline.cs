@@ -77,7 +77,7 @@ namespace UI
             EventSystem<bool>.Subscribe(EventType.DRAW, SetTimlinePause);
             EventSystem<bool>.Subscribe(EventType.FINISHED_STROKE, SetTimlinePause);
             EventSystem<BrushStrokeID, float, float>.Subscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
-            EventSystem<BrushStrokeID, float, float, int>.Subscribe(EventType.UPDATE_CLIP, UpdateClip);
+            EventSystem<TimelineClip, int>.Subscribe(EventType.UPDATE_CLIP, UpdateClip);
         }
 
         private void OnDisable()
@@ -86,7 +86,7 @@ namespace UI
             EventSystem<bool>.Unsubscribe(EventType.DRAW, SetTimlinePause);
             EventSystem<bool>.Unsubscribe(EventType.FINISHED_STROKE, SetTimlinePause);
             EventSystem<BrushStrokeID, float, float>.Unsubscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
-            EventSystem<BrushStrokeID, float, float, int>.Unsubscribe(EventType.UPDATE_CLIP, UpdateClip);
+            EventSystem<TimelineClip, int>.Unsubscribe(EventType.UPDATE_CLIP, UpdateClip);
         }
 
         private void Update()
@@ -202,6 +202,7 @@ namespace UI
                         firstTimeSelected = false;
                     }
 
+                    List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
                     for (int i = 0; i < selectedClips.Count; i++)
                     {
                         var clip = selectedClips[i];
@@ -214,9 +215,15 @@ namespace UI
                         if (Math.Abs(selectedClipsOriginalTime[i].x - selectedClips[i].leftSideScaled) > 0.001 ||
                             Math.Abs(selectedClipsOriginalTime[i].y - selectedClips[i].rightSideScaled) > 0.001)
                         {
-                            EventSystem<BrushStrokeID, float, float>.RaiseEvent(
-                                EventType.REDRAW_STROKE, clip.brushStrokeID, clip.leftSideScaled, clip.rightSideScaled);
+                            clip.brushStrokeID.lastTime = clip.leftSideScaled;
+                            clip.brushStrokeID.currentTime = clip.rightSideScaled;
+                            brushStrokeIDs.Add(clip.brushStrokeID);
+                            //EventSystem<BrushStrokeID>.RaiseEvent(EventType.REDRAW_STROKE, clip.brushStrokeID);
                         }
+                    }
+                    if (brushStrokeIDs.Count > 0)
+                    {
+                        EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs);
                     }
                 }
             }
@@ -268,9 +275,9 @@ namespace UI
 
                         if (Math.Abs(selectedClipsOriginalTime[i].x - selectedClips[i].leftSideScaled) > 0.001 || Math.Abs(selectedClipsOriginalTime[i].y - selectedClips[i].rightSideScaled) > 0.001)
                         {
-                            RedrawCommand clipCommand = new RedrawCommand(
-                                selectedClips[i].brushStrokeID, selectedClips[i].leftSideScaled, selectedClips[i].rightSideScaled, 
-                                selectedClipsOriginalTime[i].x, selectedClipsOriginalTime[i].y, selectedClipPreviousBar[i]);
+                            RedrawCommand clipCommand = new RedrawCommand(selectedClips[i], selectedClipsOriginalTime[i].x, 
+                                                                          selectedClipsOriginalTime[i].y, selectedClipPreviousBar[i]);
+                            
                             redraws.Add(clipCommand);
                         }
                     }
@@ -482,27 +489,11 @@ namespace UI
                 }
             }
         }
-
-        private void UpdateClip(BrushStrokeID _brushStrokeID, float _lastTime, float _currentTime, int _setBar)
+        private void UpdateClip(TimelineClip _timelineClip, int _setBar)
         {
-            for (int i = 0; i < clipsOrderderd.Count; i++)
-            {
-                for (int j = 0; j < clipsOrderderd[i].Count; j++)
-                {
-                    if (clipsOrderderd[i][j].brushStrokeID == _brushStrokeID)
-                    {
-                        var clip = clipsOrderderd[i][j];
-                        
-                        clip.leftSideScaled = _lastTime;
-                        clip.rightSideScaled = _currentTime;
-                        
-                        clipsOrderderd[clip.currentBar].Remove(clip);
-                        clipsOrderderd[_setBar].Add(clip);
-                        clip.SetBar(_setBar);
-                        return;
-                    }
-                }
-            }
+            clipsOrderderd[_timelineClip.currentBar].Remove(_timelineClip);
+            clipsOrderderd[_setBar].Add(_timelineClip);
+            _timelineClip.SetBar(_setBar);
         }
         private bool IsMouseOver(Vector3[] _corners)
         {
