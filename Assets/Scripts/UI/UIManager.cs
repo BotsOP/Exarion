@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using Drawing;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +24,7 @@ namespace UI
         [SerializeField] private Image cachedButton;
         [SerializeField] private TMP_InputField brushSizeInput;
         [SerializeField] private Slider brushSizeSlider;
+        [SerializeField] private Button exportButton;
         private CustomRenderTexture viewFullRT;
         private CustomRenderTexture viewFocusRT;
         private CustomRenderTexture displayFullRT;
@@ -80,6 +82,13 @@ namespace UI
             
             EventSystem<float>.RaiseEvent(EventType.CHANGE_BRUSH_SIZE, brushSizeSlider.value);
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
+        }
+
+        public void ExportResult()
+        {
+            DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
+            ExportPNG exportPNG = new ExportPNG();
+            exportPNG.SaveImageToFile(drawingManager.drawer.rt, "");
         }
 
         public void StartInteracting()
