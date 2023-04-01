@@ -271,6 +271,7 @@ namespace Drawing
         {
             drawer.brushStrokes = _data.brushStrokes;
             drawer.brushStrokesID = _data.brushStrokesID;
+            drawer.lastDrawnStrokes = _data.lastDrawnStrokes;
             drawer.RedrawAll();
             
             for (int i = 0; i < drawer.brushStrokesID.Count; i++)
@@ -284,6 +285,7 @@ namespace Drawing
         {
             _data.brushStrokes = drawer.brushStrokes;
             _data.brushStrokesID = drawer.brushStrokesID;
+            _data.lastDrawnStrokes = drawer.lastDrawnStrokes;
         }
     }
 

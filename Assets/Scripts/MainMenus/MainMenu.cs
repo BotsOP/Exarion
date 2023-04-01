@@ -51,7 +51,7 @@ public class MainMenu : Menu
         DataPersistenceManager.instance.SaveTool();
         // load the next scene - which will in turn load the game because of 
         // OnSceneLoaded() in the DataPersistenceManager
-        SceneManager.LoadSceneAsync(sceneIndex);
+        SceneManager.LoadSceneAsync("DrawScene");
     }
 
     private void DisableMenuButtons() 

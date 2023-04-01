@@ -22,7 +22,7 @@ namespace DataPersistence
         [SerializeField] private float autoSaveTimeSeconds = 60f;
 
         private ToolData toolData;
-        private List<IDataPersistence> dataPersistenceObjects;
+        private List<IDataPersistence> dataPersistenceObjects = new List<IDataPersistence>();
         private FileDataHandler dataHandler;
 
         private string selectedProfileID = "";
@@ -108,6 +108,7 @@ namespace DataPersistence
                 this.selectedProfileID = testSelectedProfileID;
                 Debug.LogWarning("Overrode selected profile id with test id: " + testSelectedProfileID);
             }
+            LoadProject();
         }
         #endregion Profile Change/Delete/Initialize
 

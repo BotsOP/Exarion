@@ -62,7 +62,7 @@ namespace MainMenus
         private void SaveToolAndLoadScene() 
         {
             // save the game anytime before loading a new scene
-            //DataPersistenceManager.instance.SaveTool();
+            DataPersistenceManager.instance.SaveTool();
             // load the scene
             SceneManager.LoadSceneAsync("DrawScene");
         }

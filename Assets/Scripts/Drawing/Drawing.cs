@@ -31,6 +31,7 @@ namespace Drawing
         public readonly CustomRenderTexture rtSelect;
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
         public List<BrushStroke> brushStrokes = new List<BrushStroke>();
+        public List<BrushStrokeID> lastDrawnStrokes = new List<BrushStrokeID>();
 
         public int brushDrawID => brushStrokes.Count;
 
@@ -45,7 +46,6 @@ namespace Drawing
                 return lastID;
             }
         }
-        public List<BrushStrokeID> lastDrawnStrokes = new List<BrushStrokeID>();
 
         private ComputeShader paintShader;
         private int paintUnderOwnLineKernelID;
@@ -255,20 +255,12 @@ namespace Drawing
             if (!CheckCollision(_brushstrokeID.GetCollisionBox(), _collisionBox))
                 return;
 
-            Vector4 collisionBoxReset = _collisionBox;
             for (int i = startID; i < endID; i++)
             {
                 BrushStroke stroke = brushStrokes[i];
 
-                if (!CheckCollision(_collisionBox, stroke.GetCollisionBox()))
-                {
-                    _collisionBox = collisionBoxReset;
-                    continue;
-                }
-                
                 Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
                 firstLoop = false;
-                _collisionBox = collisionBoxReset;
             }
         }
 
