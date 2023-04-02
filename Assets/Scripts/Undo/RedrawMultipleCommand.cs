@@ -26,6 +26,7 @@ namespace Undo
         }
         public void Undo()
         {
+            //Updates all timeline clips
             foreach (var redraw in redrawCommands)
             {
                 redraw.brushStokeID.lastTime = redraw.lastTimeOld;
@@ -33,6 +34,7 @@ namespace Undo
                 redraw.UpdateTimelineClip(redraw.lastTimeOld, redraw.currentTimeOld);
             }
             
+            //Updates all brushstrokes
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, redrawCommands.Select(_command => _command.brushStokeID).ToList());
         }
     }

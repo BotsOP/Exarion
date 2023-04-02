@@ -10155,7 +10155,7 @@ MonoBehaviour:
     type: 3}
   timelineScrollBar: {fileID: 1992386506}
   timelineObject: {fileID: 2016834873}
-  amountTimelineBars: 3
+  amountTimelineBars: 7
   clipLeftInput: {fileID: 152474444}
   clipRightInput: {fileID: 236215534}
   notSelectedColor: {r: 0.8117648, g: 0.61960787, b: 0, a: 1}

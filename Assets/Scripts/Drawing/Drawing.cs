@@ -346,23 +346,7 @@ namespace Drawing
                 RedrawStroke(brushStrokesID[i]);
             }
         }
-        
 
-        public void RedrawAllOptimized(BrushStrokeID _brushStrokeID)
-        {
-            ResetIDTex();
-
-            for (int i = 0; i < brushStrokesID.Count; i++)
-            {
-                //Probably not even need to do this check because redraw optimized will still redraw whole stroke
-                if (brushStrokesID[i] == _brushStrokeID)
-                {
-                    RedrawStroke(brushStrokesID[i]);
-                }
-                RedrawStrokeOptimized(brushStrokesID[i], _brushStrokeID.GetCollisionBox());
-            }
-        }
-        
         //Redraws everything and if a stroke needs to be interpolated it does so automatically
         public void RedrawAllSafe(BrushStrokeID _brushStrokeID)
         {

@@ -125,7 +125,7 @@ void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
     {
         paintColor = _PreviousTimeColor;
 
-        _ResultTex[paintPos] = float4(paintColor, 0, 0, 1);
+        _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
         _IdTex[paintPos] = _StrokeID;
         return;
     }

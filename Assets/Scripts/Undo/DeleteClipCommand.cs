@@ -5,8 +5,8 @@ namespace Undo
 {
     public class DeleteClipCommand : ICommand
     {
-        private List<BrushStroke> brushStrokes;
-        private BrushStrokeID brushStrokeID;
+        public List<BrushStroke> brushStrokes;
+        public BrushStrokeID brushStrokeID;
 
         public DeleteClipCommand(List<BrushStroke> _brushStrokes, BrushStrokeID _brushStrokeID)
         {
