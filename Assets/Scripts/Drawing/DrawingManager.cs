@@ -60,7 +60,7 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.HIGHLIGHT, HighlightStroke);
-            EventSystem<List<TimelineClip>>.Subscribe(EventType.DELETE_CLIP, DeleteStroke);
+            EventSystem<List<TimelineClip>>.Subscribe(EventType.DELETE_STROKE, DeleteStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
             EventSystem<List<BrushStroke>, BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
@@ -77,7 +77,7 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.HIGHLIGHT, HighlightStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
-            EventSystem<List<TimelineClip>>.Unsubscribe(EventType.DELETE_CLIP, DeleteStroke);
+            EventSystem<List<TimelineClip>>.Unsubscribe(EventType.DELETE_STROKE, DeleteStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REDRAW_STROKES, RedrawStrokes);
             EventSystem<List<BrushStroke>, BrushStrokeID>.Unsubscribe(EventType.ADD_STROKE, AddStroke);

@@ -1,8 +1,10 @@
 using System;
 using System.Globalization;
+using DataPersistence;
 using Drawing;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace UI
@@ -89,6 +91,12 @@ namespace UI
             DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
             ExportPNG exportPNG = new ExportPNG();
             exportPNG.SaveImageToFile(drawingManager.drawer.rt, "");
+        }
+
+        public void BackToMainMenu()
+        {
+            DataPersistenceManager.instance.SaveTool();
+            SceneManager.LoadScene("MainMenu");
         }
 
         public void StartInteracting()

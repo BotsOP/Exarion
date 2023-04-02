@@ -318,7 +318,7 @@ namespace UI
                 if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
                 {
                     List<TimelineClip> timelineClips = new List<TimelineClip>(selectedClips);
-                    EventSystem<List<TimelineClip>>.RaiseEvent(EventType.DELETE_CLIP, timelineClips);
+                    EventSystem<List<TimelineClip>>.RaiseEvent(EventType.DELETE_STROKE, timelineClips);
                     RemoveClip(selectedClips);
 
                     ClearSelectedClips();

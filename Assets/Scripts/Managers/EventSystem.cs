@@ -10,7 +10,7 @@ public enum EventType
     REDRAW_STROKES,
     CHANGE_BRUSH_SIZE,
     REMOVE_STROKE,
-    DELETE_CLIP,
+    DELETE_STROKE,
     UPDATE_CLIP,
     TIME,
     VIEW_CHANGED,
