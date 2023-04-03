@@ -145,7 +145,7 @@ namespace Drawing
             ICommand draw = new DrawCommand(brushStrokes, drawer.brushStrokesID[^1]);
             commandManager.AddCommand(draw);
 
-            EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, drawer.brushStrokesID[^1]);
+            EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
             collisionBox = resetBox;
             firstUse = true;
         }
