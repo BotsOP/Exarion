@@ -1,17 +1,17 @@
 ﻿using System.Collections.Generic;
 using Drawing;
+using UnityEngine;
 
 namespace Undo
 {
     public class DeleteClipCommand : ICommand
     {
-        public List<BrushStroke> brushStrokes;
         public BrushStrokeID brushStrokeID;
 
-        public DeleteClipCommand(List<BrushStroke> _brushStrokes, BrushStrokeID _brushStrokeID)
+        public DeleteClipCommand(BrushStrokeID _brushStrokeID)
         {
+            Debug.LogWarning("didnt update this command properly");
             brushStrokeID = _brushStrokeID;
-            brushStrokes = _brushStrokes;
         }
 
         public void Execute()
@@ -21,7 +21,7 @@ namespace Undo
         }
         public void Undo()
         {
-            EventSystem<List<BrushStroke>, BrushStrokeID>.RaiseEvent(EventType.ADD_STROKE, brushStrokes, brushStrokeID);
+            EventSystem<BrushStrokeID>.RaiseEvent(EventType.ADD_STROKE, brushStrokeID);
         }
     }
 }

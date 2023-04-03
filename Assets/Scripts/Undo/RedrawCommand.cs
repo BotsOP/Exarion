@@ -10,18 +10,18 @@ namespace Undo
         public float lastTimeOld;
         public float currentTimeOld;
         public BrushStrokeID brushStokeID;
-        private int timelineBar;
+        private int previousTimelineBar;
         private TimelineClip timelineClip;
         
-        public RedrawCommand(TimelineClip _timelineClip, float _lastTimeOld, float _currentTimeOld, int _timelineBar)
+        public RedrawCommand(TimelineClip _timelineClip)
         {
             timelineClip = _timelineClip;
-            lastTimeOld = _lastTimeOld;
-            currentTimeOld = _currentTimeOld;
+            lastTimeOld = _timelineClip.lastLeftSideScaled;
+            currentTimeOld = _timelineClip.lastRightSideScaled;
+            previousTimelineBar = _timelineClip.previousTimelineBar;
             lastTime = _timelineClip.leftSideScaled;
             currentTime = _timelineClip.rightSideScaled;
             brushStokeID = _timelineClip.brushStrokeID;
-            timelineBar = _timelineBar;
         }
         
         public void Execute()
@@ -45,7 +45,7 @@ namespace Undo
         {
             timelineClip.leftSideScaled = _lastTime;
             timelineClip.rightSideScaled = _currentTime;
-            EventSystem<TimelineClip, int>.RaiseEvent(EventType.UPDATE_CLIP, timelineClip, timelineBar);
+            EventSystem<TimelineClip, int>.RaiseEvent(EventType.UPDATE_CLIP, timelineClip, previousTimelineBar);
         }
     }
 }

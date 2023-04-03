@@ -6,18 +6,16 @@ namespace Undo
 {
     public class DrawCommand : ICommand
     {
-        private List<BrushStroke> brushStrokes;
         private BrushStrokeID brushStrokeID;
 
-        public DrawCommand(List<BrushStroke> _brushStrokes, BrushStrokeID _brushStrokeID)
+        public DrawCommand(BrushStrokeID _brushStrokeID)
         {
             brushStrokeID = _brushStrokeID;
-            brushStrokes = _brushStrokes;
         }
 
         public void Execute()
         {
-            EventSystem<List<BrushStroke>, BrushStrokeID>.RaiseEvent(EventType.ADD_STROKE, brushStrokes, brushStrokeID);
+            EventSystem<BrushStrokeID>.RaiseEvent(EventType.ADD_STROKE, brushStrokeID);
         }
         public void Undo()
         {

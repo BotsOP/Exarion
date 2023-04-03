@@ -27,8 +27,6 @@ namespace UI
         
         private List<List<TimelineClip>> clipsOrdered;
         private List<TimelineClip> selectedClips;
-        private List<int> selectedClipPreviousBar;
-        private List<Vector2> selectedClipsOriginalTime;
         private RectTransform timelineRect;
         private RectTransform timelineAreaRect;
         private RectTransform timelineScrollRect;
@@ -58,8 +56,6 @@ namespace UI
             timelineScrollRect = timelineScrollBar.GetComponent<RectTransform>();
 
             selectedClips = new List<TimelineClip>();
-            selectedClipPreviousBar = new List<int>();
-            selectedClipsOriginalTime = new List<Vector2>();
             
             corners = new Vector3[4];
             timelineRect.GetWorldCorners(corners);
@@ -197,11 +193,14 @@ namespace UI
                 {
                     if (firstTimeSelected)
                     {
-                        selectedClipPreviousBar.Clear();
-                        for (int index = 0; index < selectedClips.Count; index++)
+                        for (int i = 0; i < selectedClips.Count; i++)
                         {
-                            var clip = selectedClips[index];
-                            selectedClipPreviousBar.Add(clip.currentBar);
+                            Debug.Log($"test");
+                            selectedClips[i].previousTimelineBar = selectedClips[i].currentBar;
+                            selectedClips[i].lastLeftSideScaled = selectedClips[i].leftSideScaled;
+                            selectedClips[i].lastRightSideScaled = selectedClips[i].rightSideScaled;
+                            
+                            var clip = selectedClips[i];
                             clip.barOffset = clip.currentBar - selectedClip.currentBar;
                             clip.SetupMovement(lastMouseAction);
                         }
@@ -217,8 +216,8 @@ namespace UI
                         // clipLeftInput.text = clip.leftSideScaled.ToString("0.###");
                         // clipRightInput.text = clip.rightSideScaled.ToString("0.###");
 
-                        if (Math.Abs(selectedClipsOriginalTime[i].x - selectedClips[i].leftSideScaled) > 0.001 ||
-                            Math.Abs(selectedClipsOriginalTime[i].y - selectedClips[i].rightSideScaled) > 0.001)
+                        if (Math.Abs(selectedClips[i].lastLeftSideScaled - selectedClips[i].leftSideScaled) > 0.001 ||
+                            Math.Abs(selectedClips[i].lastRightSideScaled - selectedClips[i].rightSideScaled) > 0.001)
                         {
                             clip.brushStrokeID.lastTime = clip.leftSideScaled;
                             clip.brushStrokeID.currentTime = clip.rightSideScaled;
@@ -253,9 +252,7 @@ namespace UI
                             clipsOrdered[i][j].rawImage.color = selectedColor;
                             EventSystem<BrushStrokeID>.RaiseEvent(EventType.HIGHLIGHT, clipsOrdered[i][j].brushStrokeID);
                         
-                            selectedClipPreviousBar.Add(0);
                             selectedClips.Add(clipsOrdered[i][j]);
-                            selectedClipsOriginalTime.Add(new Vector2(clipsOrdered[i][j].leftSideScaled, clipsOrdered[i][j].rightSideScaled));
                             return;
                         }
                     }
@@ -272,17 +269,15 @@ namespace UI
                     for (int i = 0; i < selectedClips.Count; i++)
                     {
                         selectedClips[i].mouseAction = MouseAction.Nothing;
-                        CheckClipCollisions(selectedClips[i], selectedClipPreviousBar[i]);
+                        CheckClipCollisions(selectedClips[i]);
 
-                        if (Math.Abs(selectedClipsOriginalTime[i].x - selectedClips[i].leftSideScaled) > 0.001 || Math.Abs(selectedClipsOriginalTime[i].y - selectedClips[i].rightSideScaled) > 0.001)
-                        {
-                            RedrawCommand clipCommand = new RedrawCommand(selectedClips[i], selectedClipsOriginalTime[i].x, 
-                                                                          selectedClipsOriginalTime[i].y, selectedClipPreviousBar[i]);
-                            
-                            redraws.Add(clipCommand);
-                        }
+                        RedrawCommand clipCommand = new RedrawCommand(selectedClips[i]);
+                        redraws.Add(clipCommand);
                     }
-                    if(redraws.Count > 0) { commandManager.AddCommand(new RedrawMultipleCommand(redraws)); }
+                    if (redraws.Count > 0)
+                    {
+                        commandManager.AddCommand(new RedrawMultipleCommand(redraws));
+                    }
                 }
             }
             
@@ -317,10 +312,13 @@ namespace UI
                 //If you press backspace delete all selected timelineclips
                 if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
                 {
+                    EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_STROKE, selectedClips.Select(_clip => _clip.brushStrokeID).ToList());
+                    
                     List<TimelineClip> timelineClips = new List<TimelineClip>(selectedClips);
-                    EventSystem<List<TimelineClip>>.RaiseEvent(EventType.DELETE_STROKE, timelineClips);
+                    ICommand deleteMultiple = new DeleteClipMultipleCommand(timelineClips);
+                    commandManager.AddCommand(deleteMultiple);
+                    
                     RemoveClip(selectedClips);
-
                     ClearSelectedClips();
                 }
             }
@@ -332,19 +330,18 @@ namespace UI
             clipRightInput.text = "";
 
             selectedClips.Clear();
-            selectedClipPreviousBar.Clear();
-            selectedClipsOriginalTime.Clear();
         }
 
-        private void CheckClipCollisions(TimelineClip _clip, int _previousBar)
+        private void CheckClipCollisions(TimelineClip _clip)
         {
             int currentBar = _clip.currentBar;
+            int previousBar = _clip.previousTimelineBar;
         
             //Check if there is a collision on its current bar
             if (!IsClipCollidingInBar(_clip, currentBar))
             {
                 clipsOrdered[currentBar].Add(_clip);
-                clipsOrdered[_previousBar].Remove(_clip);
+                clipsOrdered[previousBar].Remove(_clip);
                 return;
             }
             
@@ -360,7 +357,7 @@ namespace UI
                     {
                         _clip.SetBar(lowerBar);
                         clipsOrdered[lowerBar].Add(_clip);
-                        clipsOrdered[_previousBar].Remove(_clip);
+                        clipsOrdered[previousBar].Remove(_clip);
                         return;
                     }
                 }
@@ -371,7 +368,7 @@ namespace UI
                     {
                         _clip.SetBar(upperBar);
                         clipsOrdered[upperBar].Add(_clip);
-                        clipsOrdered[_previousBar].Remove(_clip);
+                        clipsOrdered[previousBar].Remove(_clip);
                         return;
                     }
                 }
@@ -385,7 +382,7 @@ namespace UI
             int lowestBar = clipsOrdered.Count - 1;
             _clip.SetBar(lowestBar);
             clipsOrdered[lowestBar].Add(_clip);
-            clipsOrdered[_previousBar].Remove(_clip);
+            clipsOrdered[previousBar].Remove(_clip);
         }
 
         private bool IsClipCollidingInBar(TimelineClip _clip, int bar)
@@ -462,7 +459,7 @@ namespace UI
                 rightSideScaled = _brushStrokeID.currentTime,
             };
             clipsOrdered[0].Add(timelineClip);
-            CheckClipCollisions(timelineClip, 0);
+            CheckClipCollisions(timelineClip);
         }
         private void AddNewBrushClip(BrushStrokeID _brushStrokeID, TimelineClip _timelineClip)
         {
@@ -474,7 +471,7 @@ namespace UI
             _timelineClip.rightSideScaled = _brushStrokeID.currentTime;
             _timelineClip.rawImage.color = notSelectedColor;
             clipsOrdered[0].Add(_timelineClip);
-            CheckClipCollisions(_timelineClip, 0);
+            CheckClipCollisions(_timelineClip);
         }
 
         private void RemoveClip(BrushStrokeID _brushStrokeID)
@@ -512,6 +509,7 @@ namespace UI
             clipsOrdered[_timelineClip.currentBar].Remove(_timelineClip);
             clipsOrdered[_setBar].Add(_timelineClip);
             _timelineClip.SetBar(_setBar);
+            CheckClipCollisions(_timelineClip);
         }
         private bool IsMouseOver(Vector3[] _corners)
         {

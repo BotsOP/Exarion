@@ -89,6 +89,10 @@ namespace UI
             }
         }
 
+        public float lastLeftSideScaled;
+        public float lastRightSideScaled;
+        public int previousTimelineBar;
+
         public BrushStrokeID brushStrokeID;
         public RectTransform rect;
         public MouseAction mouseAction;

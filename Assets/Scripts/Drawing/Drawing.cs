@@ -30,22 +30,6 @@ namespace Drawing
         public readonly CustomRenderTexture rtID;
         public readonly CustomRenderTexture rtSelect;
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
-        public List<BrushStroke> brushStrokes = new List<BrushStroke>();
-        public List<BrushStrokeID> lastDrawnStrokes = new List<BrushStrokeID>();
-
-        public int brushDrawID => brushStrokes.Count;
-
-        public int lastBrushDrawID
-        {
-            get {
-                int lastID = 0;
-                if (lastDrawnStrokes.Count > 0)
-                {
-                    lastID = lastDrawnStrokes[^1].endID;
-                }
-                return lastID;
-            }
-        }
 
         private ComputeShader paintShader;
         private int paintUnderOwnLineKernelID;
@@ -210,17 +194,15 @@ namespace Drawing
 
         public void RedrawStroke(BrushStrokeID _brushstrokeID)
         {
-            int startID = _brushstrokeID.startID;
-            int endID = _brushstrokeID.endID;
+           
             int newStrokeID = GetNewID();
             bool firstLoop = true;
             PaintType paintType = _brushstrokeID.paintType;
-            
-            for (int i = startID; i < endID; i++)
+
+            foreach (var brushStroke in _brushstrokeID.brushStrokes)
             {
-                BrushStroke stroke = brushStrokes[i];
-        
-                Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
+                Draw(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, paintType, 
+                     brushStroke.lastTime, brushStroke.currentTime, firstLoop, newStrokeID);
 
                 firstLoop = false;
             }
@@ -228,17 +210,14 @@ namespace Drawing
 
         private void RedrawStroke(BrushStrokeID _brushstrokeID, PaintType _newPaintType)
         {
-            int startID = _brushstrokeID.startID;
-            int endID = _brushstrokeID.endID;
             int newStrokeID = GetNewID();
             bool firstLoop = true;
             PaintType paintType = _newPaintType;
             
-            for (int i = startID; i < endID; i++)
+            foreach (var brushStroke in _brushstrokeID.brushStrokes)
             {
-                BrushStroke stroke = brushStrokes[i];
-        
-                Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
+                Draw(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, paintType, 
+                     brushStroke.lastTime, brushStroke.currentTime, firstLoop, newStrokeID);
 
                 firstLoop = false;
             }
@@ -246,8 +225,6 @@ namespace Drawing
 
         public void RedrawStrokeOptimized(BrushStrokeID _brushstrokeID, Vector4 _collisionBox)
         {
-            int startID = _brushstrokeID.startID;
-            int endID = _brushstrokeID.endID;
             int newStrokeID = GetNewID();
             bool firstLoop = true;
             PaintType paintType = _brushstrokeID.paintType;
@@ -255,19 +232,17 @@ namespace Drawing
             if (!CheckCollision(_brushstrokeID.GetCollisionBox(), _collisionBox))
                 return;
 
-            for (int i = startID; i < endID; i++)
+            foreach (var brushStroke in _brushstrokeID.brushStrokes)
             {
-                BrushStroke stroke = brushStrokes[i];
-
-                Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, stroke.lastTime, stroke.brushTime, firstLoop, newStrokeID);
+                Draw(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, paintType, 
+                     brushStroke.lastTime, brushStroke.currentTime, firstLoop, newStrokeID);
+                
                 firstLoop = false;
             }
         }
 
         public void RedrawStrokeInterpolation(BrushStrokeID _brushstrokeID)
         {
-            int startID = _brushstrokeID.startID;
-            int endID = _brushstrokeID.endID;
             int newStrokeID = GetNewID();
             PaintType paintType = _brushstrokeID.paintType;
 
@@ -277,63 +252,61 @@ namespace Drawing
                 RedrawStroke(_brushstrokeID, PaintType.Erase);
             }
 
-            Vector4 collisionBox = _brushstrokeID.GetCollisionBox();
-
-            for (int i = 0; i < brushStrokesID.Count; i++)
+            if (_brushstrokeID.brushStrokes.Count == 1)
             {
-                //If stroke is not the stroke you want to redraw. Redraw it optimized
-                if (brushStrokesID[i] != _brushstrokeID)
-                {
-                    RedrawStrokeOptimized(brushStrokesID[i], collisionBox);
-                    continue;
-                }
+                BrushStroke strokeStart = _brushstrokeID.brushStrokes[0];
+                float lastTime = _brushstrokeID.lastTime;
+                strokeStart.lastTime = lastTime;
+                _brushstrokeID.brushStrokes[0] = strokeStart;
                 
-                float extraTime = (_brushstrokeID.currentTime - _brushstrokeID.lastTime) / (endID - startID);
-                float timePadding;
+                Draw(strokeStart.GetLastPos(), strokeStart.GetCurrentPos(), strokeStart.strokeBrushSize, paintType, 
+                     strokeStart.lastTime, strokeStart.currentTime, true, newStrokeID);
+                return;
+            }
 
-                {
-                    float newTime = _brushstrokeID.lastTime + extraTime * (1 + extraTime + extraTime) * 1;
-                    float lastTime = _brushstrokeID.lastTime;
-                    
-                    BrushStroke strokeStartReference = brushStrokes[startID + 1];
-                    Vector2 lineDir = (strokeStartReference.GetCurrentPos() - strokeStartReference.GetLastPos()).normalized * strokeStartReference.strokeBrushSize;
-                    Vector2 currentPos = strokeStartReference.GetCurrentPos() + lineDir;
-                    float distLine = Vector2.Distance(strokeStartReference.GetLastPos(), currentPos);
-                    timePadding = strokeStartReference.strokeBrushSize.Remap(0, distLine, 0, newTime - lastTime);
-                    
-                    BrushStroke strokeStart = brushStrokes[startID];
-                    strokeStart.brushTime = newTime;
-                    strokeStart.lastTime = lastTime;
-                    
-                    Draw(strokeStart.GetLastPos(), strokeStart.GetCurrentPos(), strokeStart.strokeBrushSize, paintType, 
-                         strokeStart.lastTime, strokeStart.brushTime, true, newStrokeID);
-                }
+            int amountStrokes = _brushstrokeID.brushStrokes.Count;
+            float extraTime = (_brushstrokeID.currentTime - _brushstrokeID.lastTime) / amountStrokes;
+            float timePadding;
+
+            {
+                float newTime = _brushstrokeID.lastTime + extraTime * (1 + extraTime + extraTime) * 1;
+                float lastTime = _brushstrokeID.lastTime;
                 
-                int strokeCounter = 1;
-                for (int j = startID + 1; j < endID; j++)
-                {
-                    BrushStroke stroke = brushStrokes[j];
+                BrushStroke strokeStartReference = _brushstrokeID.brushStrokes[1];
+                Vector2 lineDir = (strokeStartReference.GetCurrentPos() - strokeStartReference.GetLastPos()).normalized * strokeStartReference.strokeBrushSize;
+                Vector2 currentPos = strokeStartReference.GetCurrentPos() + lineDir;
+                float distLine = Vector2.Distance(strokeStartReference.GetLastPos(), currentPos);
+                timePadding = strokeStartReference.strokeBrushSize.Remap(0, distLine, 0, newTime - lastTime);
 
-                    float newTime = _brushstrokeID.lastTime + extraTime * (1 + extraTime + extraTime) * (strokeCounter + 1);
-                    float lastTime = _brushstrokeID.lastTime + extraTime * (1 + extraTime + extraTime) * strokeCounter;
-
-                    Vector2 lineDir = (stroke.GetCurrentPos() - stroke.GetLastPos()).normalized * stroke.strokeBrushSize;
-                    Vector2 currentPos = stroke.GetCurrentPos() + lineDir;
-                    float distLine = Vector2.Distance(stroke.GetLastPos(), currentPos);
-                    float brushSizeTime = stroke.strokeBrushSize.Remap(0, distLine, 0, newTime - lastTime);
-
-                    lastTime -= brushSizeTime;
-
-                    stroke.brushTime = newTime + timePadding;
-                    stroke.lastTime = lastTime + timePadding;
-
-                    brushStrokes[j] = stroke;
+                BrushStroke strokeStart = _brushstrokeID.brushStrokes[0];
+                strokeStart.currentTime = newTime;
+                strokeStart.lastTime = lastTime;
+                _brushstrokeID.brushStrokes[0] = strokeStart;
+                
+                Draw(strokeStart.GetLastPos(), strokeStart.GetCurrentPos(), strokeStart.strokeBrushSize, paintType, 
+                     strokeStart.lastTime, strokeStart.currentTime, true, newStrokeID);
+            }
             
-                    Draw(stroke.GetLastPos(), stroke.GetCurrentPos(), stroke.strokeBrushSize, paintType, 
-                         stroke.lastTime, stroke.brushTime, false, newStrokeID);
+            for (int i = 0; i < _brushstrokeID.brushStrokes.Count; i++)
+            {
+                var brushStroke = _brushstrokeID.brushStrokes[i];
+                float newTime = _brushstrokeID.lastTime + extraTime * (1 + extraTime + extraTime) * (i + 1);
+                float lastTime = _brushstrokeID.lastTime + extraTime * (1 + extraTime + extraTime) * (i);
 
-                    strokeCounter++;
-                }
+                Vector2 lineDir = (brushStroke.GetCurrentPos() - brushStroke.GetLastPos()).normalized * brushStroke.strokeBrushSize;
+                Vector2 currentPos = brushStroke.GetCurrentPos() + lineDir;
+                float distLine = Vector2.Distance(brushStroke.GetLastPos(), currentPos);
+                float brushSizeTime = brushStroke.strokeBrushSize.Remap(0, distLine, 0, newTime - lastTime);
+
+                lastTime -= brushSizeTime;
+
+                brushStroke.currentTime = newTime + timePadding;
+                brushStroke.lastTime = lastTime + timePadding;
+                _brushstrokeID.brushStrokes[i] = brushStroke;
+
+                Draw(
+                    brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, paintType,
+                    brushStroke.lastTime, brushStroke.currentTime, false, newStrokeID);
             }
         }
 
@@ -354,20 +327,19 @@ namespace Drawing
 
             Vector4 collisionBox = _brushStrokeID.GetCollisionBox();
 
-            for (int i = 0; i < brushStrokesID.Count; i++)
+            foreach (BrushStrokeID brushStrokeID in brushStrokesID)
             {
-                BrushStroke start = brushStrokes[brushStrokesID[i].startID];
-                BrushStroke end = brushStrokes[brushStrokesID[i].endID - 1];
-                float brushStart = start.lastTime;
-                float brushEnd = end.brushTime;
-                float brushIDStart = brushStrokesID[i].lastTime;
-                float brushIDEnd = brushStrokesID[i].currentTime;
+                float brushStart = brushStrokeID.brushStrokes[0].lastTime;
+                float brushEnd = brushStrokeID.brushStrokes[^1].lastTime;
+                float brushIDStart = brushStrokeID.lastTime;
+                float brushIDEnd = brushStrokeID.currentTime;
                 if (Math.Abs(brushStart - brushIDStart) > 0.01f || Math.Abs(brushEnd - brushIDEnd) > 0.01f)
                 {
-                    RedrawStrokeInterpolation(brushStrokesID[i]);
+                    RedrawStrokeInterpolation(brushStrokeID);
+                    continue;
                 }
 
-                RedrawStrokeOptimized(brushStrokesID[i], collisionBox);
+                RedrawStrokeOptimized(brushStrokeID, collisionBox);
             }
         }
         public void RedrawAllSafe(List<BrushStrokeID> _brushStrokeIDs)
@@ -377,20 +349,19 @@ namespace Drawing
             Vector4 collisionBox = CombineCollisionBox(
                 _brushStrokeIDs.Select(_id => _id.GetCollisionBox()).ToArray());
 
-            for (int i = 0; i < brushStrokesID.Count; i++)
+            foreach (BrushStrokeID brushStrokeID in brushStrokesID)
             {
-                BrushStroke start = brushStrokes[brushStrokesID[i].startID];
-                BrushStroke end = brushStrokes[brushStrokesID[i].endID - 1];
-                float brushStart = start.lastTime;
-                float brushEnd = end.brushTime;
-                float brushIDStart = brushStrokesID[i].lastTime;
-                float brushIDEnd = brushStrokesID[i].currentTime;
+                float brushStart = brushStrokeID.brushStrokes[0].lastTime;
+                float brushEnd = brushStrokeID.brushStrokes[^1].currentTime;
+                float brushIDStart = brushStrokeID.lastTime;
+                float brushIDEnd = brushStrokeID.currentTime;
                 if (Math.Abs(brushStart - brushIDStart) > 0.01f || Math.Abs(brushEnd - brushIDEnd) > 0.01f)
                 {
-                    RedrawStrokeInterpolation(brushStrokesID[i]);
+                    RedrawStrokeInterpolation(brushStrokeID);
+                    continue;
                 }
 
-                RedrawStrokeOptimized(brushStrokesID[i], collisionBox);
+                RedrawStrokeOptimized(brushStrokeID, collisionBox);
             }
         }
         
@@ -422,40 +393,4 @@ namespace Drawing
             return _box1.x <= _box2.z && _box1.z >= _box2.x && _box1.y <= _box2.w && _box1.w >= _box2.y;
         }
     }
-
-    public struct BrushStroke
-    {
-        public float lastPosX;
-        public float lastPosY;
-        public float currentPosX;
-        public float currentPosY;
-        public float strokeBrushSize;
-        public float brushTime;
-        public float lastTime;
-
-        public BrushStroke(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, float _brushTime, float _lastTime)
-        {
-            lastPosX = _lastPos.x;
-            lastPosY = _lastPos.y;
-            currentPosX = _currentPos.x;
-            currentPosY = _currentPos.y;
-            strokeBrushSize = _strokeBrushSize;
-            brushTime = _brushTime;
-            lastTime = _lastTime;
-        }
-
-        public Vector2 GetLastPos()
-        {
-            return new Vector2(lastPosX, lastPosY);
-        }
-        public Vector2 GetCurrentPos()
-        {
-            return new Vector2(currentPosX, currentPosY);
-        }
-        public Vector4 GetCollisionBox()
-        {
-            return new Vector4(lastPosX, lastPosY, currentPosX, currentPosY);
-        }
-    }
-    
 }
