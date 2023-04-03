@@ -129,6 +129,7 @@ namespace Drawing
             // ball2.position = new Vector3(collisionBox.z / imageWidth, collisionBox.w / imageHeight, 0);
         }
         
+        //Move this to timeline?
         private void StoppedDrawing()
         {
             List<BrushStroke> brushStrokes = new List<BrushStroke>(tempBrushStrokes);
@@ -169,7 +170,6 @@ namespace Drawing
                 drawer.brushStrokesID.Insert(_brushStrokeID.indexWhenDrawn, _brushStrokeID);
             }
             
-            EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, _brushStrokeID);
             drawer.RedrawAllSafe(_brushStrokeID);
         }
         

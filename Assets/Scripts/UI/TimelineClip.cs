@@ -91,7 +91,7 @@ namespace UI
 
         public float lastLeftSideScaled;
         public float lastRightSideScaled;
-        public int previousTimelineBar;
+        public int previousBar;
 
         public BrushStrokeID brushStrokeID;
         public RectTransform rect;

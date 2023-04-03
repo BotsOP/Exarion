@@ -19,7 +19,7 @@ namespace Undo
             timelineClip = _timelineClip;
             lastTimeOld = _timelineClip.lastLeftSideScaled;
             currentTimeOld = _timelineClip.lastRightSideScaled;
-            previousTimelineBar = _timelineClip.previousTimelineBar;
+            previousTimelineBar = _timelineClip.previousBar;
             timelineBar = _timelineClip.currentBar;
             lastTime = _timelineClip.leftSideScaled;
             currentTime = _timelineClip.rightSideScaled;

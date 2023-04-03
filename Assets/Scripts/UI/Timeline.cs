@@ -195,8 +195,7 @@ namespace UI
                     {
                         for (int i = 0; i < selectedClips.Count; i++)
                         {
-                            Debug.Log($"test");
-                            selectedClips[i].previousTimelineBar = selectedClips[i].currentBar;
+                            selectedClips[i].previousBar = selectedClips[i].currentBar;
                             selectedClips[i].lastLeftSideScaled = selectedClips[i].leftSideScaled;
                             selectedClips[i].lastRightSideScaled = selectedClips[i].rightSideScaled;
                             
@@ -335,11 +334,13 @@ namespace UI
         private void CheckClipCollisions(TimelineClip _clip)
         {
             int currentBar = _clip.currentBar;
-            int previousBar = _clip.previousTimelineBar;
+            int previousBar = _clip.previousBar;
         
             //Check if there is a collision on its current bar
             if (!IsClipCollidingInBar(_clip, currentBar))
             {
+                clipsOrdered[currentBar].Add(_clip);
+                clipsOrdered[previousBar].Remove(_clip);
                 return;
             }
             
@@ -462,6 +463,7 @@ namespace UI
         private void AddNewBrushClip(TimelineClip _timelineClip)
         {
             int currentBar = _timelineClip.currentBar;
+            _timelineClip.previousBar = currentBar;
             RectTransform rect = Instantiate(timelineClipObject, timelineBarToInsantiateTo).GetComponent<RectTransform>();
             RawImage clipImage = rect.GetComponent<RawImage>();
             _timelineClip.rawImage = clipImage;
@@ -501,8 +503,12 @@ namespace UI
         {
             foreach (var clip in _timelineClips)
             {
+                //Add boolean to check if you should use previous or current timerline bar
                 Destroy(clip.rect.gameObject);
-                clipsOrdered[clip.previousTimelineBar].Remove(clip);
+                foreach (var timelineBar in clipsOrdered)
+                {
+                    timelineBar.Remove(clip);
+                }
             }
         }
         private void UpdateClip(TimelineClip _timelineClip, int _setBar)
@@ -510,7 +516,7 @@ namespace UI
             clipsOrdered[_timelineClip.currentBar].Remove(_timelineClip);
             clipsOrdered[_setBar].Add(_timelineClip);
             _timelineClip.SetBar(_setBar);
-            _timelineClip.previousTimelineBar = _setBar;
+            _timelineClip.previousBar = _setBar;
             CheckClipCollisions(_timelineClip);
         }
         private bool IsMouseOver(Vector3[] _corners)
