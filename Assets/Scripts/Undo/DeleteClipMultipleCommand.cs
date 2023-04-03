@@ -27,8 +27,11 @@ namespace Undo
 
         public void Undo()
         {
-            EventSystem<List<BrushStrokeID>, List<TimelineClip>>.RaiseEvent(
-                EventType.ADD_STROKE, brushStrokeIDs, timelineClips);
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_STROKE, brushStrokeIDs);
+            foreach (var timelineClip in timelineClips)
+            {
+                EventSystem<TimelineClip>.RaiseEvent(EventType.ADD_STROKE, timelineClip);
+            }
         }
     }
 }

@@ -64,7 +64,7 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
-            EventSystem<List<BrushStrokeID>, List<TimelineClip>>.Subscribe(EventType.ADD_STROKE, AddStroke);
+            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_STROKE, AddStroke);
         }
 
         private void OnDisable()
@@ -80,7 +80,7 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REDRAW_STROKES, RedrawStrokes);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
-            EventSystem<List<BrushStrokeID>, List<TimelineClip>>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
+            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
         }
 
         private void SetTime(float _time)
@@ -173,20 +173,18 @@ namespace Drawing
             drawer.RedrawAllSafe(_brushStrokeID);
         }
         
-        private void AddStroke(List<BrushStrokeID> _brushStrokeIDs, List<TimelineClip> _timelineClips)
+        private void AddStroke(List<BrushStrokeID> _brushStrokeIDs)
         {
-            for (int i = 0; i < _brushStrokeIDs.Count; i++)
+            foreach (BrushStrokeID brushStrokeID in _brushStrokeIDs)
             {
-                if (_brushStrokeIDs[i].indexWhenDrawn > drawer.brushStrokesID.Count)
+                if (brushStrokeID.indexWhenDrawn > drawer.brushStrokesID.Count)
                 {
-                    drawer.brushStrokesID.Add(_brushStrokeIDs[i]);
+                    drawer.brushStrokesID.Add(brushStrokeID);
                 }
                 else
                 {
-                    drawer.brushStrokesID.Insert(_brushStrokeIDs[i].indexWhenDrawn, _brushStrokeIDs[i]);
+                    drawer.brushStrokesID.Insert(brushStrokeID.indexWhenDrawn, brushStrokeID);
                 }
-            
-                EventSystem<BrushStrokeID, TimelineClip>.RaiseEvent(EventType.FINISHED_STROKE, _brushStrokeIDs[i], _timelineClips[i]);
             }
             drawer.RedrawAllSafe(_brushStrokeIDs);
         }

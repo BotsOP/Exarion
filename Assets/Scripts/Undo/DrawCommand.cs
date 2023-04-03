@@ -15,6 +15,7 @@ namespace Undo
 
         public void Execute()
         {
+            //Add timeline clip ADD_STROKE event here too
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.ADD_STROKE, brushStrokeID);
         }
         public void Undo()

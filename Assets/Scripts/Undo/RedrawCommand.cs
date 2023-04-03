@@ -10,7 +10,8 @@ namespace Undo
         public float lastTimeOld;
         public float currentTimeOld;
         public BrushStrokeID brushStokeID;
-        private int previousTimelineBar;
+        public int previousTimelineBar;
+        public int timelineBar;
         private TimelineClip timelineClip;
         
         public RedrawCommand(TimelineClip _timelineClip)
@@ -19,6 +20,7 @@ namespace Undo
             lastTimeOld = _timelineClip.lastLeftSideScaled;
             currentTimeOld = _timelineClip.lastRightSideScaled;
             previousTimelineBar = _timelineClip.previousTimelineBar;
+            timelineBar = _timelineClip.currentBar;
             lastTime = _timelineClip.leftSideScaled;
             currentTime = _timelineClip.rightSideScaled;
             brushStokeID = _timelineClip.brushStrokeID;
@@ -30,7 +32,7 @@ namespace Undo
             brushStokeID.currentTime = currentTime;
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.REDRAW_STROKE, brushStokeID);
             
-            UpdateTimelineClip(lastTime, currentTime);
+            UpdateTimelineClip(lastTime, currentTime, timelineBar);
         }
         public void Undo()
         {
@@ -38,14 +40,14 @@ namespace Undo
             brushStokeID.currentTime = currentTimeOld;
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.REDRAW_STROKE, brushStokeID);
             
-            UpdateTimelineClip(lastTimeOld, currentTimeOld);
+            UpdateTimelineClip(lastTimeOld, currentTimeOld, previousTimelineBar);
         }
         
-        public void UpdateTimelineClip(float _lastTime, float _currentTime)
+        public void UpdateTimelineClip(float _lastTime, float _currentTime, int _timelineBar)
         {
             timelineClip.leftSideScaled = _lastTime;
             timelineClip.rightSideScaled = _currentTime;
-            EventSystem<TimelineClip, int>.RaiseEvent(EventType.UPDATE_CLIP, timelineClip, previousTimelineBar);
+            EventSystem<TimelineClip, int>.RaiseEvent(EventType.UPDATE_CLIP, timelineClip, _timelineBar);
         }
     }
 }
