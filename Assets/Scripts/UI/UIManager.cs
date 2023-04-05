@@ -13,20 +13,27 @@ namespace UI
     {
         public static bool IsInteracting;
         public static bool isFullView = true;
+        
+        [Header("Viewport")]
         [SerializeField] private RawImage viewImageFull;
         [SerializeField] private RawImage viewImageFocus;
         [SerializeField] private RawImage displayImageFull;
         [SerializeField] private RawImage displayImageFocus;
         [SerializeField] private Camera viewCam;
         [SerializeField] private Camera displayCam;
-        [SerializeField] private Color selectedColor;
-        [SerializeField] private Color backgroundColor;
         [SerializeField] private GameObject fullView;
         [SerializeField] private GameObject focusView;
         [SerializeField] private Image cachedButton;
+        
+        [Header("Select Deselect")]
+        [SerializeField] private Color selectedColor;
+        [SerializeField] private Color backgroundColor;
+        
+        [Header("UI input")]
         [SerializeField] private TMP_InputField brushSizeInput;
         [SerializeField] private Slider brushSizeSlider;
         [SerializeField] private Button exportButton;
+        
         private CustomRenderTexture viewFullRT;
         private CustomRenderTexture viewFocusRT;
         private CustomRenderTexture displayFullRT;

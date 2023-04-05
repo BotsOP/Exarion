@@ -12,18 +12,27 @@ namespace UI
 {
     public class Timeline : MonoBehaviour
     {
-        [SerializeField] private RectTransform timelineBarToInsantiateTo;
-        [SerializeField] private GameObject timelineBarObject;
+        [Header("Timeline objects")]
+        [SerializeField] private RectTransform timelineBarObject;
+        [SerializeField] private List<RectTransform> timelineBarObjects;
         [SerializeField] private GameObject timelineClipObject;
         [SerializeField] private GameObject timelineScrollBar;
         [SerializeField] private GameObject timelineObject;
+        
+        [Header("Timeline UI")]
         [SerializeField] private TMP_InputField clipLeftInput;
         [SerializeField] private TMP_InputField clipRightInput;
+        [SerializeField] private Slider speedSliderTimeline;
+        
+        [Header("Select Deselect")]
         [SerializeField] private Color notSelectedColor;
         [SerializeField] private Color selectedColor;
         [SerializeField] private Sprite pauseSprite;
         [SerializeField] private Sprite playSprite;
-        [SerializeField] private Slider speedSliderTimeline;
+
+        [Header("Timeline Input")]
+        [SerializeField] private float timelineScaleSensitivity = 10;
+        [SerializeField] private float timelineMaxScaleMultiplier = 20;
         
         private List<List<TimelineClip>> clipsOrdered;
         private List<TimelineClip> selectedClips;
@@ -32,6 +41,8 @@ namespace UI
         private RectTransform timelineScrollRect;
         private bool selectedInput;
         private int amountTimelineBars;
+        private float minTimelineSize;
+        private float maxTimelineSize;
         private float time;
         private float lastTimelineLeft;
         private float lastTimelineRight;
@@ -54,6 +65,8 @@ namespace UI
             commandManager = FindObjectOfType<CommandManager>();
             timelineRect = timelineObject.GetComponent<RectTransform>();
             timelineScrollRect = timelineScrollBar.GetComponent<RectTransform>();
+            minTimelineSize = timelineBarObject.sizeDelta.x;
+            maxTimelineSize = minTimelineSize * timelineMaxScaleMultiplier;
 
             selectedClips = new List<TimelineClip>();
             
@@ -130,6 +143,9 @@ namespace UI
             if (PlaceTimelineIndicator())
                 return;
 
+            if (ScaleTimeline())
+                return;
+
             if (shouldTimelinePause)
             {
                 timeIncrease = Time.timeSinceLevelLoad;
@@ -171,6 +187,39 @@ namespace UI
             var position = timelineScrollRect.position;
             position = new Vector3(xPos, position.y, position.z);
             timelineScrollRect.position = position;
+        }
+
+        private bool ScaleTimeline()
+        {
+            if (isMouseInsideTimeline && Input.mouseScrollDelta.y != 0 && Input.GetKey(KeyCode.LeftShift))
+            {
+                List<Vector2> timelineValues = clipsOrdered.SelectMany(_list => _list.Select(_clip => new Vector2(_clip.leftSideScaled, _clip.rightSideScaled))).ToList();
+                foreach (var timelineBar in timelineBarObjects)
+                {
+                    timelineBar.sizeDelta += new Vector2(Input.mouseScrollDelta.y * timelineScaleSensitivity, 0);
+                    if (timelineBar.sizeDelta.x < minTimelineSize)
+                    {
+                        timelineBar.sizeDelta = new Vector2(minTimelineSize, timelineBar.sizeDelta.y);
+                    }
+                    if (timelineBar.sizeDelta.x > maxTimelineSize)
+                    {
+                        timelineBar.sizeDelta = new Vector2(maxTimelineSize, timelineBar.sizeDelta.y);
+                    }
+                }
+
+                int index = 0;
+                for (int i = 0; i < clipsOrdered.Count; i++)
+                {
+                    for (int j = 0; j < clipsOrdered[i].Count; j++)
+                    {
+                        clipsOrdered[i][j].leftSideScaled = timelineValues[index + j].x;
+                        clipsOrdered[i][j].rightSideScaled = timelineValues[index + j].y;
+                    }
+                    index += clipsOrdered[i].Count;
+                }
+                return true;
+            }
+            return false;
         }
 
         #region ClipInput
@@ -375,7 +424,9 @@ namespace UI
             
             //There is no space anywhere create a new one timeline bar
             amountTimelineBars++;
-            Instantiate(timelineBarObject, timelineRect).transform.SetAsFirstSibling();
+            RectTransform timelineBar = Instantiate(timelineBarObject, timelineRect);
+            timelineBar.transform.SetAsFirstSibling();
+            timelineBarObjects.Add(timelineBar);
             clipsOrdered.Add(new List<TimelineClip>());
             
             int lowestBar = clipsOrdered.Count - 1;
@@ -449,10 +500,10 @@ namespace UI
 
         private void AddNewBrushClip(BrushStrokeID _brushStrokeID)
         {
-            RectTransform rect = Instantiate(timelineClipObject, timelineBarToInsantiateTo).GetComponent<RectTransform>();
+            RectTransform rect = Instantiate(timelineClipObject, timelineBarObject).GetComponent<RectTransform>();
             RawImage clipImage = rect.GetComponent<RawImage>();
             clipImage.color = notSelectedColor;
-            TimelineClip timelineClip = new TimelineClip(_brushStrokeID, rect, timelineBarToInsantiateTo, timelineRect, clipImage)
+            TimelineClip timelineClip = new TimelineClip(_brushStrokeID, rect, timelineBarObject, timelineRect, clipImage)
             {
                 leftSideScaled = _brushStrokeID.lastTime,
                 rightSideScaled = _brushStrokeID.currentTime,
@@ -464,7 +515,7 @@ namespace UI
         {
             int currentBar = _timelineClip.currentBar;
             _timelineClip.previousBar = currentBar;
-            RectTransform rect = Instantiate(timelineClipObject, timelineBarToInsantiateTo).GetComponent<RectTransform>();
+            RectTransform rect = Instantiate(timelineClipObject, timelineBarObject).GetComponent<RectTransform>();
             RawImage clipImage = rect.GetComponent<RawImage>();
             _timelineClip.rawImage = clipImage;
             _timelineClip.rect = rect;
