@@ -1,6 +1,7 @@
 using System;
 using Managers;
 using UnityEngine;
+using EventType = Managers.EventType;
 
 namespace UI
 {
@@ -12,6 +13,7 @@ namespace UI
         
         private bool mouseIsDrawing;
         private Vector2 startPosWhenDragging;
+        private Vector2 startMousePos;
         private Vector2 startPosViewCam;
         private Vector2 startPosDisplayCam;
         private float time;
@@ -55,36 +57,46 @@ namespace UI
             
             if (isMouseInsideDrawArea)
             {
-                DrawInput(_drawAreaCorners, _camPos, _camZoom);
-                MoveCamera(viewCam, _drawAreaCorners, startPosViewCam);
+                Vector4 drawCorners = GetScaledDrawingCorners(_camPos, _camZoom, _drawAreaCorners);
+                float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);
+                float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
+                Vector2 mousePos = new Vector2(mousePosX, mousePosY);
+                
+                if(DrawInput(mousePos))
+                    return;
+                
+                if (SetBrushSize(mousePos))
+                    return;
+                
+                if(MoveCamera(viewCam, _drawAreaCorners, startPosViewCam))
+                    return;
+
             }
             else if (isMouseInsideDisplayArea)
             {
                 MoveCamera(displayCam, _displayAreaCorners, startPosDisplayCam);
             }
-
-            
         }
-        private void DrawInput(Vector3[] _drawAreaCorners, Vector2 _camPos, float _camZoom)
+        private bool DrawInput(Vector2 _mousePos)
         {
             if (Input.GetMouseButton(0) && !(Math.Abs(time - 1.1) < 0.1))
             {
-                Vector4 drawCorners = GetScaledDrawingCorners(_camPos, _camZoom, _drawAreaCorners);
-                float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);
-                float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
-                Vector2 mousePos = new Vector2(mousePosX, mousePosY);
-                EventSystem<Vector2>.RaiseEvent(EventType.DRAW, mousePos);
+                EventSystem<Vector2>.RaiseEvent(EventType.DRAW, _mousePos);
                 EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
 
                 mouseIsDrawing = true;
+                return true;
             }
+            return false;
         }
-        private void MoveCamera(Camera _cam, Vector3[] _corners, Vector2 _draggingBounds)
+        private bool MoveCamera(Camera _cam, Vector3[] _corners, Vector2 _draggingBounds)
         {
             if (Input.mouseScrollDelta.y != 0)
             {
                 _cam.orthographicSize -= Mathf.Pow(_cam.orthographicSize * scrollZoomSensitivity, 1.3f) * Input.mouseScrollDelta.y;
                 _cam.orthographicSize = Mathf.Clamp(_cam.orthographicSize, 0.01f, 0.5f);
+                
+                return true;
             }
             if (Input.GetMouseButtonDown(1))
             {
@@ -107,7 +119,30 @@ namespace UI
                 mousePos.y = Mathf.Clamp(mousePos.y, _draggingBounds.y -0.5f, _draggingBounds.y + 0.5f);
                 position = new Vector3(mousePos.x, mousePos.y, position.z);
                 _cam.transform.position = position;
+
+                return true;
             }
+            return false;
+        }
+
+        private bool SetBrushSize(Vector2 _mousePos)
+        {
+            if (Input.GetMouseButtonDown(1) && Input.GetKey(KeyCode.LeftAlt))
+            {
+                startMousePos = _mousePos;
+            }
+            if (Input.GetMouseButton(1) && Input.GetKey(KeyCode.LeftAlt))
+            {
+                float brushSize = Vector2.Distance(startMousePos, _mousePos);
+                brushSize = Mathf.Clamp(brushSize, 1, 1024);
+                Debug.Log($"{brushSize}");
+                EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSize);
+                EventSystem<Vector2>.RaiseEvent(EventType.SET_BRUSH_SIZE, _mousePos);
+                return true;
+            }
+            
+            EventSystem.RaiseEvent(EventType.STOPPED_SETTING_BRUSH_SIZE);
+            return false;
         }
 
         private Vector4 GetScaledDrawingCorners(Vector2 _camPos, float _camZoom, Vector3[] _drawAreaCorners)

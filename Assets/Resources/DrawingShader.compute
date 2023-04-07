@@ -3,13 +3,10 @@
 #pragma kernel PaintOverEverything
 #pragma kernel PaintOverOwnLine
 #pragma kernel Erase
-#pragma kernel HighlightSelection
-#pragma kernel EraseHighlight
 
 
 RWTexture2D<float4> _ResultTex;
 RWTexture2D<int> _IdTex;
-RWTexture2D<float> _SelectTex;
 
 float2 _CursorPos;
 float2 _CursorPosPlusBrushSize;
@@ -70,7 +67,6 @@ float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
 void PaintUnderOwnLine (uint3 id : SV_DispatchThreadID)
 {
     const float2 paintPos = _StartPos.xy + id.xy;
-    _LastCursorPos -= float2(0.01, 0.01);
 
     if(_IdTex[paintPos] == _StrokeID)
     {
@@ -141,7 +137,6 @@ void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
 void PaintOverOwnLine (uint3 id : SV_DispatchThreadID)
 {
     const float2 paintPos = _StartPos.xy + id.xy;
-    _LastCursorPos -= float2(0.01, 0.01);
 
     if(_IdTex[paintPos] != _StrokeID && _IdTex[paintPos] != -1)
     {
@@ -174,7 +169,6 @@ void PaintOverOwnLine (uint3 id : SV_DispatchThreadID)
 void PaintOverEverything (uint3 id : SV_DispatchThreadID)
 {
     float2 paintPos = _StartPos.xy + id.xy;
-    _LastCursorPos -= float2(0.01, 0.01);
 
     if(distance(paintPos, _LastCursorPos) < _BrushSize + 1)
     {
@@ -203,7 +197,6 @@ void PaintOverEverything (uint3 id : SV_DispatchThreadID)
 void Erase (uint3 id : SV_DispatchThreadID)
 {
     float2 paintPos = _StartPos.xy + id.xy;
-    //_LastCursorPos -= float2(0.01, 0.01);
 
     float paintColor = LineSegment2DSDF(paintPos, _LastCursorPos, _CursorPos);
     paintColor = 1 - smoothstep(_BrushSize, _BrushSize, paintColor);
@@ -212,34 +205,6 @@ void Erase (uint3 id : SV_DispatchThreadID)
 
     _IdTex[paintPos] = -1;
     _ResultTex[paintPos] = float4(1, 1, 1, 1);
-}
-
-[numthreads(32,32,1)]
-void HighlightSelection (uint3 id : SV_DispatchThreadID)
-{
-    float2 paintPos = _StartPos.xy + id.xy;
-    _LastCursorPos -= float2(0.01, 0.01);
-
-    float paintColor = LineSegment2DSDF(paintPos, _LastCursorPos, _CursorPos);
-    paintColor = smoothstep(_BrushSize, 0, paintColor);
-    
-    if(paintColor <= 0) { return; }
-
-    _SelectTex[paintPos] = 0;
-}
-
-[numthreads(32,32,1)]
-void EraseHighlight (uint3 id : SV_DispatchThreadID)
-{
-    float2 paintPos = _StartPos.xy + id.xy;
-    _LastCursorPos -= float2(0.01, 0.01);
-
-    float paintColor = LineSegment2DSDF(paintPos, _LastCursorPos, _CursorPos);
-    paintColor = 1 - smoothstep(_BrushSize, _BrushSize, paintColor);
-
-    if(paintColor <= 0) { return; }
-
-    _SelectTex[paintPos] = 1;
 }
 
 

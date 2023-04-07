@@ -2,24 +2,29 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Managers;
 using UI;
 using Undo;
 using UnityEngine;
+using EventType = Managers.EventType;
 
 namespace Drawing
 {
     public class DrawingManager : MonoBehaviour, IDataPersistence
     {
-        [SerializeField] private Camera cam;
+        [Header("Materials")]
         [SerializeField] private Material drawingMat;
         [SerializeField] private Material displayMat;
         [SerializeField] private Material selectMat;
-        public int imageWidth = 2048;
-        public int imageHeight = 2048;
+        [SerializeField] private Material previewMat;
+        
+        [Header("Canvas Settings")]
+        [SerializeField] private int imageWidth = 2048;
+        [SerializeField] private int imageHeight = 2048;
     
+        [Header("Painttype")]
         [SerializeField] private PaintType paintType;
-        public Transform ball1;
-        public Transform ball2;
+        
         public Drawing drawer;
     
         private RenderTexture drawingRenderTexture;
@@ -30,6 +35,8 @@ namespace Drawing
         private bool firstUse = true;
         private List<BrushStroke> tempBrushStrokes;
 
+        private DrawHighlight highlighter;
+        private DrawPreview previewer;
         private float brushSize;
         private int newBrushStrokeID;
         private float cachedTime;
@@ -42,11 +49,15 @@ namespace Drawing
         void OnEnable()
         {
             drawer = new Drawing(imageWidth, imageHeight);
+            highlighter = new DrawHighlight(imageWidth, imageHeight);
+            previewer = new DrawPreview(imageWidth, imageHeight);
+            
             commandManager = FindObjectOfType<CommandManager>();
 
             drawingMat.SetTexture("_MainTex", drawer.rt);
             displayMat.SetTexture("_MainTex", drawer.rt);
-            selectMat.SetTexture("_MainTex", drawer.rtSelect);
+            selectMat.SetTexture("_MainTex", highlighter.rtHighlight);
+            previewMat.SetTexture("_MainTex", previewer.rtPreview);
 
             resetBox = new Vector4(imageWidth, imageHeight, 0, 0);
             tempBrushStrokes = new List<BrushStroke>();
@@ -54,9 +65,10 @@ namespace Drawing
             
             EventSystem.Subscribe(EventType.FINISHED_STROKE, StoppedDrawing);
             EventSystem.Subscribe(EventType.CLEAR_HIGHLIGHT, ClearHighlightStroke);
+            EventSystem.Subscribe(EventType.STOPPED_SETTING_BRUSH_SIZE, ClearPreview);
             EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
-            //Include the change brush size in the draw event
-            EventSystem<float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
+            EventSystem<float>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+            EventSystem<Vector2>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<float>.Subscribe(EventType.TIME, SetTime);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
@@ -71,8 +83,10 @@ namespace Drawing
         {
             EventSystem.Unsubscribe(EventType.FINISHED_STROKE, StoppedDrawing);
             EventSystem.Unsubscribe(EventType.CLEAR_HIGHLIGHT, ClearHighlightStroke);
+            EventSystem.Unsubscribe(EventType.STOPPED_SETTING_BRUSH_SIZE, ClearPreview);
             EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
-            EventSystem<float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, SetBrushSize);
+            EventSystem<float>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+            EventSystem<Vector2>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.HIGHLIGHT, HighlightStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
@@ -88,16 +102,20 @@ namespace Drawing
             time = _time;
             displayMat.SetFloat("_CustomTime", time);
         }
-        private void SetShowcaseTime(float _time)
-        {
-            displayMat.SetFloat("_TimeSpeed", _time);
-        }
 
         private void SetBrushSize(float _brushSize)
         {
             brushSize = _brushSize;
         }
+        private void SetBrushSize(Vector2 _mousePos)
+        {
+            previewer.Preview(_mousePos, brushSize);
+        }
 
+        private void ClearPreview()
+        {
+            previewer.ClearPreview();
+        }
 
         private void Draw(Vector2 _mousePos)
         {
@@ -215,24 +233,13 @@ namespace Drawing
             drawer.RedrawAllSafe(_brushStrokeIDs);
         }
         
-        private void HighlightStroke(BrushStrokeID _brushstrokeID)
+        private void HighlightStroke(BrushStrokeID _brushStrokeID)
         {
-            foreach (var brushStroke in _brushstrokeID.brushStrokes)
-            {
-                float highlightBrushThickness = Mathf.Clamp(brushStroke.strokeBrushSize / 2, 5, 1024);
-
-                drawer.DrawHighlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Paint, highlightBrushThickness);
-            }
-            
-            foreach (var brushStroke in _brushstrokeID.brushStrokes)
-            {
-                drawer.DrawHighlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Erase, -5);
-            }
+            highlighter.HighlightStroke(_brushStrokeID);
         }
         private void ClearHighlightStroke()
         {
-            Graphics.SetRenderTarget(drawer.rtSelect);
-            GL.Clear(false, true, Color.white);
+            highlighter.ClearHighlight();
         }
 
         void Update()
@@ -256,6 +263,4 @@ namespace Drawing
             _data.brushStrokesID = drawer.brushStrokesID;
         }
     }
-
-    
 }

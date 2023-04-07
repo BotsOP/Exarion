@@ -7,6 +7,7 @@ using TMPro;
 using Undo;
 using UnityEngine;
 using UnityEngine.UI;
+using EventType = Managers.EventType;
 
 namespace UI
 {

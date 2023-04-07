@@ -16,11 +16,7 @@ public enum PaintType
     PaintOverEverything,
     Erase
 }
-public enum HighlightType
-{
-    Paint,
-    Erase
-}
+
 
 namespace Drawing
 {
@@ -28,7 +24,6 @@ namespace Drawing
     {
         public readonly CustomRenderTexture rt;
         public readonly CustomRenderTexture rtID;
-        public readonly CustomRenderTexture rtSelect;
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
 
         private ComputeShader paintShader;
@@ -37,8 +32,6 @@ namespace Drawing
         private int paintOverEverythingKernelID;
         private int paintOverOwnLineKernelID;
         private int eraseKernelID;
-        private int highlightKernelID;
-        private int highlightEraseKernelID;
         private Vector3 threadGroupSizeOut;
         private Vector3 threadGroupSize;
         private int imageWidth;
@@ -50,7 +43,7 @@ namespace Drawing
         }
         public Drawing(int _imageWidth, int _imageHeight)
         {
-            paintShader = Resources.Load<ComputeShader>("PaintShader");
+            paintShader = Resources.Load<ComputeShader>("DrawingShader");
 
             imageWidth = _imageWidth;
             imageHeight = _imageHeight;
@@ -60,12 +53,13 @@ namespace Drawing
             paintOverEverythingKernelID = paintShader.FindKernel("PaintOverEverything");
             paintOverOwnLineKernelID = paintShader.FindKernel("PaintOverOwnLine");
             eraseKernelID = paintShader.FindKernel("Erase");
-            highlightKernelID = paintShader.FindKernel("HighlightSelection");
-            highlightEraseKernelID = paintShader.FindKernel("EraseHighlight");
         
             paintShader.GetKernelThreadGroupSizes(paintUnderOwnLineKernelID, out uint threadGroupSizeX, out uint threadGroupSizeY, out _);
             threadGroupSizeOut.x = threadGroupSizeX;
             threadGroupSizeOut.y = threadGroupSizeY;
+            
+            threadGroupSize.x = Mathf.CeilToInt(_imageWidth / threadGroupSizeOut.x);
+            threadGroupSize.y = Mathf.CeilToInt(_imageHeight / threadGroupSizeOut.y);
 
             rt = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
             {
@@ -79,27 +73,11 @@ namespace Drawing
                 enableRandomWrite = true,
                 name = "rtID",
             };
-            rtSelect = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                name = "rtSelect",
-            };
 
-            Graphics.SetRenderTarget(rt);
-            GL.Clear(false, true, Color.white);
+            rt.Clear(false, true, Color.white);
             
-            Graphics.SetRenderTarget(rtID);
             Color idColor = new Color(-1, -1, -1);
-            GL.Clear(false, true, idColor);
-            
-            Graphics.SetRenderTarget(rtSelect);
-            GL.Clear(false, true, Color.white);
-            
-            Graphics.SetRenderTarget(null);
-
-            threadGroupSize.x = Mathf.CeilToInt(_imageWidth / threadGroupSizeOut.x);
-            threadGroupSize.y = Mathf.CeilToInt(_imageHeight / threadGroupSizeOut.y);
+            rtID.Clear(false, true, idColor);
         }
     
         public void Draw(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, PaintType _paintType, float _lastTime = 0, float _brushTime = 0, bool _firstStroke = false, int _strokeID = 0)
@@ -134,10 +112,6 @@ namespace Drawing
                     kernelID = paintUnderOwnLineKernelID;
                     break;
                 case PaintType.Erase:
-                    if (_firstStroke)
-                    {
-                        _strokeBrushSize += 1;
-                    }
                     kernelID = eraseKernelID;
                     break;
             }
@@ -152,35 +126,6 @@ namespace Drawing
             paintShader.SetInt("_StrokeID", _strokeID);
             paintShader.SetTexture(kernelID, "_IdTex", rtID);
             paintShader.SetTexture(kernelID, "_ResultTex", rt);
-
-            paintShader.Dispatch(kernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
-        }
-        
-        public void DrawHighlight(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, HighlightType _highlightType, float _borderThickness = 0)
-        {
-            _strokeBrushSize += _borderThickness;
-            _strokeBrushSize = Mathf.Clamp(_strokeBrushSize, 1, 1024);
-            threadGroupSize.x = Mathf.CeilToInt((math.abs(_lastPos.x - _currentPos.x) + _strokeBrushSize * 2) / threadGroupSizeOut.x);
-            threadGroupSize.y = Mathf.CeilToInt((math.abs(_lastPos.y - _currentPos.y) + _strokeBrushSize * 2) / threadGroupSizeOut.y);
-        
-            Vector2 startPos = GetStartPos(_lastPos, _currentPos, _strokeBrushSize);
-            
-            int kernelID = 0;
-            switch (_highlightType)
-            {
-                case HighlightType.Paint:
-                    kernelID = highlightKernelID;
-                    break;
-                case HighlightType.Erase:
-                    kernelID = highlightEraseKernelID;
-                    break;
-            }
-
-            paintShader.SetVector("_CursorPos", _currentPos);
-            paintShader.SetVector("_LastCursorPos", _lastPos);
-            paintShader.SetVector("_StartPos", startPos);
-            paintShader.SetFloat("_BrushSize", _strokeBrushSize);
-            paintShader.SetTexture(kernelID, "_SelectTex", rtSelect);
 
             paintShader.Dispatch(kernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
         }
@@ -312,8 +257,8 @@ namespace Drawing
 
         public void RedrawAll()
         {
-            ResetIDTex();
-
+            rtID.Clear(false, true, new Color(-1, -1, -1));
+            
             for (int i = 0; i < brushStrokesID.Count; i++)
             {
                 RedrawStroke(brushStrokesID[i]);
@@ -323,7 +268,7 @@ namespace Drawing
         //Redraws everything and if a stroke needs to be interpolated it does so automatically
         public void RedrawAllSafe(BrushStrokeID _brushStrokeID)
         {
-            ResetIDTex();
+            rtID.Clear(false, true, new Color(-1, -1, -1));
 
             Vector4 collisionBox = _brushStrokeID.GetCollisionBox();
 
@@ -344,7 +289,7 @@ namespace Drawing
         }
         public void RedrawAllSafe(List<BrushStrokeID> _brushStrokeIDs)
         {
-            ResetIDTex();
+            rtID.Clear(false, true, new Color(-1, -1, -1));
 
             Vector4 collisionBox = CombineCollisionBox(
                 _brushStrokeIDs.Select(_id => _id.GetCollisionBox()).ToArray());
@@ -363,14 +308,6 @@ namespace Drawing
 
                 RedrawStrokeOptimized(brushStrokeID, collisionBox);
             }
-        }
-        
-        private void ResetIDTex()
-        {
-            Graphics.SetRenderTarget(rtID);
-            Color idColor = new Color(-1, -1, -1);
-            GL.Clear(false, true, idColor);
-            Graphics.SetRenderTarget(null);
         }
 
         private Vector4 CombineCollisionBox(Vector4[] collisionBoxes)

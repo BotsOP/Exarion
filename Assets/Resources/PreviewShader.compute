@@ -1,0 +1,27 @@
+#pragma kernel Preview
+
+RWTexture2D<float> _PreviewTex;
+
+float2 _CursorPos;
+float2 _StartPos;
+float _BrushSize;
+
+float LineSegment2DSDF(const float2 p, const float2 a, const float2 b)
+{
+    const float2 ba = b - a;
+    const float2 pa = p - a;
+    const float k = saturate(dot(pa, ba) / dot(ba, ba));
+    return length(pa - ba * k);
+}
+
+[numthreads(32,32,1)]
+void Preview (uint2 id : SV_DispatchThreadID)
+{
+    if(distance(_CursorPos, _StartPos + id) < _BrushSize)
+    {
+        _PreviewTex[_StartPos + id] = distance(_CursorPos, _StartPos + id) / _BrushSize / 2;
+    }
+}
+
+
+

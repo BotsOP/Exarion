@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Drawing;
+using Managers;
 using UnityEngine;
+using EventType = Managers.EventType;
 
 namespace Undo
 {

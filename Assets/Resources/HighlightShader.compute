@@ -1,0 +1,47 @@
+#pragma kernel HighlightSelection
+#pragma kernel EraseHighlight
+
+RWTexture2D<float> _SelectTex;
+
+float2 _CursorPos;
+float2 _LastCursorPos;
+float2 _StartPos;
+float _BrushSize;
+
+float LineSegment2DSDF(const float2 p, const float2 a, const float2 b)
+{
+    const float2 ba = b - a;
+    const float2 pa = p - a;
+    const float k = saturate(dot(pa, ba) / dot(ba, ba));
+    return length(pa - ba * k);
+}
+
+[numthreads(32,32,1)]
+void HighlightSelection (uint3 id : SV_DispatchThreadID)
+{
+    float2 paintPos = _StartPos.xy + id.xy;
+    _LastCursorPos -= float2(0.01, 0.01);
+
+    float paintColor = LineSegment2DSDF(paintPos, _LastCursorPos, _CursorPos);
+    paintColor = smoothstep(_BrushSize, 0, paintColor);
+    
+    if(paintColor <= 0) { return; }
+
+    _SelectTex[paintPos] = 0;
+}
+
+[numthreads(32,32,1)]
+void EraseHighlight (uint3 id : SV_DispatchThreadID)
+{
+    float2 paintPos = _StartPos.xy + id.xy;
+    _LastCursorPos -= float2(0.01, 0.01);
+
+    float paintColor = LineSegment2DSDF(paintPos, _LastCursorPos, _CursorPos);
+    paintColor = 1 - smoothstep(_BrushSize, _BrushSize, paintColor);
+
+    if(paintColor <= 0) { return; }
+
+    _SelectTex[paintPos] = 1;
+}
+
+

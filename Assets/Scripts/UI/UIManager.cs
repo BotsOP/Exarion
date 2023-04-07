@@ -1,11 +1,12 @@
-using System;
 using System.Globalization;
 using DataPersistence;
 using Drawing;
+using Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using EventType = Managers.EventType;
 
 namespace UI
 {
@@ -32,7 +33,6 @@ namespace UI
         [Header("UI input")]
         [SerializeField] private TMP_InputField brushSizeInput;
         [SerializeField] private Slider brushSizeSlider;
-        [SerializeField] private Button exportButton;
         
         private CustomRenderTexture viewFullRT;
         private CustomRenderTexture viewFocusRT;
@@ -42,8 +42,9 @@ namespace UI
         private RectTransform rectTransformDisplayFull;
         private RectTransform rectTransformViewFocus;
         private RectTransform rectTransformDisplayFocus;
+        readonly ExportPNG exportPNG = new ExportPNG();
 
-        private void Awake()
+        private void OnEnable()
         {
             rectTransformViewFull = viewImageFull.rectTransform;
             rectTransformViewFocus = viewImageFocus.rectTransform;
@@ -89,14 +90,20 @@ namespace UI
             displayImageFull.texture = displayFullRT;
             displayImageFocus.texture = displayFocusRT;
             
-            EventSystem<float>.RaiseEvent(EventType.CHANGE_BRUSH_SIZE, brushSizeSlider.value);
+            EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSizeSlider.value);
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
+            
+            EventSystem<float>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+        }
+
+        private void OnDisable()
+        {
+            EventSystem<float>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
         }
 
         public void ExportResult()
         {
             DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
-            ExportPNG exportPNG = new ExportPNG();
             exportPNG.SaveImageToFile(drawingManager.drawer.rt, "");
         }
 
@@ -155,7 +162,14 @@ namespace UI
             {
                 brushSizeSlider.value = int.Parse(brushSizeInput.text);
             }
-            EventSystem<float>.RaiseEvent(EventType.CHANGE_BRUSH_SIZE, brushSizeSlider.value);
+            EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSizeSlider.value);
+        }
+
+        private void SetBrushSize(float _brushSize)
+        {
+            int brushSize = (int)_brushSize;
+            brushSizeInput.text = brushSize.ToString(CultureInfo.CurrentCulture);
+            brushSizeSlider.value = brushSize;
         }
     }
 }
