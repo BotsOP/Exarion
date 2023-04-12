@@ -18,9 +18,9 @@ namespace Undo
         {
             foreach (var redraw in redrawCommands)
             {
-                redraw.brushStokeID.lastTime = redraw.lastTime;
-                redraw.brushStokeID.currentTime = redraw.currentTime;
-                redraw.UpdateTimelineClip(redraw.lastTime, redraw.currentTime, redraw.timelineBar);
+                redraw.brushStokeID.lastTime = redraw.clipTime.x;
+                redraw.brushStokeID.currentTime = redraw.clipTime.y;
+                redraw.UpdateTimelineClip(redraw.clipTime, redraw.timelineBar);
             }
             
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, redrawCommands.Select(_command => _command.brushStokeID).ToList());
@@ -30,9 +30,9 @@ namespace Undo
             //Updates all timeline clips
             foreach (var redraw in redrawCommands)
             {
-                redraw.brushStokeID.lastTime = redraw.lastTimeOld;
-                redraw.brushStokeID.currentTime = redraw.currentTimeOld;
-                redraw.UpdateTimelineClip(redraw.lastTimeOld, redraw.currentTimeOld, redraw.previousTimelineBar);
+                redraw.brushStokeID.lastTime = redraw.clipTimeOld.x;
+                redraw.brushStokeID.currentTime = redraw.clipTimeOld.y;
+                redraw.UpdateTimelineClip(redraw.clipTimeOld, redraw.previousTimelineBar);
             }
             
             //Updates all brushstrokes

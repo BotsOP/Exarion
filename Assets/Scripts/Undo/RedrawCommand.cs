@@ -1,15 +1,15 @@
 ﻿using Drawing;
 using Managers;
 using UI;
+using UnityEngine;
+using EventType = Managers.EventType;
 
 namespace Undo
 {
     public class RedrawCommand : ICommand
     {
-        public float lastTime;
-        public float currentTime;
-        public float lastTimeOld;
-        public float currentTimeOld;
+        public Vector2 clipTime;
+        public Vector2 clipTimeOld;
         public BrushStrokeID brushStokeID;
         public int previousTimelineBar;
         public int timelineBar;
@@ -18,36 +18,33 @@ namespace Undo
         public RedrawCommand(TimelineClip _timelineClip)
         {
             timelineClip = _timelineClip;
-            lastTimeOld = _timelineClip.lastLeftSideScaled;
-            currentTimeOld = _timelineClip.lastRightSideScaled;
+            clipTime = _timelineClip.ClipTime;
+            clipTimeOld = _timelineClip.clipTimeOld;
             previousTimelineBar = _timelineClip.previousBar;
             timelineBar = _timelineClip.currentBar;
-            lastTime = _timelineClip.leftSideScaled;
-            currentTime = _timelineClip.rightSideScaled;
             brushStokeID = _timelineClip.brushStrokeID;
         }
         
         public void Execute()
         {
-            brushStokeID.lastTime = lastTime;
-            brushStokeID.currentTime = currentTime;
+            brushStokeID.lastTime = clipTime.x;
+            brushStokeID.currentTime = clipTime.y;
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.REDRAW_STROKE, brushStokeID);
             
-            UpdateTimelineClip(lastTime, currentTime, timelineBar);
+            UpdateTimelineClip(clipTime, timelineBar);
         }
         public void Undo()
         {
-            brushStokeID.lastTime = lastTimeOld;
-            brushStokeID.currentTime = currentTimeOld;
+            brushStokeID.lastTime = clipTimeOld.x;
+            brushStokeID.currentTime = clipTimeOld.y;
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.REDRAW_STROKE, brushStokeID);
             
-            UpdateTimelineClip(lastTimeOld, currentTimeOld, previousTimelineBar);
+            UpdateTimelineClip(clipTimeOld, previousTimelineBar);
         }
         
-        public void UpdateTimelineClip(float _lastTime, float _currentTime, int _timelineBar)
+        public void UpdateTimelineClip(Vector2 _clipTime, int _timelineBar)
         {
-            timelineClip.leftSideScaled = _lastTime;
-            timelineClip.rightSideScaled = _currentTime;
+            timelineClip.ClipTime = _clipTime;
             EventSystem<TimelineClip, int>.RaiseEvent(EventType.UPDATE_CLIP, timelineClip, _timelineBar);
         }
     }

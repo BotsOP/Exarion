@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using DataPersistence;
 using Drawing;
@@ -50,7 +51,7 @@ namespace UI
             rectTransformViewFocus = viewImageFocus.rectTransform;
             rectTransformDisplayFull = displayImageFull.rectTransform;
             rectTransformDisplayFocus = displayImageFocus.rectTransform;
-            
+
             Vector3[] viewCorners = new Vector3[4];
             rectTransformViewFull.GetWorldCorners(viewCorners);
             int imageWidth = (int)(viewCorners[2].x - viewCorners[0].x);
@@ -91,7 +92,6 @@ namespace UI
             displayImageFocus.texture = displayFocusRT;
             
             EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSizeSlider.value);
-            EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
             
             EventSystem<float>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
         }
@@ -99,6 +99,11 @@ namespace UI
         private void OnDisable()
         {
             EventSystem<float>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+        }
+
+        private void Start()
+        {
+            EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
         }
 
         public void ExportResult()

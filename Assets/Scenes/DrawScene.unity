@@ -10576,7 +10576,6 @@ MonoBehaviour:
   backgroundColor: {r: 0.10588236, g: 0.10588236, b: 0.10588236, a: 1}
   brushSizeInput: {fileID: 1590046405}
   brushSizeSlider: {fileID: 1323818942}
-  exportButton: {fileID: 0}
 --- !u!114 &1756645831
 MonoBehaviour:
   m_ObjectHideFlags: 0

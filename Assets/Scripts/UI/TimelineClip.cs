@@ -17,14 +17,15 @@ namespace UI
     }
     public class TimelineClip
     {
-        public float leftSideScaled
+        public Vector2 ClipTime
         {
             get
             {
                 rect.GetWorldCorners(corners);
                 timelineBarRect.GetWorldCorners(timelineBarCorners);
-                float leftSide = ExtensionMethods.Remap(corners[0].x, timelineBarCorners[0].x, timelineBarCorners[2].x, 0, 1);
-                return leftSide;
+                float lastTime = ExtensionMethods.Remap(corners[0].x, timelineBarCorners[0].x, timelineBarCorners[2].x, 0, 1);
+                float currentTime = ExtensionMethods.Remap(corners[2].x, timelineBarCorners[0].x, timelineBarCorners[2].x, 0, 1);
+                return new Vector2(lastTime, currentTime);
             }
             set
             {
@@ -33,64 +34,26 @@ namespace UI
                 var sizeDelta = rect.sizeDelta;
                 var position = rect.position;
             
-                float xPos = ExtensionMethods.Remap(value, 0, 1, timelineBarCorners[0].x, timelineBarCorners[2].x);
-                float differenceInLength = corners[0].x - xPos;
-                float clipLength = sizeDelta.x + differenceInLength;
+                float lastTimePos = ExtensionMethods.Remap(value.x, 0, 1, timelineBarCorners[0].x, timelineBarCorners[2].x);
+                float currentTimePos = ExtensionMethods.Remap(value.y, 0, 1, timelineBarCorners[0].x, timelineBarCorners[2].x);
+                float clipLength = currentTimePos - lastTimePos;
                 sizeDelta = new Vector2(clipLength, sizeDelta.y);
                 rect.sizeDelta = sizeDelta;
 
                 if (rect.pivot.x == 0)
                 {
-                    position = new Vector3(xPos, position.y, position.z);
+                    position = new Vector3(lastTimePos, position.y, position.z);
                     rect.position = position;
                 }
                 else
                 {
-                    xPos += clipLength;
-                    position = new Vector3(xPos, position.y, position.z);
+                    position = new Vector3(currentTimePos, position.y, position.z);
                     rect.position = position;
                 }
             }
         }
 
-        public float rightSideScaled
-        {
-            get
-            {
-                rect.GetWorldCorners(corners);
-                timelineBarRect.GetWorldCorners(timelineBarCorners);
-                float rightSide = ExtensionMethods.Remap(corners[2].x, timelineBarCorners[0].x, timelineBarCorners[2].x, 0, 1);
-                return rightSide;
-            }
-            set
-            {
-                rect.GetWorldCorners(corners);
-                timelineBarRect.GetWorldCorners(timelineBarCorners);
-                var sizeDelta = rect.sizeDelta;
-                var position = rect.position;
-            
-                float xPos = ExtensionMethods.Remap(value, 0, 1, timelineBarCorners[0].x, timelineBarCorners[2].x);
-                float differenceInLength = xPos - corners[2].x;
-                float clipLength = sizeDelta.x + differenceInLength;
-                sizeDelta = new Vector2(clipLength, sizeDelta.y);
-                rect.sizeDelta = sizeDelta;
-
-                if (rect.pivot.x == 0)
-                {
-                    xPos -= clipLength;
-                    position = new Vector3(xPos, position.y, position.z);
-                    rect.position = position;
-                }
-                else
-                {
-                    position = new Vector3(xPos, position.y, position.z);
-                    rect.position = position;
-                }
-            }
-        }
-        
-        public float lastLeftSideScaled;
-        public float lastRightSideScaled;
+        public Vector2 clipTimeOld;
         public int previousBar;
 
         public BrushStrokeID brushStrokeID;
