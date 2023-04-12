@@ -88,7 +88,7 @@ namespace UI
                 }
             }
         }
-
+        
         public float lastLeftSideScaled;
         public float lastRightSideScaled;
         public int previousBar;
@@ -121,15 +121,6 @@ namespace UI
             corners = new Vector3[4];
             timelineBarCorners = new Vector3[4];
             timelineAreaCorners = new Vector3[4];
-        }
-
-        public void UpdateUI(Vector2 _previousMousePos)
-        {
-            rect.GetWorldCorners(corners);
-
-            mouseAction = GetMouseAction();
-
-            UpdateTransform(_previousMousePos);
         }
         public void SetupMovement(MouseAction _mouseAction)
         {
@@ -315,8 +306,9 @@ namespace UI
             currentBar = newBar;
         }
 
-        private bool IsMouseOver()
+        public bool IsMouseOver()
         {
+            rect.GetWorldCorners(corners);
             return Input.mousePosition.x > corners[0].x && Input.mousePosition.x < corners[2].x && Input.mousePosition.y > corners[0].y &&
                    Input.mousePosition.y < corners[2].y;
         }

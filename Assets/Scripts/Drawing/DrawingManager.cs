@@ -72,7 +72,7 @@ namespace Drawing
             EventSystem<float>.Subscribe(EventType.TIME, SetTime);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
-            EventSystem<BrushStrokeID>.Subscribe(EventType.HIGHLIGHT, HighlightStroke);
+            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.HIGHLIGHT, HighlightStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
@@ -88,7 +88,7 @@ namespace Drawing
             EventSystem<float>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<Vector2>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
-            EventSystem<BrushStrokeID>.Unsubscribe(EventType.HIGHLIGHT, HighlightStroke);
+            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.HIGHLIGHT, HighlightStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
@@ -233,9 +233,9 @@ namespace Drawing
             drawer.RedrawAllSafe(_brushStrokeIDs);
         }
         
-        private void HighlightStroke(BrushStrokeID _brushStrokeID)
+        private void HighlightStroke(List<BrushStrokeID> _brushStrokeIDs)
         {
-            highlighter.HighlightStroke(_brushStrokeID);
+            highlighter.HighlightStroke(_brushStrokeIDs);
         }
         private void ClearHighlightStroke()
         {

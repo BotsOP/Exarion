@@ -1,4 +1,5 @@
-﻿using Managers;
+﻿using System.Collections.Generic;
+using Managers;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -87,6 +88,28 @@ namespace Drawing
             foreach (var brushStroke in _brushStrokeID.brushStrokes)
             {
                 Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Erase, -5);
+            }
+        }
+        
+        public void HighlightStroke(List<BrushStrokeID> _brushStrokeIDs)
+        {
+            ClearHighlight();
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                foreach (var brushStroke in brushStrokeID.brushStrokes)
+                {
+                    float highlightBrushThickness = Mathf.Clamp(brushStroke.strokeBrushSize / 2, 5, 1024);
+
+                    Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Paint, highlightBrushThickness);
+                }
+            }
+            
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                foreach (var brushStroke in brushStrokeID.brushStrokes)
+                {
+                    Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Erase, -5);
+                }
             }
         }
 
