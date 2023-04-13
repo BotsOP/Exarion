@@ -150,7 +150,6 @@ namespace Drawing
         //Move this to timeline?
         private void StoppedDrawing()
         {
-            Debug.Log($"lasttime: {startBrushStrokeTime} time: {time}");
             List<BrushStroke> brushStrokes = new List<BrushStroke>(tempBrushStrokes);
             BrushStrokeID brushStrokeID = new BrushStrokeID(
                 brushStrokes, paintType, startBrushStrokeTime,

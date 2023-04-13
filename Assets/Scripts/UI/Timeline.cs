@@ -57,6 +57,7 @@ namespace UI
         private bool firstTimeSelected;
         private bool shouldMoveTimeline;
         private MouseAction lastMouseAction;
+        private float startClickPos;
 
         private Vector3[] Corners
         {
@@ -279,8 +280,24 @@ namespace UI
                     selectedClip = clip;
                 }
             }
+            
             if (selectedClip != null)
             {
+                float leftMostPos = Mathf.Infinity;
+                float rightMostPos = 0;
+                if (lastMouseAction is MouseAction.ResizeClipRight or MouseAction.ResizeClipLeft)
+                {
+                    Vector3[] clipCorners = new Vector3[4];
+                    foreach (var clip in selectedClips)
+                    {
+                        clip.rect.GetWorldCorners(clipCorners);
+                        if (clipCorners[0].x < leftMostPos)
+                            leftMostPos = clipCorners[0].x;
+                        if (clipCorners[2].x > rightMostPos)
+                            rightMostPos = clipCorners[2].x;
+                    }
+                }
+                
                 if (firstTimeSelected)
                 {
                     Debug.Log($"setting up timeline");
@@ -289,18 +306,19 @@ namespace UI
                         clip.previousBar = clip.currentBar;
                         clip.clipTimeOld = clip.ClipTime;
 
+                        Debug.Log($"{leftMostPos}  {rightMostPos}  {lastMouseAction}");
                         clip.barOffset = clip.currentBar - selectedClip.currentBar;
-                        clip.SetupMovement(lastMouseAction);
+                        clip.SetupMovement(lastMouseAction, leftMostPos, rightMostPos);
                     }
                     firstTimeSelected = false;
                 }
 
-                Debug.Log($"{selectedClips.Count}");
                 List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
                 for (int i = 0; i < selectedClips.Count; i++)
                 {
                     var clip = selectedClips[i];
                     clip.mouseAction = lastMouseAction;
+
                     clip.UpdateTransform(previousMousePos);
                     // clipLeftInput.text = clip.leftSideScaled.ToString("0.###");
                     // clipRightInput.text = clip.rightSideScaled.ToString("0.###");
@@ -337,10 +355,10 @@ namespace UI
 
                         if (selectedClips.Count == 0 || Input.GetKey(KeyCode.LeftShift))
                         {
+                            firstTimeSelected = true;
                             lastSelectedClip = clip;
                             selectedClips.Add(clip);
                             clip.rawImage.color = selectedColor;
-                            clip.SetupMovement(clip.GetMouseAction());
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.HIGHLIGHT, selectedClips.Select(_clip => _clip.brushStrokeID).ToList());
                             return true;
                         }
@@ -350,6 +368,7 @@ namespace UI
                             _clip.rawImage.color = notSelectedColor;
                         }
 
+                        firstTimeSelected = true;
                         selectedClips.Clear();
                         clip.rawImage.color = selectedColor;
                         selectedClips.Add(clip);
@@ -568,7 +587,6 @@ namespace UI
             {
                 ClipTime = new Vector2(_brushStrokeID.lastTime, _brushStrokeID.currentTime)
             };
-            Debug.Log($"lasttime: {timelineClip.ClipTime.x} time: {timelineClip.ClipTime.y}");
             clipsOrdered[0].Add(timelineClip);
             CheckClipCollisions(timelineClip);
         }
