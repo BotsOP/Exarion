@@ -255,6 +255,22 @@ namespace Drawing
             }
         }
 
+        public bool IsMouseOverBrushStroke(BrushStrokeID _brushStrokeID, Vector2 _mousePos)
+        {
+            Vector4 collisionBox = _brushStrokeID.GetCollisionBox();
+            if (CheckCollision(collisionBox, _mousePos))
+            {
+                foreach (var brushStroke in _brushStrokeID.brushStrokes)
+                {
+                    if (DistancePointToLine(brushStroke.GetStartPos(), brushStroke.GetEndPos(), _mousePos) < brushStroke.strokeBrushSize)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
         public void RedrawAll()
         {
             rtID.Clear(false, true, new Color(-1, -1, -1));
@@ -328,6 +344,24 @@ namespace Drawing
         private bool CheckCollision(Vector4 _box1, Vector4 _box2)
         {
             return _box1.x <= _box2.z && _box1.z >= _box2.x && _box1.y <= _box2.w && _box1.w >= _box2.y;
+        }
+        private bool CheckCollision(Vector4 _box1, Vector2 _point)
+        {
+            return _point.x >= _box1.x && _point.x <= _box1.z && _point.y >= _box1.y && _point.y <= _box1.w;
+        }
+        
+        private float DistancePointToLine(Vector2 lineStart, Vector2 lineEnd, Vector2 point)
+        {
+            //Get heading
+            Vector2 heading = (lineEnd - lineStart);
+            float magnitudeMax = heading.magnitude;
+            heading.Normalize();
+
+            //Do projection from the point but clamp it
+            Vector2 lhs = point - lineStart;
+            float dotP = Vector2.Dot(lhs, heading);
+            dotP = Mathf.Clamp(dotP, 0f, magnitudeMax);
+            return Vector2.Distance(lineStart + heading * dotP, point);
         }
     }
 }

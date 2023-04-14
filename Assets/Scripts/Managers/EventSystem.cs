@@ -14,6 +14,7 @@ namespace Managers
         UPDATE_CLIP,
         TIME,
         VIEW_CHANGED,
+        SELECT_BRUSHSTROKE,
         HIGHLIGHT,
         CLEAR_HIGHLIGHT,
         ADD_STROKE,

@@ -162,7 +162,7 @@ namespace UI
             
             timeIncrease = (Time.timeSinceLevelLoad - timeIncrease) / Mathf.Pow(speedSliderTimeline.value, 1.5f);
             time += timeIncrease;
-            time %= 1.1f;
+            time %= 1f;
             MoveTimelineTimIndicator(time);
             EventSystem<float>.RaiseEvent(EventType.TIME, time);
             

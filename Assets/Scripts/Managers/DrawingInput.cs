@@ -16,6 +16,7 @@ namespace UI
         private Vector2 startMousePos;
         private Vector2 startPosViewCam;
         private Vector2 startPosDisplayCam;
+        private bool otherInput;
         private float time;
 
         public DrawingInput(Camera _viewCam, Camera _displayCam, float _scrollZoomSensitivity)
@@ -43,39 +44,78 @@ namespace UI
         {
             bool isMouseInsideDrawArea = IsMouseInsideDrawArea(_drawAreaCorners);
             bool isMouseInsideDisplayArea = IsMouseInsideDrawArea(_displayAreaCorners);
-            
-            if (mouseIsDrawing)
-            {
-                if(Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || Math.Abs(time - 1.1) < 0.1)
-                {
-                    EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
-                    EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
 
-                    mouseIsDrawing = false;
-                }
-            }
-            
             if (isMouseInsideDrawArea)
             {
                 Vector4 drawCorners = GetScaledDrawingCorners(_camPos, _camZoom, _drawAreaCorners);
                 float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);
                 float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
                 Vector2 mousePos = new Vector2(mousePosX, mousePosY);
-                
-                if(DrawInput(mousePos))
-                    return;
-                
-                if (SetBrushSize(mousePos))
-                    return;
-                
-                if(MoveCamera(viewCam, _drawAreaCorners, startPosViewCam))
-                    return;
 
+                if (SelectBrushStroke(mousePos))
+                {
+                    if (mouseIsDrawing)
+                    {
+                        EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
+                        EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
+
+                        mouseIsDrawing = false;
+                    }
+                    
+                    return;
+                }
             }
-            else if (isMouseInsideDisplayArea)
+
+            if (!otherInput)
             {
-                MoveCamera(displayCam, _displayAreaCorners, startPosDisplayCam);
+                if (mouseIsDrawing)
+                {
+                    if(Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || Math.Abs(time - 1.1) < 0.1)
+                    {
+                        EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
+                        EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
+
+                        mouseIsDrawing = false;
+                    }
+                }
+            
+                if (isMouseInsideDrawArea)
+                {
+                    Vector4 drawCorners = GetScaledDrawingCorners(_camPos, _camZoom, _drawAreaCorners);
+                    float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);
+                    float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
+                    Vector2 mousePos = new Vector2(mousePosX, mousePosY);
+
+                    if(DrawInput(mousePos))
+                        return;
+                
+                    if (SetBrushSize(mousePos))
+                        return;
+                
+                    if(MoveCamera(viewCam, _drawAreaCorners, startPosViewCam))
+                        return;
+
+                }
+                else if (isMouseInsideDisplayArea)
+                {
+                    MoveCamera(displayCam, _displayAreaCorners, startPosDisplayCam);
+                }
             }
+            
+            if (Input.GetMouseButtonUp(0))
+            {
+                otherInput = false;
+            }
+        }
+        private bool SelectBrushStroke(Vector2 _mousePos)
+        {
+            if (Input.GetMouseButtonDown(0) && Input.GetKey(KeyCode.W))
+            {
+                otherInput = true;
+                EventSystem<Vector2>.RaiseEvent(EventType.SELECT_BRUSHSTROKE, _mousePos);
+                return true;
+            }
+            return false;
         }
         private bool DrawInput(Vector2 _mousePos)
         {

@@ -67,5 +67,14 @@ namespace Drawing
         {
             return new Vector4(lastPosX, lastPosY, currentPosX, currentPosY);
         }
+        
+        public Vector2 GetStartPos()
+        {
+            return new Vector2(lastPosX, lastPosY);
+        }
+        public Vector2 GetEndPos()
+        {
+            return new Vector2(currentPosX, currentPosY);
+        }
     }
 }

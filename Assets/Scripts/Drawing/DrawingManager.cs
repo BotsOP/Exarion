@@ -69,6 +69,7 @@ namespace Drawing
             EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
             EventSystem<float>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<Vector2>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+            EventSystem<Vector2>.Subscribe(EventType.SELECT_BRUSHSTROKE, SelectBrushStroke);
             EventSystem<float>.Subscribe(EventType.TIME, SetTime);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
@@ -87,6 +88,7 @@ namespace Drawing
             EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
             EventSystem<float>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<Vector2>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+            EventSystem<Vector2>.Unsubscribe(EventType.SELECT_BRUSHSTROKE, SelectBrushStroke);
             EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.HIGHLIGHT, HighlightStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
@@ -143,28 +145,27 @@ namespace Drawing
             if (collisionBox.y > _mousePos.y) { collisionBox.y = _mousePos.y; }
             if (collisionBox.z < _mousePos.x) { collisionBox.z = _mousePos.x; }
             if (collisionBox.w < _mousePos.y) { collisionBox.w = _mousePos.y; }
-            // ball1.position = new Vector3(collisionBox.x / imageWidth, collisionBox.y / imageHeight, 0);
-            // ball2.position = new Vector3(collisionBox.z / imageWidth, collisionBox.w / imageHeight, 0);
         }
         
-        //Move this to timeline?
         private void StoppedDrawing()
         {
+            collisionBox = new Vector4(collisionBox.x - brushSize, collisionBox.y - brushSize, collisionBox.z + brushSize, collisionBox.w + brushSize);
             List<BrushStroke> brushStrokes = new List<BrushStroke>(tempBrushStrokes);
+            
             BrushStrokeID brushStrokeID = new BrushStrokeID(
                 brushStrokes, paintType, startBrushStrokeTime,
                 time, collisionBox, drawer.brushStrokesID.Count);
             
             drawer.brushStrokesID.Add(brushStrokeID);
-
-
-
+            
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
             
             collisionBox = resetBox;
             tempBrushStrokes.Clear();
             firstUse = true;
         }
+
+        
         
         private void RedrawStroke(BrushStrokeID _brushStrokeID)
         {
@@ -239,6 +240,19 @@ namespace Drawing
         private void ClearHighlightStroke()
         {
             highlighter.ClearHighlight();
+        }
+        
+        private void SelectBrushStroke(Vector2 _mousePos)
+        {
+            highlighter.ClearHighlight();
+            foreach (BrushStrokeID brushStrokeID in drawer.brushStrokesID)
+            {
+                if (drawer.IsMouseOverBrushStroke(brushStrokeID, _mousePos))
+                {
+                    highlighter.HighlightStroke(brushStrokeID);
+                    return;
+                }
+            }
         }
 
         void Update()
