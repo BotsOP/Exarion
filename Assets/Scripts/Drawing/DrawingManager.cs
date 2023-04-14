@@ -157,8 +157,7 @@ namespace Drawing
             
             drawer.brushStrokesID.Add(brushStrokeID);
 
-            ICommand draw = new DrawCommand(brushStrokeID);
-            commandManager.AddCommand(draw);
+
 
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
             

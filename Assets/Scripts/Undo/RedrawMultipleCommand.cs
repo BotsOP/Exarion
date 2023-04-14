@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Drawing;
 using Managers;
+using UnityEngine;
+using EventType = Managers.EventType;
 
 namespace Undo
 {
@@ -27,6 +29,7 @@ namespace Undo
         }
         public void Undo()
         {
+            Debug.Log($"redraw");
             //Updates all timeline clips
             foreach (var redraw in redrawCommands)
             {

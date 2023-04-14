@@ -300,13 +300,11 @@ namespace UI
                 
                 if (firstTimeSelected)
                 {
-                    Debug.Log($"setting up timeline");
                     foreach (TimelineClip clip in selectedClips)
                     {
                         clip.previousBar = clip.currentBar;
                         clip.clipTimeOld = clip.ClipTime;
 
-                        Debug.Log($"{leftMostPos}  {rightMostPos}  {lastMouseAction}");
                         clip.barOffset = clip.currentBar - selectedClip.currentBar;
                         clip.SetupMovement(lastMouseAction, leftMostPos, rightMostPos);
                     }
@@ -362,26 +360,27 @@ namespace UI
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.HIGHLIGHT, selectedClips.Select(_clip => _clip.brushStrokeID).ToList());
                             return true;
                         }
-                        
-                        foreach (var _clip in selectedClips)
+                        if (Input.GetMouseButtonDown(0))
                         {
-                            _clip.rawImage.color = notSelectedColor;
+                            foreach (var _clip in selectedClips)
+                            {
+                                _clip.rawImage.color = notSelectedColor;
+                            }
+
+                            firstTimeSelected = true;
+                            selectedClips.Clear();
+                            clip.rawImage.color = selectedColor;
+                            selectedClips.Add(clip);
+
+                            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.HIGHLIGHT, selectedClips.Select(_clip => _clip.brushStrokeID).ToList());
+                            return true;
                         }
-
-                        firstTimeSelected = true;
-                        selectedClips.Clear();
-                        clip.rawImage.color = selectedColor;
-                        selectedClips.Add(clip);
-
-                        EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.HIGHLIGHT, selectedClips.Select(_clip => _clip.brushStrokeID).ToList());
-                        return true;
                     }
-                    if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButtonUp(0) && clip != lastSelectedClip && clip.previousBar == clip.currentBar &&
-                            Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) < 0.001f && Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) < 0.001f)
+                    if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButtonUp(0) && (lastSelectedClip is null || clip != lastSelectedClip && clip.previousBar == clip.currentBar &&
+                            Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) < 0.001f && Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) < 0.001f))
                     {
                         clip.mouseAction = MouseAction.Nothing;
                         lastSelectedClip = null;
-                        Debug.Log($"deselct clip");
                         selectedClips.Remove(clip);
                         clip.rawImage.color = notSelectedColor;
                         firstTimeSelected = true;
@@ -411,9 +410,8 @@ namespace UI
 
                     RedrawCommand clipCommand = new RedrawCommand(clip);
                     redraws.Add(clipCommand);
-
-                    
                 }
+                Debug.Log($"new redraw command");
                 commandManager.AddCommand(new RedrawMultipleCommand(redraws));
             }
         }
@@ -585,10 +583,14 @@ namespace UI
             clipImage.color = notSelectedColor;
             TimelineClip timelineClip = new TimelineClip(_brushStrokeID, rect, timelineBarObject, timelineRect, clipImage)
             {
-                ClipTime = new Vector2(_brushStrokeID.lastTime, _brushStrokeID.currentTime)
+                ClipTime = new Vector2(_brushStrokeID.lastTime, _brushStrokeID.currentTime),
+                clipTimeOld = new Vector2(_brushStrokeID.lastTime, _brushStrokeID.currentTime),
             };
             clipsOrdered[0].Add(timelineClip);
             CheckClipCollisions(timelineClip);
+            
+            ICommand draw = new DrawCommand(timelineClip);
+            commandManager.AddCommand(draw);
         }
         private void AddNewBrushClip(TimelineClip _timelineClip)
         {

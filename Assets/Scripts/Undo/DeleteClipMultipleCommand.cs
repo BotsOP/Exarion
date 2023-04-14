@@ -4,6 +4,8 @@ using System.Linq;
 using Drawing;
 using Managers;
 using UI;
+using UnityEngine;
+using EventType = Managers.EventType;
 
 
 namespace Undo
@@ -28,6 +30,7 @@ namespace Undo
 
         public void Undo()
         {
+            Debug.Log($"delete multiple");
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_STROKE, brushStrokeIDs);
             foreach (var timelineClip in timelineClips)
             {
