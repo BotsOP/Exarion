@@ -153,7 +153,7 @@ namespace Drawing
             }
         }
 
-        private void RedrawStroke(BrushStrokeID _brushstrokeID, PaintType _newPaintType)
+        public void RedrawStroke(BrushStrokeID _brushstrokeID, PaintType _newPaintType)
         {
             int newStrokeID = GetNewID();
             bool firstLoop = true;

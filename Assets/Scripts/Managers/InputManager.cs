@@ -27,6 +27,7 @@ public class InputManager : MonoBehaviour
 
     private void SetDrawArea(RectTransform _currentDrawArea, RectTransform _currentDisplayArea)
     {
+        Debug.Log($"set");
         currentDrawArea = _currentDrawArea;
         currentDisplayArea = _currentDisplayArea;
     }
@@ -40,6 +41,6 @@ public class InputManager : MonoBehaviour
         currentDisplayArea.GetWorldCorners(displayAreaCorners);
         
         drawingInput.scrollZoomSensitivity = scrollZoomSensitivity;
-        drawingInput.UpdateDrawingInput(drawAreaCorners, displayAreaCorners, viewCam.transform.position, viewCam.orthographicSize);
+        drawingInput.UpdateDrawingInput(viewCam.transform.position, viewCam.orthographicSize);
     }
 }

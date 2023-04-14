@@ -5,6 +5,7 @@ using Drawing;
 using Managers;
 using TMPro;
 using Undo;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using EventType = Managers.EventType;
@@ -99,6 +100,7 @@ namespace UI
             EventSystem<TimelineClip>.Subscribe(EventType.ADD_STROKE, AddNewBrushClip);
             EventSystem<TimelineClip, int>.Subscribe(EventType.UPDATE_CLIP, UpdateClip);
             EventSystem<List<TimelineClip>>.Subscribe(EventType.REMOVE_STROKE, RemoveClip);
+            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
         }
 
         private void OnDisable()
@@ -110,6 +112,7 @@ namespace UI
             EventSystem<TimelineClip>.Unsubscribe(EventType.ADD_STROKE, AddNewBrushClip);
             EventSystem<TimelineClip, int>.Unsubscribe(EventType.UPDATE_CLIP, UpdateClip);
             EventSystem<List<TimelineClip>>.Unsubscribe(EventType.REMOVE_STROKE, RemoveClip);
+            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
         }
 
         private void Update()
@@ -162,9 +165,15 @@ namespace UI
             
             timeIncrease = (Time.timeSinceLevelLoad - timeIncrease) / Mathf.Pow(speedSliderTimeline.value, 1.5f);
             time += timeIncrease;
-            time %= 1f;
+            
             MoveTimelineTimIndicator(time);
             EventSystem<float>.RaiseEvent(EventType.TIME, time);
+            
+            if (time > 1)
+            {
+                EventSystem.RaiseEvent(EventType.RESET_TIME);
+                time = 0;
+            }
             
             timeIncrease = Time.timeSinceLevelLoad;
         }
@@ -424,7 +433,8 @@ namespace UI
             commandManager.AddCommand(deleteMultiple);
 
             RemoveClip(selectedClips);
-            ClearSelectedClips();
+            EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
+            selectedClips.Clear();
         }
         private bool ClickedAway()
         {
@@ -446,11 +456,7 @@ namespace UI
                     return true;
                 }
 
-                foreach (TimelineClip clip in selectedClips)
-                {
-                    clip.rawImage.color = notSelectedColor;
-                }
-
+                EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
                 ClearSelectedClips();
                 return true;
             }
@@ -458,10 +464,10 @@ namespace UI
         }
         private void ClearSelectedClips()
         {
-            EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
-            clipLeftInput.text = "";
-            clipRightInput.text = "";
-
+            foreach (TimelineClip clip in selectedClips)
+            {
+                clip.rawImage.color = notSelectedColor;
+            }
             selectedClips.Clear();
         }
 
@@ -630,11 +636,24 @@ namespace UI
                 }
             }
         }
+        private void SelectClip(List<BrushStrokeID> _brushStrokeIDs)
+        {
+            ClearSelectedClips();
+            List<TimelineClip> clips = new List<TimelineClip>();
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                clips.AddRange(clipsOrdered.SelectMany(_timeBar => _timeBar.Where(_clip => _clip.brushStrokeID == brushStrokeID)));
+            }
+            foreach (var clip in clips)
+            {
+                clip.rawImage.color = selectedColor;
+                selectedClips.Add(clip);
+            }
+        }
         private void RemoveClip(List<TimelineClip> _timelineClips)
         {
             foreach (var clip in _timelineClips)
             {
-                //Add boolean to check if you should use previous or current timerline bar
                 Destroy(clip.rect.gameObject);
                 foreach (var timelineBar in clipsOrdered)
                 {

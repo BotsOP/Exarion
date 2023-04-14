@@ -16,8 +16,13 @@ namespace UI
         private Vector2 startMousePos;
         private Vector2 startPosViewCam;
         private Vector2 startPosDisplayCam;
+        private Vector2 lastMousePos;
         private bool otherInput;
         private float time;
+        private Vector3[] drawAreaCorners = new Vector3[4];
+        private Vector3[] displayAreaCorners = new Vector3[4];
+        private bool isMouseInsideDrawArea => IsMouseInsideDrawArea(drawAreaCorners);
+        private bool isMouseInsideDisplayArea => IsMouseInsideDrawArea(displayAreaCorners);
 
         public DrawingInput(Camera _viewCam, Camera _displayCam, float _scrollZoomSensitivity)
         {
@@ -28,11 +33,21 @@ namespace UI
             startPosDisplayCam = _displayCam.transform.position;
             
             EventSystem<float>.Subscribe(EventType.TIME, SetTime);
+            EventSystem<RectTransform, RectTransform>.Subscribe(EventType.VIEW_CHANGED, SetDrawArea);
+            EventSystem.Subscribe(EventType.RESET_TIME, StopDrawing);
         }
 
         ~DrawingInput()
         {
+            EventSystem<RectTransform, RectTransform>.Unsubscribe(EventType.VIEW_CHANGED, SetDrawArea);
             EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
+            EventSystem.Unsubscribe(EventType.RESET_TIME, StopDrawing);
+        }
+
+        private void SetDrawArea(RectTransform _currentDrawArea, RectTransform _currentDisplayArea)
+        {
+            _currentDrawArea.GetWorldCorners(drawAreaCorners);
+            _currentDisplayArea.GetWorldCorners(displayAreaCorners);
         }
 
         private void SetTime(float _time)
@@ -40,83 +55,100 @@ namespace UI
             time = _time;
         }
         
-        public void UpdateDrawingInput(Vector3[] _drawAreaCorners, Vector3[] _displayAreaCorners, Vector2 _camPos, float _camZoom)
+        public void UpdateDrawingInput(Vector2 _camPos, float _camZoom)
         {
-            bool isMouseInsideDrawArea = IsMouseInsideDrawArea(_drawAreaCorners);
-            bool isMouseInsideDisplayArea = IsMouseInsideDrawArea(_displayAreaCorners);
-
+            Vector4 drawCorners = GetScaledDrawingCorners(_camPos, _camZoom, drawAreaCorners);
+            float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);
+            float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
+            Vector2 mousePos = new Vector2(mousePosX, mousePosY);
+            
+            
             if (isMouseInsideDrawArea)
             {
-                Vector4 drawCorners = GetScaledDrawingCorners(_camPos, _camZoom, _drawAreaCorners);
-                float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);
-                float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
-                Vector2 mousePos = new Vector2(mousePosX, mousePosY);
-
                 if (SelectBrushStroke(mousePos))
                 {
-                    if (mouseIsDrawing)
-                    {
-                        EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
-                        EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
-
-                        mouseIsDrawing = false;
-                    }
-                    
+                    otherInput = true;
+                    StopDrawing();
+                    return;
+                }
+                
+                if (MoveBrushStrokes(mousePos))
+                {
+                    otherInput = true;
+                    StopDrawing();
                     return;
                 }
             }
 
             if (!otherInput)
             {
-                if (mouseIsDrawing)
-                {
-                    if(Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || Math.Abs(time - 1.1) < 0.1)
-                    {
-                        EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
-                        EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
+                StopDrawing();
 
-                        mouseIsDrawing = false;
-                    }
-                }
-            
                 if (isMouseInsideDrawArea)
                 {
-                    Vector4 drawCorners = GetScaledDrawingCorners(_camPos, _camZoom, _drawAreaCorners);
-                    float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);
-                    float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
-                    Vector2 mousePos = new Vector2(mousePosX, mousePosY);
-
                     if(DrawInput(mousePos))
                         return;
                 
                     if (SetBrushSize(mousePos))
                         return;
                 
-                    if(MoveCamera(viewCam, _drawAreaCorners, startPosViewCam))
+                    if(MoveCamera(viewCam, drawAreaCorners, startPosViewCam))
                         return;
 
                 }
                 else if (isMouseInsideDisplayArea)
                 {
-                    MoveCamera(displayCam, _displayAreaCorners, startPosDisplayCam);
+                    MoveCamera(displayCam, drawAreaCorners, startPosDisplayCam);
                 }
             }
             
+            lastMousePos = mousePos;
             if (Input.GetMouseButtonUp(0))
             {
                 otherInput = false;
             }
         }
+        private void StopDrawing()
+        {
+            if (mouseIsDrawing)
+            {
+                if (Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || time > 1)
+                {
+                    EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
+                    EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
+
+                    mouseIsDrawing = false;
+                }
+            }
+        }
         private bool SelectBrushStroke(Vector2 _mousePos)
         {
-            if (Input.GetMouseButtonDown(0) && Input.GetKey(KeyCode.W))
+            if (Input.GetMouseButtonDown(0) && Input.GetKey(KeyCode.S))
             {
-                otherInput = true;
+                if (!Input.GetKey(KeyCode.LeftShift))
+                {
+                    EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
+                }
+                
                 EventSystem<Vector2>.RaiseEvent(EventType.SELECT_BRUSHSTROKE, _mousePos);
                 return true;
             }
             return false;
         }
+        
+        private bool MoveBrushStrokes(Vector2 _mousePos)
+        {
+            if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.W))
+            {
+                Debug.Log($"{_mousePos - lastMousePos}");
+
+                EventSystem<Vector2>.RaiseEvent(EventType.MOVE_STROKE, (_mousePos - lastMousePos));
+                lastMousePos = _mousePos;
+                return true;
+            }
+            return false;
+        }
+        
         private bool DrawInput(Vector2 _mousePos)
         {
             if (Input.GetMouseButton(0) && !(Math.Abs(time - 1.1) < 0.1))
