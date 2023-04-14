@@ -38,11 +38,11 @@ namespace Undo
                 Undo();
                 return;
             }
-            if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.C))
-            {
-                Redo();
-                return;
-            }
+            // if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.C))
+            // {
+            //     Redo();
+            //     return;
+            // }
         }
     }
 }
