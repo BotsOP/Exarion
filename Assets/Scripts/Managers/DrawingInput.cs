@@ -129,10 +129,9 @@ namespace UI
             {
                 if (!Input.GetKey(KeyCode.LeftShift))
                 {
-                    EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
+                    EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
                 }
 
-                isInteracting = true;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
                 EventSystem<Vector2>.RaiseEvent(EventType.SELECT_BRUSHSTROKE, _mousePos);
                 return true;
@@ -146,7 +145,6 @@ namespace UI
             {
                 Debug.Log($"{_mousePos - lastMousePos}");
 
-                isInteracting = true;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
                 EventSystem<Vector2>.RaiseEvent(EventType.MOVE_STROKE, (_mousePos - lastMousePos));
                 lastMousePos = _mousePos;

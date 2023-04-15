@@ -25,7 +25,7 @@ namespace Undo
         {
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_STROKE, brushStrokeIDs);
             EventSystem<List<TimelineClip>>.RaiseEvent(EventType.REMOVE_STROKE, timelineClips);
-            EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
+            EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
         }
 
         public void Undo()

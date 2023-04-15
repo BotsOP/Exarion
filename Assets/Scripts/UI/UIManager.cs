@@ -120,7 +120,6 @@ namespace UI
 
         private void IsInteracting(bool _isInteracting)
         {
-            Debug.Log($"{_isInteracting}");
             isInteracting = _isInteracting;
         }
 

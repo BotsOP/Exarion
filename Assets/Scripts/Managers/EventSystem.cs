@@ -18,9 +18,9 @@ namespace Managers
         TIME,
         VIEW_CHANGED,
         SELECT_BRUSHSTROKE,
-        HIGHLIGHT,
-        REMOVE_HIGHLIGHT,
-        CLEAR_HIGHLIGHT,
+        ADD_SELECT,
+        REMOVE_SELECT,
+        CLEAR_SELECT,
         ADD_STROKE,
         IS_INTERACTING,
     }

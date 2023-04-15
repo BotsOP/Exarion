@@ -64,7 +64,7 @@ namespace Drawing
             collisionBox = resetBox;
             
             EventSystem.Subscribe(EventType.FINISHED_STROKE, StoppedDrawing);
-            EventSystem.Subscribe(EventType.CLEAR_HIGHLIGHT, ClearHighlightStroke);
+            EventSystem.Subscribe(EventType.CLEAR_SELECT, ClearHighlightStroke);
             EventSystem.Subscribe(EventType.STOPPED_SETTING_BRUSH_SIZE, ClearPreview);
             EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
             EventSystem<float>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
@@ -73,26 +73,28 @@ namespace Drawing
             EventSystem<float>.Subscribe(EventType.TIME, SetTime);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
-            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.HIGHLIGHT, HighlightStroke);
+            EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
+            EventSystem<List<TimelineClip>>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<Vector2>.Subscribe(EventType.MOVE_STROKE, MoveStrokes);
-            EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_HIGHLIGHT, RemoveHighlight);
+            EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
         }
 
         private void OnDisable()
         {
             EventSystem.Unsubscribe(EventType.FINISHED_STROKE, StoppedDrawing);
-            EventSystem.Unsubscribe(EventType.CLEAR_HIGHLIGHT, ClearHighlightStroke);
+            EventSystem.Unsubscribe(EventType.CLEAR_SELECT, ClearHighlightStroke);
             EventSystem.Unsubscribe(EventType.STOPPED_SETTING_BRUSH_SIZE, ClearPreview);
             EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
             EventSystem<float>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<Vector2>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<Vector2>.Unsubscribe(EventType.SELECT_BRUSHSTROKE, SelectBrushStroke);
             EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
-            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.HIGHLIGHT, HighlightStroke);
+            EventSystem<BrushStrokeID>.Unsubscribe(EventType.ADD_SELECT, HighlightStroke);
+            EventSystem<List<TimelineClip>>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
@@ -100,7 +102,7 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<Vector2>.Unsubscribe(EventType.MOVE_STROKE, MoveStrokes);
-            EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_HIGHLIGHT, RemoveHighlight);
+            EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
         }
 
         private void SetTime(float _time)
@@ -227,7 +229,7 @@ namespace Drawing
             }
 
             selectedBrushStrokes.Remove(_brushStrokeID);
-            HighlightStroke(selectedBrushStrokes);
+            highlighter.HighlightStroke(selectedBrushStrokes);
             
             drawer.brushStrokesID.Remove(_brushStrokeID);
             drawer.RedrawAllSafe(_brushStrokeID);
@@ -246,24 +248,24 @@ namespace Drawing
                 drawer.brushStrokesID.Remove(brushStrokeID);
             }
             
-            HighlightStroke(selectedBrushStrokes);
+            highlighter.HighlightStroke(selectedBrushStrokes);
             drawer.RedrawAllSafe(_brushStrokeIDs);
         }
         
-        private void HighlightStroke(List<BrushStrokeID> _brushStrokeIDs)
+        private void HighlightStroke(BrushStrokeID _brushStrokeIDs)
         {
-            for (var i = 0; i < _brushStrokeIDs.Count; i++)
+            if (selectedBrushStrokes.Remove(_brushStrokeIDs))
             {
-                var brushStrokeID = _brushStrokeIDs[i];
-                if (selectedBrushStrokes.Contains(brushStrokeID))
-                {
-                    selectedBrushStrokes.Remove(brushStrokeID);
-                    i--;
-                    continue;
-                }
-
-                selectedBrushStrokes.Add(brushStrokeID);
+                highlighter.HighlightStroke(selectedBrushStrokes);
+                return;
             }
+
+            selectedBrushStrokes.Add(_brushStrokeIDs);
+            highlighter.HighlightStroke(selectedBrushStrokes);
+        }
+        private void HighlightStroke(List<TimelineClip> _brushStrokeIDs)
+        {
+            selectedBrushStrokes = _brushStrokeIDs.Select(_clip => _clip.brushStrokeID).ToList();
             highlighter.HighlightStroke(selectedBrushStrokes);
         }
 
@@ -284,9 +286,16 @@ namespace Drawing
             {
                 if (drawer.IsMouseOverBrushStroke(brushStrokeID, _mousePos))
                 {
+                    if (selectedBrushStrokes.Remove(brushStrokeID))
+                    {
+                        
+                        highlighter.HighlightStroke(selectedBrushStrokes);
+                        EventSystem<BrushStrokeID>.RaiseEvent(EventType.REMOVE_SELECT, brushStrokeID);
+                        return;
+                    }
                     selectedBrushStrokes.Add(brushStrokeID);
-                    highlighter.HighlightStroke(brushStrokeID);
-                    EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.SELECT_TIMELINECLIP, selectedBrushStrokes);
+                    highlighter.HighlightStroke(selectedBrushStrokes);
+                    EventSystem<BrushStrokeID>.RaiseEvent(EventType.SELECT_TIMELINECLIP, brushStrokeID);
                     return;
                 }
             }

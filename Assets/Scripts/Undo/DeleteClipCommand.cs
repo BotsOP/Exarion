@@ -19,7 +19,7 @@ namespace Undo
         public void Execute()
         {
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.REMOVE_STROKE, brushStrokeID);
-            EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
+            EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
         }
         public void Undo()
         {

@@ -101,7 +101,8 @@ namespace UI
             EventSystem<TimelineClip>.Subscribe(EventType.ADD_STROKE, AddNewBrushClip);
             EventSystem<TimelineClip, int>.Subscribe(EventType.UPDATE_CLIP, UpdateClip);
             EventSystem<List<TimelineClip>>.Subscribe(EventType.REMOVE_STROKE, RemoveClip);
-            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
+            EventSystem<BrushStrokeID>.Subscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
+            EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveSelectedClip);
         }
 
         private void OnDisable()
@@ -113,7 +114,8 @@ namespace UI
             EventSystem<TimelineClip>.Unsubscribe(EventType.ADD_STROKE, AddNewBrushClip);
             EventSystem<TimelineClip, int>.Unsubscribe(EventType.UPDATE_CLIP, UpdateClip);
             EventSystem<List<TimelineClip>>.Unsubscribe(EventType.REMOVE_STROKE, RemoveClip);
-            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
+            EventSystem<BrushStrokeID>.Unsubscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
+            EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveSelectedClip);
         }
 
         private void Update()
@@ -264,8 +266,23 @@ namespace UI
                 //Otherwise check if you are interacting with any other timeline clips
                 if (Input.GetMouseButton(0) && isMouseInsideTimeline)
                 {
+                    
+                    
                     if (ClickedTimelineClip())
                         return;
+                }
+            }
+            
+            if (Input.GetMouseButtonUp(0))
+            {
+                lastSelectedClip = null;
+            }
+
+            if (lastSelectedClip != null)
+            {
+                if (!lastSelectedClip.IsMouseOver())
+                {
+                    lastSelectedClip = null;
                 }
             }
             
@@ -385,7 +402,7 @@ namespace UI
                             lastSelectedClip = clip;
                             selectedClips.Add(clip);
                             clip.rawImage.color = selectedColor;
-                            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.HIGHLIGHT, selectedClips.Select(_clip => _clip.brushStrokeID).ToList());
+                            EventSystem<BrushStrokeID>.RaiseEvent(EventType.ADD_SELECT, clip.brushStrokeID);
                             return true;
                         }
                         if (Input.GetMouseButtonDown(0) && clip != lastSelectedClip)
@@ -400,8 +417,8 @@ namespace UI
                             clip.rawImage.color = selectedColor;
                             selectedClips.Add(clip);
 
-                            EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
-                            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.HIGHLIGHT, selectedClips.Select(_clip => _clip.brushStrokeID).ToList());
+                            EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
+                            EventSystem<BrushStrokeID>.RaiseEvent(EventType.ADD_SELECT, clip.brushStrokeID);
                             return true;
                         }
                     }
@@ -413,23 +430,12 @@ namespace UI
                         selectedClips.Remove(clip);
                         clip.rawImage.color = notSelectedColor;
                         firstTimeSelected = true;
-                        EventSystem<BrushStrokeID>.RaiseEvent(EventType.REMOVE_HIGHLIGHT, clip.brushStrokeID);
+                        EventSystem<BrushStrokeID>.RaiseEvent(EventType.REMOVE_SELECT, clip.brushStrokeID);
                         return true;
                     }
                 }
             }
-            if (Input.GetMouseButtonUp(0))
-            {
-                lastSelectedClip = null;
-            }
-
-            if (lastSelectedClip != null)
-            {
-                if (!lastSelectedClip.IsMouseOver())
-                {
-                    lastSelectedClip = null;
-                }
-            }
+            
             return false;
         }
         private void StoppedMakingChanges()
@@ -462,7 +468,7 @@ namespace UI
             commandManager.AddCommand(deleteMultiple);
 
             RemoveClip(selectedClips);
-            EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
+            EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
             selectedClips.Clear();
         }
         private bool ClickedAway()
@@ -486,7 +492,8 @@ namespace UI
                     return true;
                 }
 
-                EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
+                Debug.Log($"clicked away");
+                EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
                 ClearSelectedClips();
                 return true;
             }
@@ -666,19 +673,27 @@ namespace UI
                 }
             }
         }
-        private void SelectClip(List<BrushStrokeID> _brushStrokeIDs)
+        private void SelectClip(BrushStrokeID _brushStrokeIDs)
         {
-            ClearSelectedClips();
-            List<TimelineClip> clips = new List<TimelineClip>();
-            foreach (var brushStrokeID in _brushStrokeIDs)
-            {
-                clips.AddRange(clipsOrdered.SelectMany(_timeBar => _timeBar.Where(_clip => _clip.brushStrokeID == brushStrokeID)));
-            }
+            Debug.Log($"before add: {selectedClips.Count}");
+            List<TimelineClip> clips = clipsOrdered.SelectMany(_timeBar => _timeBar.Where(_clip => _clip.brushStrokeID == _brushStrokeIDs)).ToList();
             foreach (var clip in clips)
             {
                 clip.rawImage.color = selectedColor;
                 selectedClips.Add(clip);
             }
+            Debug.Log($"after add: {selectedClips.Count}");
+        }
+        private void RemoveSelectedClip(BrushStrokeID _brushStrokeID)
+        {
+            Debug.Log($"before remove: {selectedClips.Count}");
+            List<TimelineClip> clips = clipsOrdered.SelectMany(_timeBar => _timeBar.Where(_clip => _clip.brushStrokeID == _brushStrokeID)).ToList();
+            foreach (var clip in clips)
+            {
+                clip.rawImage.color = notSelectedColor;
+                selectedClips.Remove(clip);
+            }
+            Debug.Log($"after remove: {selectedClips.Count}");
         }
         private void RemoveClip(List<TimelineClip> _timelineClips)
         {
