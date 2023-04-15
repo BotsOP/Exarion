@@ -19,8 +19,10 @@ namespace Managers
         VIEW_CHANGED,
         SELECT_BRUSHSTROKE,
         HIGHLIGHT,
+        REMOVE_HIGHLIGHT,
         CLEAR_HIGHLIGHT,
         ADD_STROKE,
+        IS_INTERACTING,
     }
 
 

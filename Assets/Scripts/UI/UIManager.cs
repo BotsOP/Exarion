@@ -13,7 +13,7 @@ namespace UI
 {
     public class UIManager : MonoBehaviour
     {
-        public static bool IsInteracting;
+        public static bool isInteracting;
         public static bool isFullView = true;
         
         [Header("Viewport")]
@@ -92,8 +92,8 @@ namespace UI
             displayImageFocus.texture = displayFocusRT;
             
             EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSizeSlider.value);
-            
             EventSystem<float>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+            EventSystem<bool>.Subscribe(EventType.IS_INTERACTING, IsInteracting);
         }
 
         private void OnDisable()
@@ -118,13 +118,10 @@ namespace UI
             SceneManager.LoadScene("MainMenu");
         }
 
-        public void StartInteracting()
+        private void IsInteracting(bool _isInteracting)
         {
-            IsInteracting = true;
-        }
-        public void StopInteracting()
-        {
-            IsInteracting = false;
+            Debug.Log($"{_isInteracting}");
+            isInteracting = _isInteracting;
         }
 
         public void SwitchToFullView(Image _buttonImage)

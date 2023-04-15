@@ -112,6 +112,8 @@ namespace Drawing
                     kernelID = paintUnderOwnLineKernelID;
                     break;
                 case PaintType.Erase:
+                    // if (_firstStroke)
+                    //     _strokeBrushSize++;
                     kernelID = eraseKernelID;
                     break;
             }
@@ -139,7 +141,6 @@ namespace Drawing
 
         public void RedrawStroke(BrushStrokeID _brushstrokeID)
         {
-           
             int newStrokeID = GetNewID();
             bool firstLoop = true;
             PaintType paintType = _brushstrokeID.paintType;
@@ -176,7 +177,7 @@ namespace Drawing
 
             if (!CheckCollision(_brushstrokeID.GetCollisionBox(), _collisionBox))
                 return;
-
+            
             foreach (var brushStroke in _brushstrokeID.brushStrokes)
             {
                 Draw(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, paintType, 
@@ -284,8 +285,6 @@ namespace Drawing
         //Redraws everything and if a stroke needs to be interpolated it does so automatically
         public void RedrawAllSafe(BrushStrokeID _brushStrokeID)
         {
-            rtID.Clear(false, true, new Color(-1, -1, -1));
-
             Vector4 collisionBox = _brushStrokeID.GetCollisionBox();
 
             foreach (BrushStrokeID brushStrokeID in brushStrokesID)
@@ -300,28 +299,29 @@ namespace Drawing
                     continue;
                 }
 
+                RedrawStroke(brushStrokeID, PaintType.Erase);
                 RedrawStrokeOptimized(brushStrokeID, collisionBox);
             }
         }
         public void RedrawAllSafe(List<BrushStrokeID> _brushStrokeIDs)
         {
-            rtID.Clear(false, true, new Color(-1, -1, -1));
-
             Vector4 collisionBox = CombineCollisionBox(
                 _brushStrokeIDs.Select(_id => _id.GetCollisionBox()).ToArray());
 
-            foreach (BrushStrokeID brushStrokeID in brushStrokesID)
+            for (var i = brushStrokesID.Count - 1; i >= 0; i--)
             {
+                BrushStrokeID brushStrokeID = brushStrokesID[i];
                 float brushStart = brushStrokeID.brushStrokes[0].lastTime;
                 float brushEnd = brushStrokeID.brushStrokes[^1].currentTime;
                 float brushIDStart = brushStrokeID.lastTime;
                 float brushIDEnd = brushStrokeID.currentTime;
-                if (Math.Abs(brushStart - brushIDStart) > 0.01f || Math.Abs(brushEnd - brushIDEnd) > 0.01f)
+                if (Math.Abs(brushStart - brushIDStart) > 0.001f || Math.Abs(brushEnd - brushIDEnd) > 0.001f)
                 {
                     RedrawStrokeInterpolation(brushStrokeID);
                     continue;
                 }
 
+                RedrawStroke(brushStrokeID, PaintType.Erase);
                 RedrawStrokeOptimized(brushStrokeID, collisionBox);
             }
         }

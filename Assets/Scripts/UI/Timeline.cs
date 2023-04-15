@@ -59,6 +59,7 @@ namespace UI
         private bool shouldMoveTimeline;
         private MouseAction lastMouseAction;
         private float startClickPos;
+        private bool isInteracting;
 
         private Vector3[] Corners
         {
@@ -117,12 +118,19 @@ namespace UI
 
         private void Update()
         {
+            if (Input.GetMouseButtonUp(0))
+            {
+                isInteracting = false;
+                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, false);
+            }
+            
             MoveTimelineIndicator();
+            
             if (UIManager.isFullView)
             {
                 TimelineClipsInput();
             }
-
+            
             previousMousePos = Input.mousePosition;
         }
         public void SetTimelinePauseButton(Image _image)
@@ -151,9 +159,12 @@ namespace UI
         }
         private void MoveTimelineIndicator()
         {
-            if (PlaceTimelineIndicator())
-                return;
-
+            if (!UIManager.isInteracting)
+            {
+                if (PlaceTimelineIndicator())
+                    return;
+            }
+            
             if (ScaleTimeline())
                 return;
 
@@ -242,17 +253,20 @@ namespace UI
         #region ClipInput
         private void TimelineClipsInput()
         {
-            //If you are already interacting with a timelineclip check that one first
-            if (Input.GetMouseButton(0) && selectedClips.Count > 0 && !Input.GetKey(KeyCode.LeftShift))
+            if (!UIManager.isInteracting || isInteracting)
             {
-                ChangeSelectedTimelineClips();
-            }
+                //If you are already interacting with a timelineclip check that one first
+                if (Input.GetMouseButton(0) && selectedClips.Count > 0 && !Input.GetKey(KeyCode.LeftShift))
+                {
+                    ChangeSelectedTimelineClips();
+                }
             
-            //Otherwise check if you are interacting with any other timeline clips
-            if ((Input.GetMouseButton(0) || Input.GetMouseButtonUp(0)) && isMouseInsideTimeline)
-            {
-                if (ClickedTimelineClip())
-                    return;
+                //Otherwise check if you are interacting with any other timeline clips
+                if (Input.GetMouseButton(0) && isMouseInsideTimeline)
+                {
+                    if (ClickedTimelineClip())
+                        return;
+                }
             }
             
             //Once you are done making changes 
@@ -275,7 +289,12 @@ namespace UI
                     return;
                 }
             }
-            //Debug.Log($"{selectedClips.Count}");
+            
+            if (Input.GetMouseButton(0) && selectedClips.Count > 0)
+            {
+                isInteracting = true;
+                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
+            }
         }
         private void ChangeSelectedTimelineClips()
         {
@@ -360,7 +379,7 @@ namespace UI
                     {
                         Debug.Log($"seleect clip");
 
-                        if (selectedClips.Count == 0 || Input.GetKey(KeyCode.LeftShift))
+                        if (Input.GetKey(KeyCode.LeftShift) && (clip != lastSelectedClip))
                         {
                             firstTimeSelected = true;
                             lastSelectedClip = clip;
@@ -369,7 +388,7 @@ namespace UI
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.HIGHLIGHT, selectedClips.Select(_clip => _clip.brushStrokeID).ToList());
                             return true;
                         }
-                        if (Input.GetMouseButtonDown(0))
+                        if (Input.GetMouseButtonDown(0) && clip != lastSelectedClip)
                         {
                             foreach (var _clip in selectedClips)
                             {
@@ -381,18 +400,20 @@ namespace UI
                             clip.rawImage.color = selectedColor;
                             selectedClips.Add(clip);
 
+                            EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.HIGHLIGHT, selectedClips.Select(_clip => _clip.brushStrokeID).ToList());
                             return true;
                         }
                     }
-                    if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButtonUp(0) && (lastSelectedClip is null || clip != lastSelectedClip && clip.previousBar == clip.currentBar &&
-                            Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) < 0.001f && Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) < 0.001f))
+                    if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButton(0) && (clip != lastSelectedClip && clip.previousBar == clip.currentBar 
+                            && Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) < 0.001f && Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) < 0.001f))
                     {
                         clip.mouseAction = MouseAction.Nothing;
-                        lastSelectedClip = null;
+                        lastSelectedClip = clip;
                         selectedClips.Remove(clip);
                         clip.rawImage.color = notSelectedColor;
                         firstTimeSelected = true;
+                        EventSystem<BrushStrokeID>.RaiseEvent(EventType.REMOVE_HIGHLIGHT, clip.brushStrokeID);
                         return true;
                     }
                 }
@@ -400,6 +421,14 @@ namespace UI
             if (Input.GetMouseButtonUp(0))
             {
                 lastSelectedClip = null;
+            }
+
+            if (lastSelectedClip != null)
+            {
+                if (!lastSelectedClip.IsMouseOver())
+                {
+                    lastSelectedClip = null;
+                }
             }
             return false;
         }
@@ -438,7 +467,8 @@ namespace UI
         }
         private bool ClickedAway()
         {
-            if (Input.GetMouseButtonDown(0) && selectedClips.Count > 0)
+            if (Input.GetMouseButtonDown(0) && selectedClips.Count > 0 && !UIManager.isInteracting && !(Input.GetKey(
+                    KeyCode.LeftShift) && isMouseInsideTimeline))
             {
                 Vector3[] clipCorners = new Vector3[4];
                 bool clickedOnSelectedClip = false;

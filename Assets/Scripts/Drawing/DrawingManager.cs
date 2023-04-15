@@ -79,6 +79,7 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<Vector2>.Subscribe(EventType.MOVE_STROKE, MoveStrokes);
+            EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_HIGHLIGHT, RemoveHighlight);
         }
 
         private void OnDisable()
@@ -99,6 +100,7 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<Vector2>.Unsubscribe(EventType.MOVE_STROKE, MoveStrokes);
+            EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_HIGHLIGHT, RemoveHighlight);
         }
 
         private void SetTime(float _time)
@@ -175,27 +177,7 @@ namespace Drawing
             firstUse = true;
         }
 
-        private void MoveStrokes(Vector2 _dir)
-        {
-            foreach (var brushStrokeID in selectedBrushStrokes)
-            {
-                drawer.RedrawStroke(brushStrokeID, PaintType.Erase);
-                for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
-                {
-                    var brushStroke = brushStrokeID.brushStrokes[i];
-                    brushStroke.lastPosX += _dir.x;
-                    brushStroke.lastPosY += _dir.y;
-                    brushStroke.currentPosX += _dir.x;
-                    brushStroke.currentPosY += _dir.y;
-                    brushStrokeID.brushStrokes[i] = brushStroke;
-                }
-                brushStrokeID.collisionBoxX += _dir.x;
-                brushStrokeID.collisionBoxY += _dir.y;
-                brushStrokeID.collisionBoxZ += _dir.x;
-                brushStrokeID.collisionBoxW += _dir.y;
-            }
-            drawer.RedrawAllSafe(selectedBrushStrokes);
-        }
+        
 
         private void RedrawStroke(BrushStrokeID _brushStrokeID)
         {
@@ -245,7 +227,6 @@ namespace Drawing
             }
 
             selectedBrushStrokes.Remove(_brushStrokeID);
-            highlighter.ClearHighlight();
             HighlightStroke(selectedBrushStrokes);
             
             drawer.brushStrokesID.Remove(_brushStrokeID);
@@ -265,23 +246,31 @@ namespace Drawing
                 drawer.brushStrokesID.Remove(brushStrokeID);
             }
             
-            highlighter.ClearHighlight();
             HighlightStroke(selectedBrushStrokes);
             drawer.RedrawAllSafe(_brushStrokeIDs);
         }
         
         private void HighlightStroke(List<BrushStrokeID> _brushStrokeIDs)
         {
-            highlighter.HighlightStroke(_brushStrokeIDs);
-            foreach (var brushStrokeID in _brushStrokeIDs)
+            for (var i = 0; i < _brushStrokeIDs.Count; i++)
             {
+                var brushStrokeID = _brushStrokeIDs[i];
                 if (selectedBrushStrokes.Contains(brushStrokeID))
                 {
                     selectedBrushStrokes.Remove(brushStrokeID);
+                    i--;
                     continue;
                 }
+
                 selectedBrushStrokes.Add(brushStrokeID);
             }
+            highlighter.HighlightStroke(selectedBrushStrokes);
+        }
+
+        private void RemoveHighlight(BrushStrokeID _brushStrokeID)
+        {
+            selectedBrushStrokes.Remove(_brushStrokeID);
+            highlighter.HighlightStroke(selectedBrushStrokes);
         }
         private void ClearHighlightStroke()
         {
@@ -297,10 +286,33 @@ namespace Drawing
                 {
                     selectedBrushStrokes.Add(brushStrokeID);
                     highlighter.HighlightStroke(brushStrokeID);
-                    //EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.SELECT_TIMELINECLIP, selectedBrushStrokes);
+                    EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.SELECT_TIMELINECLIP, selectedBrushStrokes);
                     return;
                 }
             }
+        }
+        
+        private void MoveStrokes(Vector2 _dir)
+        {
+            foreach (var brushStrokeID in selectedBrushStrokes)
+            {
+                drawer.RedrawStroke(brushStrokeID, PaintType.Erase);
+                for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
+                {
+                    var brushStroke = brushStrokeID.brushStrokes[i];
+                    brushStroke.lastPosX += _dir.x;
+                    brushStroke.lastPosY += _dir.y;
+                    brushStroke.currentPosX += _dir.x;
+                    brushStroke.currentPosY += _dir.y;
+                    brushStrokeID.brushStrokes[i] = brushStroke;
+                }
+                brushStrokeID.collisionBoxX += _dir.x;
+                brushStrokeID.collisionBoxY += _dir.y;
+                brushStrokeID.collisionBoxZ += _dir.x;
+                brushStrokeID.collisionBoxW += _dir.y;
+            }
+            highlighter.HighlightStroke(selectedBrushStrokes);
+            drawer.RedrawAllSafe(selectedBrushStrokes);
         }
 
         public void LoadData(ToolData _data)

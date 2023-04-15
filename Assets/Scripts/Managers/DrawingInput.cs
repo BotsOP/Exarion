@@ -17,10 +17,10 @@ namespace UI
         private Vector2 startPosViewCam;
         private Vector2 startPosDisplayCam;
         private Vector2 lastMousePos;
-        private bool otherInput;
         private float time;
         private Vector3[] drawAreaCorners = new Vector3[4];
         private Vector3[] displayAreaCorners = new Vector3[4];
+        private bool isInteracting;
         private bool isMouseInsideDrawArea => IsMouseInsideDrawArea(drawAreaCorners);
         private bool isMouseInsideDisplayArea => IsMouseInsideDrawArea(displayAreaCorners);
 
@@ -57,33 +57,35 @@ namespace UI
         
         public void UpdateDrawingInput(Vector2 _camPos, float _camZoom)
         {
+            if (Input.GetMouseButtonUp(0))
+            {
+                isInteracting = false;
+                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, false);
+            }
+            
             Vector4 drawCorners = GetScaledDrawingCorners(_camPos, _camZoom, drawAreaCorners);
             float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);
             float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
             Vector2 mousePos = new Vector2(mousePosX, mousePosY);
-            
-            
-            if (isMouseInsideDrawArea)
+
+            if (!UIManager.isInteracting || isInteracting)
             {
-                if (SelectBrushStroke(mousePos))
+                if (isMouseInsideDrawArea)
                 {
-                    otherInput = true;
-                    StopDrawing();
-                    return;
-                }
+                    if (SelectBrushStroke(mousePos))
+                    {
+                        StopDrawing();
+                        return;
+                    }
                 
-                if (MoveBrushStrokes(mousePos))
-                {
-                    otherInput = true;
-                    StopDrawing();
-                    return;
+                    if (MoveBrushStrokes(mousePos))
+                    {
+                        StopDrawing();
+                        return;
+                    }
                 }
-            }
 
-            if (!otherInput)
-            {
                 StopDrawing();
-
                 if (isMouseInsideDrawArea)
                 {
                     if(DrawInput(mousePos))
@@ -94,19 +96,19 @@ namespace UI
                 
                     if(MoveCamera(viewCam, drawAreaCorners, startPosViewCam))
                         return;
-
                 }
                 else if (isMouseInsideDisplayArea)
                 {
                     MoveCamera(displayCam, drawAreaCorners, startPosDisplayCam);
                 }
             }
+            else
+            {
+                StopDrawing();
+            }
+            
             
             lastMousePos = mousePos;
-            if (Input.GetMouseButtonUp(0))
-            {
-                otherInput = false;
-            }
         }
         private void StopDrawing()
         {
@@ -129,7 +131,9 @@ namespace UI
                 {
                     EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
                 }
-                
+
+                isInteracting = true;
+                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
                 EventSystem<Vector2>.RaiseEvent(EventType.SELECT_BRUSHSTROKE, _mousePos);
                 return true;
             }
@@ -142,6 +146,8 @@ namespace UI
             {
                 Debug.Log($"{_mousePos - lastMousePos}");
 
+                isInteracting = true;
+                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
                 EventSystem<Vector2>.RaiseEvent(EventType.MOVE_STROKE, (_mousePos - lastMousePos));
                 lastMousePos = _mousePos;
                 return true;
@@ -153,6 +159,8 @@ namespace UI
         {
             if (Input.GetMouseButton(0) && !(Math.Abs(time - 1.1) < 0.1))
             {
+                isInteracting = true;
+                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
                 EventSystem<Vector2>.RaiseEvent(EventType.DRAW, _mousePos);
                 EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
 

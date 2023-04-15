@@ -78,6 +78,7 @@ namespace Drawing
 
         public void HighlightStroke(BrushStrokeID _brushStrokeID)
         {
+            ClearHighlight();
             foreach (var brushStroke in _brushStrokeID.brushStrokes)
             {
                 float highlightBrushThickness = Mathf.Clamp(brushStroke.strokeBrushSize / 2, 5, 1024);
