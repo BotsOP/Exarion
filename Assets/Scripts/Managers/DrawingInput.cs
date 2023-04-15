@@ -70,6 +70,7 @@ namespace UI
 
             if (!UIManager.isInteracting || isInteracting)
             {
+                StopDrawing();
                 if (isMouseInsideDrawArea)
                 {
                     if (SelectBrushStroke(mousePos))
@@ -83,11 +84,16 @@ namespace UI
                         StopDrawing();
                         return;
                     }
-                }
+                    
+                    if (Resize(mousePos))
+                    {
+                        StopDrawing();
+                        return;
+                    }
 
-                StopDrawing();
-                if (isMouseInsideDrawArea)
-                {
+                    if (SpawnCircle(mousePos))
+                        return;
+                    
                     if(DrawInput(mousePos))
                         return;
                 
@@ -110,6 +116,19 @@ namespace UI
             
             lastMousePos = mousePos;
         }
+
+        
+
+        private bool SpawnCircle(Vector2 _mousePos)
+        {
+            if (Input.GetKeyDown(KeyCode.F))
+            {
+                EventSystem<Vector2>.RaiseEvent(EventType.SPAWN_CIRCLE, _mousePos);
+                return true;
+            }
+            return false;
+        }
+
         private void StopDrawing()
         {
             if (mouseIsDrawing)
@@ -143,10 +162,22 @@ namespace UI
         {
             if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.W))
             {
-                Debug.Log($"test ,move");
                 isInteracting = true;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
                 EventSystem<Vector2>.RaiseEvent(EventType.MOVE_STROKE, (_mousePos - lastMousePos));
+                lastMousePos = _mousePos;
+                return true;
+            }
+            return false;
+        }
+        
+        private bool Resize(Vector2 _mousePos)
+        {
+            if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.R))
+            {
+                isInteracting = true;
+                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
+                EventSystem<float>.RaiseEvent(EventType.RESIZE_STROKE, (_mousePos.x - lastMousePos.x) / 100);
                 lastMousePos = _mousePos;
                 return true;
             }
@@ -213,9 +244,8 @@ namespace UI
             {
                 float brushSize = Vector2.Distance(startMousePos, _mousePos);
                 brushSize = Mathf.Clamp(brushSize, 1, 1024);
-                Debug.Log($"{brushSize}");
                 EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSize);
-                EventSystem<Vector2>.RaiseEvent(EventType.SET_BRUSH_SIZE, _mousePos);
+                EventSystem<Vector2>.RaiseEvent(EventType.SET_BRUSH_SIZE, startMousePos);
                 return true;
             }
             
