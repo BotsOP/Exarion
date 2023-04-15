@@ -57,7 +57,7 @@ namespace UI
         
         public void UpdateDrawingInput(Vector2 _camPos, float _camZoom)
         {
-            if (Input.GetMouseButtonUp(0))
+            if (Input.GetMouseButtonUp(0) && !Input.GetKey(KeyCode.LeftControl) || Input.GetKeyUp(KeyCode.LeftControl))
             {
                 isInteracting = false;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, false);
@@ -133,8 +133,13 @@ namespace UI
         {
             if (mouseIsDrawing)
             {
-                if (Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || time > 1)
+                
+                
+                if (Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || time > 1 || Input.GetKeyUp(KeyCode.LeftControl))
                 {
+                    if(isInteracting && Input.GetKey(KeyCode.LeftControl))
+                        return;
+                    
                     EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
                     EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
 
@@ -186,7 +191,26 @@ namespace UI
         
         private bool DrawInput(Vector2 _mousePos)
         {
-            if (Input.GetMouseButton(0) && !(Math.Abs(time - 1.1) < 0.1))
+            if (Input.GetMouseButtonDown(0))
+            {
+                isInteracting = true;
+                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
+                EventSystem<Vector2>.RaiseEvent(EventType.DRAW, _mousePos);
+                EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
+
+                mouseIsDrawing = true;
+                return true;
+            }
+            if (Input.GetKey(KeyCode.LeftControl))
+            {
+                isInteracting = true;
+                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
+                EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
+
+                mouseIsDrawing = true;
+                return true;
+            }
+            if (Input.GetMouseButton(0))
             {
                 isInteracting = true;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
