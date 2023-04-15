@@ -143,8 +143,8 @@ namespace UI
         {
             if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.W))
             {
-                Debug.Log($"{_mousePos - lastMousePos}");
-
+                Debug.Log($"test ,move");
+                isInteracting = true;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
                 EventSystem<Vector2>.RaiseEvent(EventType.MOVE_STROKE, (_mousePos - lastMousePos));
                 lastMousePos = _mousePos;
