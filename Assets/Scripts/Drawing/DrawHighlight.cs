@@ -100,6 +100,7 @@ namespace Drawing
                 foreach (var brushStroke in brushStrokeID.brushStrokes)
                 {
                     float highlightBrushThickness = Mathf.Clamp(brushStroke.strokeBrushSize / 2, 5, 1024);
+                    highlightBrushThickness = 0;
 
                     Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Paint, highlightBrushThickness);
                 }
@@ -109,7 +110,9 @@ namespace Drawing
             {
                 foreach (var brushStroke in brushStrokeID.brushStrokes)
                 {
-                    Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Erase, -5);
+                    float highlightBrushThickness = Mathf.Clamp(brushStroke.strokeBrushSize / 2, 5, 1024);
+                    
+                    Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Erase, -highlightBrushThickness);
                 }
             }
         }

@@ -27,7 +27,6 @@ public class InputManager : MonoBehaviour
 
     private void SetDrawArea(RectTransform _currentDrawArea, RectTransform _currentDisplayArea)
     {
-        Debug.Log($"set");
         currentDrawArea = _currentDrawArea;
         currentDisplayArea = _currentDisplayArea;
     }

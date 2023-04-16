@@ -90,8 +90,16 @@ namespace UI
                         StopDrawing();
                         return;
                     }
+                    
+                    if (RotateBrushStrokes(mousePos))
+                    {
+                        StopDrawing();
+                        return;
+                    }
 
                     if (SpawnCircle(mousePos))
+                        return;
+                    if (SpawnSquare(mousePos))
                         return;
                     
                     if(DrawInput(mousePos))
@@ -117,13 +125,20 @@ namespace UI
             lastMousePos = mousePos;
         }
 
-        
-
         private bool SpawnCircle(Vector2 _mousePos)
         {
             if (Input.GetKeyDown(KeyCode.F))
             {
-                EventSystem<Vector2>.RaiseEvent(EventType.SPAWN_CIRCLE, _mousePos);
+                EventSystem<Vector2, string>.RaiseEvent(EventType.SPAWN_STAMP, _mousePos, "circle");
+                return true;
+            }
+            return false;
+        }
+        private bool SpawnSquare(Vector2 _mousePos)
+        {
+            if (Input.GetKeyDown(KeyCode.G))
+            {
+                EventSystem<Vector2, string>.RaiseEvent(EventType.SPAWN_STAMP, _mousePos, "square");
                 return true;
             }
             return false;
@@ -133,8 +148,6 @@ namespace UI
         {
             if (mouseIsDrawing)
             {
-                
-                
                 if (Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || time > 1 || Input.GetKeyUp(KeyCode.LeftControl))
                 {
                     if(isInteracting && Input.GetKey(KeyCode.LeftControl))
@@ -176,13 +189,26 @@ namespace UI
             return false;
         }
         
+        private bool RotateBrushStrokes(Vector2 _mousePos)
+        {
+            if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.E))
+            {
+                isInteracting = true;
+                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
+                EventSystem<float>.RaiseEvent(EventType.ROTATE_STROKE, (_mousePos.x - lastMousePos.x) / 1000);
+                lastMousePos = _mousePos;
+                return true;
+            }
+            return false;
+        }
+        
         private bool Resize(Vector2 _mousePos)
         {
             if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.R))
             {
                 isInteracting = true;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
-                EventSystem<float>.RaiseEvent(EventType.RESIZE_STROKE, (_mousePos.x - lastMousePos.x) / 100);
+                EventSystem<float>.RaiseEvent(EventType.RESIZE_STROKE, Mathf.Clamp((_mousePos.x - lastMousePos.x) / 1000, -1f, 1f));
                 lastMousePos = _mousePos;
                 return true;
             }
@@ -191,25 +217,25 @@ namespace UI
         
         private bool DrawInput(Vector2 _mousePos)
         {
-            if (Input.GetMouseButtonDown(0))
-            {
-                isInteracting = true;
-                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
-                EventSystem<Vector2>.RaiseEvent(EventType.DRAW, _mousePos);
-                EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
-
-                mouseIsDrawing = true;
-                return true;
-            }
-            if (Input.GetKey(KeyCode.LeftControl))
-            {
-                isInteracting = true;
-                EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
-                EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
-
-                mouseIsDrawing = true;
-                return true;
-            }
+            // if (Input.GetMouseButtonDown(0))
+            // {
+            //     isInteracting = true;
+            //     EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
+            //     EventSystem<Vector2>.RaiseEvent(EventType.DRAW, _mousePos);
+            //     EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
+            //
+            //     mouseIsDrawing = true;
+            //     return true;
+            // }
+            // if (Input.GetKey(KeyCode.LeftControl))
+            // {
+            //     isInteracting = true;
+            //     EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
+            //     EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
+            //
+            //     mouseIsDrawing = true;
+            //     return true;
+            // }
             if (Input.GetMouseButton(0))
             {
                 isInteracting = true;

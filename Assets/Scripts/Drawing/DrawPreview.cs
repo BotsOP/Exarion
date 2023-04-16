@@ -56,7 +56,6 @@ namespace Drawing
         {
             if (!clearedTexture)
             {
-                Debug.Log($"clear");
                 rtPreview.Clear(false, true, Color.black);
                 clearedTexture = true;
             }

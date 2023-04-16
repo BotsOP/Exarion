@@ -44,6 +44,20 @@ namespace Drawing
             return new Vector2(avgPosX, avgPosY);
         }
 
+        public void RecalculateAvgPos()
+        {
+            Vector2 avgPos = Vector2.zero;
+            for (var i = 1; i < brushStrokes.Count; i++)
+            {
+                var brushStroke = brushStrokes[i];
+                avgPos += brushStroke.GetCurrentPos();
+            }
+
+            avgPos /= brushStrokes.Count - 1;
+            avgPosX = avgPos.x;
+            avgPosY = avgPos.y;
+        }
+
         public void RecalculateCollisionBox()
         {
             Vector4 collisionBox = new Vector4(Mathf.Infinity, Mathf.Infinity, 0, 0);
@@ -65,6 +79,39 @@ namespace Drawing
             collisionBoxY = collisionBox.y;
             collisionBoxZ = collisionBox.z;
             collisionBoxW = collisionBox.w;
+        }
+
+        public void RecalculateCollisionBoxAndAvgPos()
+        {
+            Vector4 collisionBox = new Vector4(Mathf.Infinity, Mathf.Infinity, 0, 0);
+            Vector2 avgPos = Vector2.zero;
+
+            foreach (var brushStroke in brushStrokes)
+            {
+                if (collisionBox.x > brushStroke.currentPosX - brushStroke.strokeBrushSize) { collisionBox.x = brushStroke.currentPosX - brushStroke.strokeBrushSize; }
+                if (collisionBox.y > brushStroke.currentPosY - brushStroke.strokeBrushSize) { collisionBox.y = brushStroke.currentPosY - brushStroke.strokeBrushSize; }
+                if (collisionBox.z < brushStroke.currentPosX + brushStroke.strokeBrushSize) { collisionBox.z = brushStroke.currentPosX + brushStroke.strokeBrushSize; }
+                if (collisionBox.w < brushStroke.currentPosY + brushStroke.strokeBrushSize) { collisionBox.w = brushStroke.currentPosY + brushStroke.strokeBrushSize; }
+                
+                if (collisionBox.x > brushStroke.lastPosX - brushStroke.strokeBrushSize) { collisionBox.x = brushStroke.lastPosX - brushStroke.strokeBrushSize; }
+                if (collisionBox.y > brushStroke.lastPosY - brushStroke.strokeBrushSize) { collisionBox.y = brushStroke.lastPosY - brushStroke.strokeBrushSize; }
+                if (collisionBox.z < brushStroke.lastPosX + brushStroke.strokeBrushSize) { collisionBox.z = brushStroke.lastPosX + brushStroke.strokeBrushSize; }
+                if (collisionBox.w < brushStroke.lastPosY + brushStroke.strokeBrushSize) { collisionBox.w = brushStroke.lastPosY + brushStroke.strokeBrushSize; }
+                
+                if(brushStroke.GetLastPos() == brushStroke.GetCurrentPos())
+                    continue;
+                
+                avgPos += brushStroke.GetCurrentPos();
+            }
+            
+            collisionBoxX = collisionBox.x;
+            collisionBoxY = collisionBox.y;
+            collisionBoxZ = collisionBox.z;
+            collisionBoxW = collisionBox.w;
+            
+            avgPos /= brushStrokes.Count - 1;
+            avgPosX = avgPos.x;
+            avgPosY = avgPos.y;
         }
     }
 
