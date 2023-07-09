@@ -10,7 +10,7 @@ namespace UI
             // Allocate
             var sRgbRenderTex = RenderTexture.GetTemporary(_rt.width, _rt.height, 0, RenderTextureFormat.ARGB32,
                 RenderTextureReadWrite.sRGB);
-            var tex = new Texture2D(_rt.width, _rt.height, TextureFormat.ARGB32, mipChain: false, linear: false);
+            var tex = new Texture2D(_rt.width, _rt.height, TextureFormat.RGBAFloat, mipChain: false, linear: false);
             
             // Linear to Gamma Conversion
             Graphics.Blit(_rt, sRgbRenderTex);
@@ -22,10 +22,11 @@ namespace UI
             tex.Apply();
             RenderTexture.active = tmp;
             
-            byte[] bytes = tex.EncodeToPNG();
+            string fileName = System.DateTime.Now.ToString("yyyy.MM.dd") + "_" + System.DateTime.Now.ToString("hh.mm.ss");
+            byte[] bytes = tex.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat);
             string filePath = Application.dataPath + "/Results";
             if (!Directory.Exists(filePath)) Directory.CreateDirectory(filePath);
-            filePath = filePath + "/Results" + ".png";
+            filePath = filePath + "/" + fileName + ".exr";
             File.WriteAllBytes(filePath, bytes);
             // Open File in saved location
             filePath = filePath.Replace(@"/", @"\");

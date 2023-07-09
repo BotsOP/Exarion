@@ -29,5 +29,9 @@ namespace Undo
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.REMOVE_STROKE, brushStrokeID);
             EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
         }
+        public string GetCommandName()
+        {
+            return "DrawCommand";
+        }
     }
 }

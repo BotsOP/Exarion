@@ -37,5 +37,9 @@ namespace Undo
                 EventSystem<TimelineClip>.RaiseEvent(EventType.ADD_STROKE, timelineClip);
             }
         }
+        public string GetCommandName()
+        {
+            return "DeleteClipMultipleCommand";
+        }
     }
 }

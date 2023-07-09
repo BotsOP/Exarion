@@ -47,5 +47,9 @@ namespace Undo
             timelineClip.ClipTime = _clipTime;
             EventSystem<TimelineClip, int>.RaiseEvent(EventType.UPDATE_CLIP, timelineClip, _timelineBar);
         }
+        public string GetCommandName()
+        {
+            return "RedrawCommand";
+        }
     }
 }

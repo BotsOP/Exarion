@@ -25,5 +25,9 @@ namespace Undo
         {
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.ADD_STROKE, brushStrokeID);
         }
+        public string GetCommandName()
+        {
+            return "DeleteClipCommand";
+        }
     }
 }

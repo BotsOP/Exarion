@@ -90,6 +90,44 @@ namespace Drawing
             return new BrushStrokeID(brushStrokes, PaintType.PaintUnderEverything, _startTime, 
                 _endTime, collisionBox, _indexWhenDrawn, _middlePos);
         }
+        
+        public BrushStrokeID Hexagon(Vector2 _middlePos, float _squareWidth, int _indexWhenDrawn, 
+            float _brushSize = 50, float _startTime = 0, float _endTime = 0)
+        {
+            _middlePos = new Vector2(1024, 1024);
+            _squareWidth /= 2;
+            float collisionBoxX = _middlePos.x - _squareWidth - _brushSize;
+            float collisionBoxY = _middlePos.y - _squareWidth - _brushSize;
+            float collisionBoxZ = _middlePos.x + _squareWidth + _brushSize;
+            float collisionBoxW = _middlePos.y + _squareWidth + _brushSize;
+            Vector4 collisionBox = new Vector4(collisionBoxX, collisionBoxY, collisionBoxZ, collisionBoxW);
+            
+            List<BrushStroke> brushStrokes = new List<BrushStroke>();
+            Vector2 topLeft = _middlePos + new Vector2(-_squareWidth / 2, _squareWidth * 0.875f);
+            Vector2 bottomLeft = _middlePos + new Vector2(-_squareWidth / 2, -_squareWidth * 0.875f);
+            Vector2 bottomRight = _middlePos + new Vector2(_squareWidth / 2, -_squareWidth * 0.875f);
+            Vector2 topRight = _middlePos + new Vector2(_squareWidth / 2, _squareWidth * 0.875f);
+            Vector2 left = _middlePos + new Vector2(-_squareWidth, 0);
+            Vector2 right = _middlePos + new Vector2(_squareWidth, 0);
+            
+            BrushStroke topLeftStroke = new BrushStroke(topLeft, topLeft, _brushSize, 0, 0);
+            BrushStroke leftStroke = new BrushStroke(topLeft, left, _brushSize, 0, 0);
+            BrushStroke bottomLeftStroke = new BrushStroke(left, bottomLeft, _brushSize, 0, 0);
+            BrushStroke bottomRightStroke = new BrushStroke(bottomLeft, bottomRight, _brushSize, 0, 0);
+            BrushStroke rightStroke = new BrushStroke(bottomRight, right, _brushSize, 0, 0);
+            BrushStroke topRightStroke = new BrushStroke(right, topRight, _brushSize, 0, 0);
+            BrushStroke topRightStroke2 = new BrushStroke(topRight, topLeft, _brushSize, 0, 0);
+            brushStrokes.Add(topLeftStroke);
+            brushStrokes.Add(leftStroke);
+            brushStrokes.Add(bottomLeftStroke);
+            brushStrokes.Add(bottomRightStroke);
+            brushStrokes.Add(rightStroke);
+            brushStrokes.Add(topRightStroke);
+            brushStrokes.Add(topRightStroke2);
+
+            return new BrushStrokeID(brushStrokes, PaintType.PaintUnderEverything, _startTime, 
+                _endTime, collisionBox, _indexWhenDrawn, _middlePos);
+        }
 
         public BrushStrokeID GetStamp(string key, Vector2 _middlePos, float _squareWidth, int _indexWhenDrawn, 
             float _brushSize = 50, float _startTime = 0, float _endTime = 0)
@@ -100,6 +138,8 @@ namespace Drawing
                     return Circle(_middlePos, _squareWidth, _indexWhenDrawn, _brushSize, _startTime, _endTime);
                 case "square":
                     return Square(_middlePos, _squareWidth, _indexWhenDrawn, _brushSize, _startTime, _endTime);
+                case "hexagon":
+                    return Hexagon(_middlePos, _squareWidth, _indexWhenDrawn, _brushSize, _startTime, _endTime);
                 default:
                     Debug.Log($"failed to find string");
                     return stamps[key];

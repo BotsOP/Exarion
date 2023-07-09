@@ -27,6 +27,7 @@ namespace Managers
         CLEAR_SELECT,
         ADD_STROKE,
         IS_INTERACTING,
+        ADD_COMMAND,
     }
 
 

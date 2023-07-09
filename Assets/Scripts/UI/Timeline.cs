@@ -282,8 +282,6 @@ namespace UI
                 //Otherwise check if you are interacting with any other timeline clips
                 if (Input.GetMouseButton(0) && isMouseInsideTimeline)
                 {
-                    
-                    
                     if (ClickedTimelineClip())
                         return;
                 }
@@ -474,7 +472,12 @@ namespace UI
                     RedrawCommand clipCommand = new RedrawCommand(clip);
                     redraws.Add(clipCommand);
                 }
-                commandManager.AddCommand(new RedrawMultipleCommand(redraws));
+
+                if (redraws.Count > 0)
+                {
+                    ICommand redrawCommand = new RedrawMultipleCommand(redraws);
+                    EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, redrawCommand);
+                }
             }
         }
         private void DeleteAllSelectedClips()
@@ -483,7 +486,7 @@ namespace UI
 
             List<TimelineClip> timelineClips = new List<TimelineClip>(selectedClips);
             ICommand deleteMultiple = new DeleteClipMultipleCommand(timelineClips);
-            commandManager.AddCommand(deleteMultiple);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, deleteMultiple);
 
             RemoveClip(selectedClips);
             selectedClips.Clear();
@@ -519,7 +522,6 @@ namespace UI
         private void CheckClipCollisions(TimelineClip _clip)
         {
             int currentBar = _clip.currentBar;
-            int previousBar = _clip.previousBar;
         
             //Check if there is a collision on its current bar
             if (!IsClipCollidingInBar(_clip, currentBar))
@@ -532,8 +534,6 @@ namespace UI
                 _clip.previousBar = currentBar;
                 _clip.currentBar = currentBar;
 
-                Debug.Log($"{clipsOrdered[0].Count} {clipsOrdered[1].Count} {clipsOrdered[2].Count} {clipsOrdered[3].Count} " +
-                          $"{clipsOrdered[4].Count} {clipsOrdered[5].Count} {clipsOrdered[6].Count}");
                 return;
             }
             
@@ -555,8 +555,6 @@ namespace UI
                         clipsOrdered[lowerBar].Add(_clip);
                         _clip.previousBar = lowerBar;
 
-                        Debug.Log($"{clipsOrdered[0].Count} {clipsOrdered[1].Count} {clipsOrdered[2].Count} {clipsOrdered[3].Count} " +
-                                  $"{clipsOrdered[4].Count} {clipsOrdered[5].Count} {clipsOrdered[6].Count}");
                         return;
                     }
                 }
@@ -669,7 +667,7 @@ namespace UI
             CheckClipCollisions(timelineClip);
             
             ICommand draw = new DrawCommand(timelineClip);
-            commandManager.AddCommand(draw);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, draw);
         }
         private void AddNewBrushClip(TimelineClip _timelineClip)
         {

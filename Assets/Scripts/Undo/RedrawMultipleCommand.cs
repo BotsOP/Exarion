@@ -29,7 +29,6 @@ namespace Undo
         }
         public void Undo()
         {
-            Debug.Log($"redraw");
             //Updates all timeline clips
             foreach (var redraw in redrawCommands)
             {
@@ -40,6 +39,10 @@ namespace Undo
             
             //Updates all brushstrokes
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, redrawCommands.Select(_command => _command.brushStokeID).ToList());
+        }
+        public string GetCommandName()
+        {
+            return "RedrawMultipleCommand";
         }
     }
 }

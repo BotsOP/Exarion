@@ -6,7 +6,6 @@ namespace Drawing
     public class BrushStrokeID
     {
         public List<BrushStroke> brushStrokes;
-        public List<BrushStroke> brushStrokesReference;
         public float collisionBoxX;
         public float collisionBoxY;
         public float collisionBoxZ;
@@ -17,11 +16,12 @@ namespace Drawing
         public int indexWhenDrawn;
         public float avgPosX;
         public float avgPosY;
+        public float angle;
+        public float size;
 
-        public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _lastTime, float _currentTime, Vector4 _collisionBox, int _indexWhenDrawn, Vector2 _avgPos)
+        public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _lastTime, float _currentTime, Vector4 _collisionBox, int _indexWhenDrawn, Vector2 _avgPos, float _angle = 0, float _size = 1)
         {
             brushStrokes = _brushStrokes;
-            brushStrokesReference = new List<BrushStroke>(_brushStrokes);
             paintType = _paintType;
             lastTime = _lastTime;
             currentTime = _currentTime;
@@ -32,6 +32,8 @@ namespace Drawing
             indexWhenDrawn = _indexWhenDrawn;
             avgPosX = _avgPos.x;
             avgPosY = _avgPos.y;
+            angle = _angle;
+            size = _size;
         }
 
         public Vector4 GetCollisionBox()

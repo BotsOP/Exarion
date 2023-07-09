@@ -101,6 +101,8 @@ namespace UI
                         return;
                     if (SpawnSquare(mousePos))
                         return;
+                    if (SpawnHexagon(mousePos))
+                        return;
                     
                     if(DrawInput(mousePos))
                         return;
@@ -143,6 +145,16 @@ namespace UI
             }
             return false;
         }
+        
+        private bool SpawnHexagon(Vector2 _mousePos)
+        {
+            if (Input.GetKeyDown(KeyCode.H))
+            {
+                EventSystem<Vector2, string>.RaiseEvent(EventType.SPAWN_STAMP, _mousePos, "hexagon");
+                return true;
+            }
+            return false;
+        }
 
         private void StopDrawing()
         {
@@ -175,42 +187,64 @@ namespace UI
             }
             return false;
         }
-        
+
+        private bool isMoving;
         private bool MoveBrushStrokes(Vector2 _mousePos)
         {
             if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.W))
             {
                 isInteracting = true;
+                isMoving = true;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
                 EventSystem<Vector2>.RaiseEvent(EventType.MOVE_STROKE, (_mousePos - lastMousePos));
                 lastMousePos = _mousePos;
                 return true;
             }
+            if ((Input.GetMouseButtonUp(0) || Input.GetKeyUp(KeyCode.W)) && isMoving)
+            {
+                isMoving = false;
+                EventSystem.RaiseEvent(EventType.MOVE_STROKE);
+            }
             return false;
         }
-        
+
+        private bool isRotating;
         private bool RotateBrushStrokes(Vector2 _mousePos)
         {
             if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.E))
             {
                 isInteracting = true;
+                isRotating = true;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
                 EventSystem<float>.RaiseEvent(EventType.ROTATE_STROKE, (_mousePos.x - lastMousePos.x) / 1000);
                 lastMousePos = _mousePos;
                 return true;
             }
+            if ((Input.GetMouseButtonUp(0) || Input.GetKeyUp(KeyCode.E)) && isRotating)
+            {
+                isRotating = false;
+                EventSystem.RaiseEvent(EventType.ROTATE_STROKE);
+            }
             return false;
         }
-        
+
+        private bool isResizing;
         private bool Resize(Vector2 _mousePos)
         {
             if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.R))
             {
                 isInteracting = true;
+                isResizing = true;
+                float resizeAmount = 1 + Mathf.Clamp((_mousePos.x - lastMousePos.x) / 1000, -1f, 1f);
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
-                EventSystem<float>.RaiseEvent(EventType.RESIZE_STROKE, Mathf.Clamp((_mousePos.x - lastMousePos.x) / 1000, -1f, 1f));
+                EventSystem<float>.RaiseEvent(EventType.RESIZE_STROKE, resizeAmount);
                 lastMousePos = _mousePos;
                 return true;
+            }
+            if ((Input.GetMouseButtonUp(0) || Input.GetKeyUp(KeyCode.E)) && isResizing)
+            {
+                isResizing = false;
+                EventSystem.RaiseEvent(EventType.RESIZE_STROKE);
             }
             return false;
         }

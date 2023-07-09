@@ -178,6 +178,8 @@ namespace Drawing
             if (!CheckCollision(_brushstrokeID.GetCollisionBox(), _collisionBox))
                 return;
             
+            RedrawStroke(_brushstrokeID, PaintType.Erase);
+            
             foreach (var brushStroke in _brushstrokeID.brushStrokes)
             {
                 Draw(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, paintType, 
@@ -293,13 +295,12 @@ namespace Drawing
                 float brushEnd = brushStrokeID.brushStrokes[^1].lastTime;
                 float brushIDStart = brushStrokeID.lastTime;
                 float brushIDEnd = brushStrokeID.currentTime;
-                if (Math.Abs(brushStart - brushIDStart) > 0.01f || Math.Abs(brushEnd - brushIDEnd) > 0.01f)
+                if (Math.Abs(brushStart - brushIDStart) > 0.000001f || Math.Abs(brushEnd - brushIDEnd) > 0.000001f)
                 {
                     RedrawStrokeInterpolation(brushStrokeID);
                     continue;
                 }
 
-                RedrawStroke(brushStrokeID, PaintType.Erase);
                 RedrawStrokeOptimized(brushStrokeID, collisionBox);
             }
         }
@@ -321,7 +322,6 @@ namespace Drawing
                     continue;
                 }
 
-                RedrawStroke(brushStrokeID, PaintType.Erase);
                 RedrawStrokeOptimized(brushStrokeID, collisionBox);
             }
         }
