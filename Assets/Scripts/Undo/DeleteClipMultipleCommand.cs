@@ -17,7 +17,7 @@ namespace Undo
 
         public DeleteClipMultipleCommand(List<TimelineClip> _timelineClips)
         {
-            brushStrokeIDs = _timelineClips.Select(_clip => _clip.brushStrokeID).ToList();
+            brushStrokeIDs = _timelineClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             timelineClips = _timelineClips;
         }
 

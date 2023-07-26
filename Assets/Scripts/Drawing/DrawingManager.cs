@@ -76,7 +76,7 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
-            EventSystem<List<TimelineClip>>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
+            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
@@ -107,7 +107,7 @@ namespace Drawing
             EventSystem<Vector2>.Unsubscribe(EventType.SELECT_BRUSHSTROKE, SelectBrushStroke);
             EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.ADD_SELECT, HighlightStroke);
-            EventSystem<List<TimelineClip>>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
+            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
@@ -301,7 +301,7 @@ namespace Drawing
         }
         private void HighlightStroke(List<TimelineClip> _brushStrokeIDs)
         {
-            selectedBrushStrokes = _brushStrokeIDs.Select(_clip => _clip.brushStrokeID).ToList();
+            selectedBrushStrokes = _brushStrokeIDs.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             highlighter.HighlightStroke(selectedBrushStrokes);
         }
 

@@ -14,7 +14,8 @@ namespace Undo
 
         public DrawCommand(TimelineClip _timelineClip)
         {
-            brushStrokeID = _timelineClip.brushStrokeID;
+            //DrawCommand is only used when drawing one stroke if you can draw multiple strokes at the same time change this
+            brushStrokeID = _timelineClip.GetBrushStrokeIDs()[0];
             timelineClip = _timelineClip;
         }
 
