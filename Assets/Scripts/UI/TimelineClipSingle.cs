@@ -24,7 +24,7 @@ namespace UI
         
         public override List<TimelineClip> GetClips()
         {
-            return new List<TimelineClip>();
+            return new List<TimelineClip> { this };
         }
 
         public override void SetTime(Vector2 _time)

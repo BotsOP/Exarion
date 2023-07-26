@@ -14,7 +14,7 @@ namespace UI
         private List<Vector2> oldBrushStrokeTimes;
         public TimelineClipGroup(List<TimelineClip> _clips, RectTransform _rect, RectTransform _timelineBarRect, RectTransform _timelineAreaRect, RawImage _rawImage) : base(_rect, _timelineBarRect, _timelineAreaRect, _rawImage)
         {
-            clips = _clips;
+            clips = _clips.SelectMany(_clip => _clip.GetClips()).ToList();
             allBrushStrokes = clips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
 
             Vector2 brushStrokeTime = GetTime();

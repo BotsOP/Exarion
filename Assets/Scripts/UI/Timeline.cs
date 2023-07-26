@@ -326,7 +326,7 @@ namespace UI
                 }
                 
                 //Group all selected timelineClips in one clip
-                if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.G) || Input.GetKeyDown(KeyCode.LeftControl) && Input.GetKey(KeyCode.G))
+                if ((Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.G) || Input.GetKeyDown(KeyCode.LeftControl) && Input.GetKey(KeyCode.G)) && selectedClips.Count >= 2)
                 {
                     RectTransform rect = Instantiate(timelineClipObject, timelineBarObject).GetComponent<RectTransform>();
                     RawImage clipImage = rect.GetComponent<RawImage>();
@@ -346,6 +346,32 @@ namespace UI
                     ICommand group = new GroupCommand(timelineClipGroup);
                     EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, group);
                 }
+                
+                //Ungroups all unselected clips
+                if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.G) || Input.GetKeyDown(KeyCode.LeftShift) && Input.GetKey(KeyCode.G))
+                {
+                    List<TimelineClip> clips = selectedClips.Where(_clips => _clips.GetBrushStrokeIDs().Count >= 2).ToList();
+                    
+                    RemoveClip(clips);
+                    List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
+                    List<UnGroupCommand> ungroupCommands = new List<UnGroupCommand>();
+                    foreach (var groupClip in clips)
+                    {
+                        selectedClips.Remove(groupClip);
+                        brushStrokeIDs.AddRange(groupClip.GetBrushStrokeIDs());
+                        ungroupCommands.Add(new UnGroupCommand(groupClip.GetClips()));
+                
+                        foreach (var clip in groupClip.GetClips())
+                        {
+                            AddNewBrushClip(clip);
+                        }
+                    }
+                    
+                    ICommand ungroupMultipleCommand = new UnGroupMultipleCommand(ungroupCommands);
+                    EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, ungroupMultipleCommand);
+                    
+                    EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, brushStrokeIDs);
+                }
             }
             
             if (Input.GetMouseButton(0) && selectedClips.Count > 0)
@@ -358,7 +384,7 @@ namespace UI
         {
             RectTransform rect = Instantiate(timelineClipObject, timelineBarObject).GetComponent<RectTransform>();
             RawImage clipImage = rect.GetComponent<RawImage>();
-            clipImage.color = selectedColor;
+            clipImage.color = notSelectedColor;
             TimelineClip timelineClipGroup = new TimelineClipGroup(_clips, rect, timelineBarObject, timelineRect, clipImage);
 
             RemoveClip(_clips);
