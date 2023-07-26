@@ -92,6 +92,8 @@ namespace Drawing
             EventSystem<Vector2, List<BrushStrokeID>>.Subscribe(EventType.MOVE_STROKE, MoveStrokes);
             EventSystem<float, List<BrushStrokeID>>.Subscribe(EventType.RESIZE_STROKE, ResizeStrokes);
             EventSystem<float, List<BrushStrokeID>>.Subscribe(EventType.ROTATE_STROKE, RotateStroke);
+            EventSystem.Subscribe(EventType.DUPLICATE_STROKE, DuplicateBrushStrokes);
+            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.SELECT_BRUSHSTROKE, HighlightStroke);
         }
 
         private void OnDisable()
@@ -123,6 +125,8 @@ namespace Drawing
             EventSystem<Vector2, List<BrushStrokeID>>.Unsubscribe(EventType.MOVE_STROKE, MoveStrokes);
             EventSystem<float, List<BrushStrokeID>>.Unsubscribe(EventType.RESIZE_STROKE, ResizeStrokes);
             EventSystem<float, List<BrushStrokeID>>.Unsubscribe(EventType.ROTATE_STROKE, RotateStroke);
+            EventSystem.Unsubscribe(EventType.DUPLICATE_STROKE, DuplicateBrushStrokes);
+            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.SELECT_BRUSHSTROKE, HighlightStroke);
         }
 
         private void SetTime(float _time)
@@ -270,16 +274,30 @@ namespace Drawing
             drawer.RedrawAllSafe(_brushStrokeIDs);
         }
         
-        private void HighlightStroke(BrushStrokeID _brushStrokeIDs)
+        private void HighlightStroke(BrushStrokeID _brushStrokeID)
         {
-            if (selectedBrushStrokes.Remove(_brushStrokeIDs))
+            if (selectedBrushStrokes.Remove(_brushStrokeID))
             {
                 highlighter.HighlightStroke(selectedBrushStrokes);
                 return;
             }
 
-            selectedBrushStrokes.Add(_brushStrokeIDs);
+            selectedBrushStrokes.Add(_brushStrokeID);
             highlighter.HighlightStroke(selectedBrushStrokes);
+        }
+        private void HighlightStroke(List<BrushStrokeID> _brushStrokeIDs)
+        {
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                if (selectedBrushStrokes.Remove(brushStrokeID))
+                {
+                    highlighter.HighlightStroke(selectedBrushStrokes);
+                    return;
+                }
+
+                selectedBrushStrokes.Add(brushStrokeID);
+                highlighter.HighlightStroke(selectedBrushStrokes);
+            }
         }
         private void HighlightStroke(List<TimelineClip> _brushStrokeIDs)
         {
@@ -325,6 +343,25 @@ namespace Drawing
                     return;
                 }
             }
+        }
+
+        private void DuplicateBrushStrokes()
+        {
+            List<BrushStrokeID> duplicateBrushStrokeIDs = new List<BrushStrokeID>();
+            foreach (var brushStrokeID in selectedBrushStrokes)
+            {
+                BrushStrokeID duplicateBrushStrokeID = new BrushStrokeID(brushStrokeID, drawer.brushStrokesID.Count);
+                
+                drawer.brushStrokesID.Add(duplicateBrushStrokeID);
+                EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, duplicateBrushStrokeID);
+                
+                duplicateBrushStrokeIDs.Add(duplicateBrushStrokeID);
+            }
+            
+            MoveStrokes(new Vector2(10, 10), duplicateBrushStrokeIDs);
+            EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
+            selectedBrushStrokes = duplicateBrushStrokeIDs;
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.SELECT_TIMELINECLIP, selectedBrushStrokes);
         }
 
         private Vector2 lastMovePos;
@@ -483,7 +520,6 @@ namespace Drawing
             EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, resizeCommand);
             resizeAmount = 1;
         }
-
 
         private float rotateAmount;
         private void RotateStroke(float _angle)

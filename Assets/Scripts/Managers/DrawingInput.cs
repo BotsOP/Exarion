@@ -103,6 +103,8 @@ namespace UI
                         return;
                     if (SpawnHexagon(mousePos))
                         return;
+                    if (DuplicateStroke())
+                        return;
                     
                     if(DrawInput(mousePos))
                         return;
@@ -171,6 +173,17 @@ namespace UI
                     mouseIsDrawing = false;
                 }
             }
+        }
+
+        private bool DuplicateStroke()
+        {
+            if (Input.GetKeyDown(KeyCode.D) && Input.GetKey(KeyCode.LeftControl))
+            {
+                EventSystem.RaiseEvent(EventType.DUPLICATE_STROKE);
+                return true;
+            }
+
+            return false;
         }
         private bool SelectBrushStroke(Vector2 _mousePos)
         {

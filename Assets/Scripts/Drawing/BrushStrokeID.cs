@@ -35,6 +35,23 @@ namespace Drawing
             angle = _angle;
             size = _size;
         }
+        
+        public BrushStrokeID(BrushStrokeID _brushStrokeID, int _indexWhenDrawn)
+        {
+            brushStrokes = new List<BrushStroke>(_brushStrokeID.brushStrokes);
+            paintType = _brushStrokeID.paintType;
+            lastTime = _brushStrokeID.lastTime;
+            currentTime = _brushStrokeID.currentTime;
+            collisionBoxX = _brushStrokeID.collisionBoxX;
+            collisionBoxY = _brushStrokeID.collisionBoxY;
+            collisionBoxZ = _brushStrokeID.collisionBoxZ;
+            collisionBoxW = _brushStrokeID.collisionBoxW;
+            avgPosX = _brushStrokeID.avgPosX;
+            avgPosY = _brushStrokeID.avgPosY;
+            angle = _brushStrokeID.angle;
+            size = _brushStrokeID.size;
+            indexWhenDrawn = _indexWhenDrawn;
+        }
 
         public Vector4 GetCollisionBox()
         {

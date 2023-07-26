@@ -28,6 +28,7 @@ namespace Managers
         ADD_STROKE,
         IS_INTERACTING,
         ADD_COMMAND,
+        DUPLICATE_STROKE,
     }
 
 

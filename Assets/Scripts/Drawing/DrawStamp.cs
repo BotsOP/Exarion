@@ -117,6 +117,7 @@ namespace Drawing
             BrushStroke rightStroke = new BrushStroke(bottomRight, right, _brushSize, 0, 0);
             BrushStroke topRightStroke = new BrushStroke(right, topRight, _brushSize, 0, 0);
             BrushStroke topRightStroke2 = new BrushStroke(topRight, topLeft, _brushSize, 0, 0);
+            
             brushStrokes.Add(topLeftStroke);
             brushStrokes.Add(leftStroke);
             brushStrokes.Add(bottomLeftStroke);

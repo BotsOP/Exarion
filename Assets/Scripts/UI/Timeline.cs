@@ -103,6 +103,7 @@ namespace UI
             EventSystem<TimelineClip, int>.Subscribe(EventType.UPDATE_CLIP, UpdateClip);
             EventSystem<List<TimelineClip>>.Subscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<BrushStrokeID>.Subscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
+            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveSelectedClip);
             EventSystem<float>.Subscribe(EventType.ADD_TIME, AddTime);
         }
@@ -118,6 +119,7 @@ namespace UI
             EventSystem<TimelineClip, int>.Unsubscribe(EventType.UPDATE_CLIP, UpdateClip);
             EventSystem<List<TimelineClip>>.Unsubscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
+            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveSelectedClip);
             EventSystem<float>.Unsubscribe(EventType.ADD_TIME, AddTime);
         }
@@ -707,13 +709,25 @@ namespace UI
                 }
             }
         }
-        private void SelectClip(BrushStrokeID _brushStrokeIDs)
+        private void SelectClip(BrushStrokeID _brushStrokeID)
         {
-            List<TimelineClip> clips = clipsOrdered.SelectMany(_timeBar => _timeBar.Where(_clip => _clip.brushStrokeID == _brushStrokeIDs)).ToList();
+            List<TimelineClip> clips = clipsOrdered.SelectMany(_timeBar => _timeBar.Where(_clip => _clip.brushStrokeID == _brushStrokeID)).ToList();
             foreach (var clip in clips)
             {
                 clip.rawImage.color = selectedColor;
                 selectedClips.Add(clip);
+            }
+        }
+        private void SelectClip(List<BrushStrokeID> _brushStrokeIDs)
+        {
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                List<TimelineClip> clips = clipsOrdered.SelectMany(_timeBar => _timeBar.Where(_clip => _clip.brushStrokeID == brushStrokeID)).ToList();
+                foreach (var clip in clips)
+                {
+                    clip.rawImage.color = selectedColor;
+                    selectedClips.Add(clip);
+                }
             }
         }
 
