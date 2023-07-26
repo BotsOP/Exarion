@@ -86,6 +86,7 @@ namespace Drawing
             EventSystem<float>.Subscribe(EventType.ROTATE_STROKE, RotateStroke);
             EventSystem<Vector2, string>.Subscribe(EventType.SPAWN_STAMP, DrawStamp);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
+            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem.Subscribe(EventType.MOVE_STROKE, StoppedMovingStroke);
             EventSystem.Subscribe(EventType.RESIZE_STROKE, StoppedResizing);
             EventSystem.Subscribe(EventType.ROTATE_STROKE, StoppedRotating);
@@ -119,6 +120,7 @@ namespace Drawing
             EventSystem<float>.Unsubscribe(EventType.ROTATE_STROKE, RotateStroke);
             EventSystem<Vector2, string>.Unsubscribe(EventType.SPAWN_STAMP, DrawStamp);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
+            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem.Unsubscribe(EventType.MOVE_STROKE, StoppedMovingStroke);
             EventSystem.Unsubscribe(EventType.RESIZE_STROKE, StoppedResizing);
             EventSystem.Unsubscribe(EventType.ROTATE_STROKE, StoppedRotating);
@@ -296,18 +298,20 @@ namespace Drawing
                 }
 
                 selectedBrushStrokes.Add(brushStrokeID);
-                highlighter.HighlightStroke(selectedBrushStrokes);
             }
-        }
-        private void HighlightStroke(List<TimelineClip> _brushStrokeIDs)
-        {
-            selectedBrushStrokes = _brushStrokeIDs.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             highlighter.HighlightStroke(selectedBrushStrokes);
         }
-
         private void RemoveHighlight(BrushStrokeID _brushStrokeID)
         {
             selectedBrushStrokes.Remove(_brushStrokeID);
+            highlighter.HighlightStroke(selectedBrushStrokes);
+        }
+        private void RemoveHighlight(List<BrushStrokeID> _brushStrokeIDs)
+        {
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                selectedBrushStrokes.Remove(brushStrokeID);
+            }
             highlighter.HighlightStroke(selectedBrushStrokes);
         }
         private void ClearHighlightStroke()

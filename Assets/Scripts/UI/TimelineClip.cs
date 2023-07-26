@@ -71,8 +71,12 @@ namespace UI
 
         public virtual List<BrushStrokeID> GetBrushStrokeIDs()
         {
-            
             return new List<BrushStrokeID>();
+        }
+        
+        public virtual List<TimelineClip> GetClips()
+        {
+            return new List<TimelineClip>();
         }
 
         public virtual void SetTime(Vector2 _time) { }
@@ -117,7 +121,7 @@ namespace UI
             timelineBarCorners = new Vector3[4];
             timelineAreaCorners = new Vector3[4];
         }
-        public void SetupMovement(MouseAction _mouseAction, float _leftMostPos, float _rightMostPos)
+        public virtual void SetupMovement(MouseAction _mouseAction, float _leftMostPos, float _rightMostPos)
         {
             switch (_mouseAction)
             {

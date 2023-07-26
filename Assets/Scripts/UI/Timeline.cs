@@ -100,12 +100,14 @@ namespace UI
             EventSystem<bool>.Subscribe(EventType.FINISHED_STROKE, SetTimlinePause);
             EventSystem<BrushStrokeID>.Subscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
             EventSystem<TimelineClip>.Subscribe(EventType.ADD_STROKE, AddNewBrushClip);
-            EventSystem<TimelineClip>.Subscribe(EventType.UPDATE_CLIP, UpdateClip);
+            EventSystem<TimelineClip, int>.Subscribe(EventType.UPDATE_CLIP, UpdateClip);
             EventSystem<List<TimelineClip>>.Subscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<BrushStrokeID>.Subscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveSelectedClip);
             EventSystem<float>.Subscribe(EventType.ADD_TIME, AddTime);
+            EventSystem<List<TimelineClip>>.Subscribe(EventType.GROUP_CLIPS, GroupClips);
+            EventSystem<List<TimelineClip>>.Subscribe(EventType.UNGROUP_CLIPS, UnGroupClips);
         }
 
         private void OnDisable()
@@ -116,12 +118,14 @@ namespace UI
             EventSystem<bool>.Unsubscribe(EventType.FINISHED_STROKE, SetTimlinePause);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
             EventSystem<TimelineClip>.Unsubscribe(EventType.ADD_STROKE, AddNewBrushClip);
-            EventSystem<TimelineClip>.Unsubscribe(EventType.UPDATE_CLIP, UpdateClip);
+            EventSystem<TimelineClip, int>.Unsubscribe(EventType.UPDATE_CLIP, UpdateClip);
             EventSystem<List<TimelineClip>>.Unsubscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.SELECT_TIMELINECLIP, SelectClip);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveSelectedClip);
             EventSystem<float>.Unsubscribe(EventType.ADD_TIME, AddTime);
+            EventSystem<List<TimelineClip>>.Unsubscribe(EventType.GROUP_CLIPS, GroupClips);
+            EventSystem<List<TimelineClip>>.Unsubscribe(EventType.UNGROUP_CLIPS, UnGroupClips);
         }
 
         private void Update()
@@ -320,6 +324,28 @@ namespace UI
                     DeleteAllSelectedClips();
                     return;
                 }
+                
+                //Group all selected timelineClips in one clip
+                if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.G) || Input.GetKeyDown(KeyCode.LeftControl) && Input.GetKey(KeyCode.G))
+                {
+                    RectTransform rect = Instantiate(timelineClipObject, timelineBarObject).GetComponent<RectTransform>();
+                    RawImage clipImage = rect.GetComponent<RawImage>();
+                    clipImage.color = selectedColor;
+                    TimelineClip timelineClipGroup = new TimelineClipGroup(new List<TimelineClip>(selectedClips), rect, timelineBarObject, timelineRect, clipImage);
+
+                    RemoveClip(selectedClips);
+
+                    int avgTimelineBar = Mathf.RoundToInt((float)selectedClips.Select(_clip => _clip.currentBar).ToList().Average());
+            
+                    clipsOrdered[avgTimelineBar].Add(timelineClipGroup);
+                    CheckClipCollisions(timelineClipGroup);
+                    
+                    ClearSelected();
+                    selectedClips.Add(timelineClipGroup);
+
+                    ICommand group = new GroupCommand(timelineClipGroup);
+                    EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, group);
+                }
             }
             
             if (Input.GetMouseButton(0) && selectedClips.Count > 0)
@@ -327,6 +353,36 @@ namespace UI
                 isInteracting = true;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
             }
+        }
+        private void GroupClips(List<TimelineClip> _clips)
+        {
+            RectTransform rect = Instantiate(timelineClipObject, timelineBarObject).GetComponent<RectTransform>();
+            RawImage clipImage = rect.GetComponent<RawImage>();
+            clipImage.color = selectedColor;
+            TimelineClip timelineClipGroup = new TimelineClipGroup(_clips, rect, timelineBarObject, timelineRect, clipImage);
+
+            RemoveClip(_clips);
+
+            int avgTimelineBar = Mathf.RoundToInt((float)_clips.Select(_clip => _clip.currentBar).ToList().Average());
+            
+            clipsOrdered[avgTimelineBar].Add(timelineClipGroup);
+            CheckClipCollisions(timelineClipGroup);
+        }
+        private void UnGroupClips(List<TimelineClip> _clips)
+        {
+            RemoveClip(_clips);
+            List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
+            foreach (var groupClip in _clips)
+            {
+                selectedClips.Remove(groupClip);
+                brushStrokeIDs.AddRange(groupClip.GetBrushStrokeIDs());
+                
+                foreach (var clip in groupClip.GetClips())
+                {
+                    AddNewBrushClip(clip);
+                }
+            }
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, brushStrokeIDs);
         }
         private void ChangeSelectedTimelineClips()
         {
@@ -530,7 +586,6 @@ namespace UI
                     timelineList.Remove(_clip);
                 }
                 clipsOrdered[currentBar].Add(_clip);
-                _clip.previousBar = currentBar;
                 _clip.currentBar = currentBar;
 
                 return;
@@ -552,7 +607,6 @@ namespace UI
                         }
                         _clip.SetBar(lowerBar);
                         clipsOrdered[lowerBar].Add(_clip);
-                        _clip.previousBar = lowerBar;
 
                         return;
                     }
@@ -568,9 +622,6 @@ namespace UI
                         }
                         _clip.SetBar(upperBar);
                         clipsOrdered[upperBar].Add(_clip);
-                        _clip.previousBar = upperBar;
-                        Debug.Log($"{clipsOrdered[0].Count} {clipsOrdered[1].Count} {clipsOrdered[2].Count} {clipsOrdered[3].Count} " +
-                                  $"{clipsOrdered[4].Count} {clipsOrdered[5].Count} {clipsOrdered[6].Count}");
                         return;
                     }
                 }
@@ -760,9 +811,9 @@ namespace UI
                 }
             }
         }
-        private void UpdateClip(TimelineClip _timelineClip)
+        private void UpdateClip(TimelineClip _timelineClip, int bar)
         {
-            int bar = _timelineClip.currentBar;
+            Debug.Log(bar);
             clipsOrdered[_timelineClip.currentBar].Remove(_timelineClip);
             clipsOrdered[bar].Add(_timelineClip);
             _timelineClip.SetBar(bar);

@@ -11,11 +11,20 @@ namespace UI
         public TimelineClipSingle(BrushStrokeID _brushStrokeID, RectTransform _rect, RectTransform _timelineBarRect, RectTransform _timelineAreaRect, RawImage _rawImage) : base(_rect, _timelineBarRect, _timelineAreaRect, _rawImage)
         {
             brushStrokeID = _brushStrokeID;
+            
+            Vector2 brushStrokeTime = GetTime();
+            ClipTime = brushStrokeTime;
+            clipTimeOld = brushStrokeTime;
         }
 
         public override List<BrushStrokeID> GetBrushStrokeIDs()
         {
             return new List<BrushStrokeID> { brushStrokeID };
+        }
+        
+        public override List<TimelineClip> GetClips()
+        {
+            return new List<TimelineClip>();
         }
 
         public override void SetTime(Vector2 _time)
@@ -24,7 +33,7 @@ namespace UI
             brushStrokeID.currentTime = _time.y;
         }
 
-        public override Vector2 GetTime()
+        public override sealed Vector2 GetTime()
         {
             return new Vector2(brushStrokeID.lastTime, brushStrokeID.currentTime);
         }

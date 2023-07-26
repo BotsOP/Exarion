@@ -13,11 +13,13 @@ namespace Undo
     {
         private List<TimelineClip> timelineClips;
         private List<Vector2> clipTimeOld;
+        private List<int> timelineBars;
 
         public RedrawMultipleCommand(List<TimelineClip> _clips)
         {
             timelineClips = _clips;
             clipTimeOld = _clips.Select(_clip => _clip.clipTimeOld).ToList();
+            timelineBars = _clips.Select(_clip => _clip.previousBar).ToList();
         }
         public void Execute()
         {
@@ -31,7 +33,7 @@ namespace Undo
                 var clip = timelineClips[i];
                 clip.SetTime(clipTimeOld[i]);
                 clip.ClipTime = clipTimeOld[i];
-                EventSystem<TimelineClip>.RaiseEvent(EventType.UPDATE_CLIP, clip);
+                EventSystem<TimelineClip, int>.RaiseEvent(EventType.UPDATE_CLIP, clip, timelineBars[i]);
 
                 redrawStrokes.AddRange(clip.GetBrushStrokeIDs());
             }

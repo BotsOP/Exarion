@@ -29,6 +29,8 @@ namespace Managers
         IS_INTERACTING,
         ADD_COMMAND,
         DUPLICATE_STROKE,
+        GROUP_CLIPS,
+        UNGROUP_CLIPS,
     }
 
 
