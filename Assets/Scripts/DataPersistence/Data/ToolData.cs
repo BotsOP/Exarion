@@ -12,9 +12,7 @@ public class ToolData
     //Data for us
     //Variables per project
     public string projectName;
-    public List<BrushStroke> brushStrokes;
     public List<BrushStrokeID> brushStrokesID;
-    public List<BrushStrokeID> lastDrawnStrokes;
 
     public byte[] overlayImg;
 
@@ -24,9 +22,7 @@ public class ToolData
     {
         projectName = "";
         overlayImg = null;
-        brushStrokes = new List<BrushStroke>();
         brushStrokesID = new List<BrushStrokeID>();
-        lastDrawnStrokes = new List<BrushStrokeID>();
     }
 
     public string GetProjectName() 

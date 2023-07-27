@@ -1,0 +1,341 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="AnotherFileBrowser.Windows.FileBrowser" Collapsed="true">
+    <Position X="9.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAIAA=</HashCode>
+      <FileName>Assets\AnotherFileBrowser\FileBrowser.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AnotherFileBrowser.Windows.BrowserProperties" Collapsed="true">
+    <Position X="9.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAQFAAAAAAAABAEAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\AnotherFileBrowser\FileBrowser.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AnotherFileBrowser.Windows.WindowWrapper" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="14.5" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAIAAAA=</HashCode>
+      <FileName>Assets\AnotherFileBrowser\FileBrowser.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ToolData" Collapsed="true">
+    <Position X="11" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAAAAAAAAAQAIAAgAAAAAAAAAAAAQQAAAAAg=</HashCode>
+      <FileName>Assets\Scripts\DataPersistence\Data\ToolData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FileBrowserUpdate" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="11" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AABAAAAAAAAQAAAAAAAAAAAQAAAAAAAAAYgAAAAAIAA=</HashCode>
+      <FileName>Assets\Scripts\DataPersistence\FileBrowserUpdate.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="FileDataHandler" Collapsed="true">
+    <Position X="12.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAgKIAAAgAAABEAEAAAAAAAAEAIEAAAAAAAAAAACA=</HashCode>
+      <FileName>Assets\Scripts\DataPersistence\FileDataHandler.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SerializableDictionary&lt;TKey, TValue&gt;" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="14.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEAIAAAAAAAAAAAAAABAACAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\DataPersistence\SerializableTypes\SerializableDictionary.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ConfirmationPopupMenu" Collapsed="true">
+    <Position X="2.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAQQAAAAAAAAAIAAAAAAAAAAAAAAAAAEAAAA=</HashCode>
+      <FileName>Assets\Scripts\MainMenus\ConfirmationPopupMenu.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CreateNewSaveSlot" Collapsed="true">
+    <Position X="14.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAIAAA=</HashCode>
+      <FileName>Assets\Scripts\MainMenus\CreateNewSaveSlot.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MainMenu" Collapsed="true">
+    <Position X="5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgAACAFhAAAAAAAJQAgAgAAAAAAEAAAAAEAAAA=</HashCode>
+      <FileName>Assets\Scripts\MainMenus\MainMenu.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Menu" Collapsed="true">
+    <Position X="2.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAACAA=</HashCode>
+      <FileName>Assets\Scripts\MainMenus\Menu.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SetProjectName" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="19" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAMAAAQAAAAAAAAAAgQAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\MainMenus\SetProjectName.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="EventSystem" Collapsed="true">
+    <Position X="9" Y="13.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAEAAAAAAAAAAAAAAAAAAAAAAACAAAAQAAAAEAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Managers\EventSystem.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="EventSystem&lt;T&gt;" Collapsed="true">
+    <Position X="9" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAEAAAAAAAAAAAAAAAAAAAAAAACAAAAQAAAAEAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Managers\EventSystem.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="EventSystem&lt;T, A&gt;" Collapsed="true">
+    <Position X="9" Y="11.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAEAAAAAAAAAAAAAAAAAAAAAAACAAAAQAAAAEAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Managers\EventSystem.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="EventSystem&lt;T, A, B&gt;" Collapsed="true">
+    <Position X="9" Y="12" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAEAAAAAAAAAAAAAAAAAAAAAAACAAAAQAAAAEAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Managers\EventSystem.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="EventSystem&lt;T, A, B, C&gt;" Collapsed="true">
+    <Position X="9" Y="12.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAEAAAAAAAAAAAAAAAAAAAAAAACAAAAQAAAAEAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Managers\EventSystem.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="InputManager">
+    <Position X="14.25" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAACAAAAAAAEAAMAAAABAIAAACAAAACEA=</HashCode>
+      <FileName>Assets\Scripts\Managers\InputManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImportImage" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="14.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AABAAAAAACAYEAAAAAAAAAAQAAAAAAIAAQAAAAACIBA=</HashCode>
+      <FileName>Assets\Scripts\UI\ImportImage.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="DataPersistence.DataPersistenceManager" Collapsed="true">
+    <Position X="16.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IBAQABAAABgAAAACABAgAAAgIEBAAAIJEGAgKAAACEA=</HashCode>
+      <FileName>Assets\Scripts\DataPersistence\DataPersistenceManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drawing.BrushStrokeID">
+    <Position X="24.75" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAQBsEABAAAAAAAgAAAAIAAACAAAAAAAAAABA=</HashCode>
+      <FileName>Assets\Scripts\Drawing\BrushStrokeID.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drawing.Drawing">
+    <Position X="21.25" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAQkGAhESAAgggAEAgAIAAALQAEAADiIBgACQAAAAAg=</HashCode>
+      <FileName>Assets\Scripts\Drawing\Drawing.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drawing.DrawingManager" BaseTypeListCollapsed="true">
+    <Position X="19.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AHSDDYGUCAAcAgcABAAAAgBSARCABAAIAAECYAAAeAA=</HashCode>
+      <FileName>Assets\Scripts\Drawing\DrawingManager.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MainMenus.SaveSlot" Collapsed="true">
+    <Position X="11" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACCAAAhAAQAAAAACAgAAAgAAAAAAAAAAgAAAAAAAEA=</HashCode>
+      <FileName>Assets\Scripts\MainMenus\SaveSlot.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MainMenus.SaveSlotsMenu" Collapsed="true">
+    <Position X="0.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAQwAAIAAAAAAIAAgAQAAEAAAAAAAAAEMAEA=</HashCode>
+      <FileName>Assets\Scripts\MainMenus\SaveSlotsMenu.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="UI.DrawingInput" Collapsed="true">
+    <Position X="16" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABABAAABAAAAAAAAABAAAAAgMAAIABwAIAAAJAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Managers\DrawingInput.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="UI.AlwaysSquare" Collapsed="true">
+    <Position X="19" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQGAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\UI\AlwaysSquare.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="UI.ExportPNG" Collapsed="true">
+    <Position X="12.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\UI\ExportPNG.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="UI.Timeline">
+    <Position X="28" Y="3.25" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>2CQBoMwQRAAAAgAIxyAAEGAEgQqJAAAoBIEAEAIAS8I=</HashCode>
+      <FileName>Assets\Scripts\UI\Timeline.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="UI.TimelineClip">
+    <Position X="29.75" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAQgIAAAAAFAAAARACAMKABgAEECAAQAggAAACCAGI=</HashCode>
+      <FileName>Assets\Scripts\UI\TimelineClip.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="UI.UIManager" Collapsed="true">
+    <Position X="12.75" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QAAAAEAAkAAgFYRAEgAAsAQAUAAASBgABMAAAAIIAEA=</HashCode>
+      <FileName>Assets\Scripts\UI\UIManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Managers.ExtensionMethods" Collapsed="true">
+    <Position X="7.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Managers\ExtensionMethods.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="UnityEngine.UI.ScrollRectMiddleMouseClick" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="12.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CZOWAcIDKN56HECIlD/BMACyNgQCCb4aAHQLhmiATgQ=</HashCode>
+      <FileName>Assets\Scripts\UI\ScrollRectMiddleMouseClick.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Undo.CommandManager" Collapsed="true">
+    <Position X="2.25" Y="9" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAQABAACAAAAAAABAAAAAAAAAQAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Undo\CommandManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Undo.DeleteClipCommand" BaseTypeListCollapsed="true">
+    <Position X="0.5" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAABAQAAAAIAAAAAAAAAAAAAAAAAAACAAA=</HashCode>
+      <FileName>Assets\Scripts\Undo\DeleteClipCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Undo.DeleteClipMultipleCommand" BaseTypeListCollapsed="true">
+    <Position X="0.5" Y="13.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAABAQAAAAAAAAEAAAAAAAAAAAAAAAAAAE=</HashCode>
+      <FileName>Assets\Scripts\Undo\DeleteClipMultipleCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Undo.DrawCommand" BaseTypeListCollapsed="true">
+    <Position X="2.25" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAABAQAAAAIAAAAAAAAAAAAAAAAAAACAAA=</HashCode>
+      <FileName>Assets\Scripts\Undo\DrawCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Undo.RedrawCommand" BaseTypeListCollapsed="true">
+    <Position X="4" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAQAAABAQAAAAAggAABAAEAACAAAAAAABAAAA=</HashCode>
+      <FileName>Assets\Scripts\Undo\RedrawCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Undo.RedrawMultipleCommand" BaseTypeListCollapsed="true">
+    <Position X="4" Y="14.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAACAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Undo\RedrawMultipleCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Struct Name="Drawing.BrushStroke">
+    <Position X="23" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAKAQAAAABAAAAAAAgAAAAAAAAAQAAAAAAQCADA=</HashCode>
+      <FileName>Assets\Scripts\Drawing\Drawing.cs</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Interface Name="IDataPersistence" Collapsed="true">
+    <Position X="0.75" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAQAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\DataPersistence\IDataPersistence.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Undo.ICommand" Collapsed="true">
+    <Position X="2.25" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Undo\ICommand.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="PaintType">
+    <Position X="23" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAABAAAAAACAAEAAAAAAAAAAIAEAA=</HashCode>
+      <FileName>Assets\Scripts\Drawing\Drawing.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="HighlightType">
+    <Position X="23" Y="9" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAIAAA=</HashCode>
+      <FileName>Assets\Scripts\Drawing\Drawing.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="EventType">
+    <Position X="10.75" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgEgAAGAABABAAAAgAAAQAAARAAAEAAAAAgAAA=</HashCode>
+      <FileName>Assets\Scripts\Managers\EventSystem.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="UI.MouseAction">
+    <Position X="31.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAAAAAAAAAACAAAAAAAAAAAAAAgAAEAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\UI\TimelineClip.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

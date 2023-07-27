@@ -2,31 +2,39 @@ using System;
 using System.Globalization;
 using DataPersistence;
 using Drawing;
+using Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using EventType = Managers.EventType;
 
 namespace UI
 {
     public class UIManager : MonoBehaviour
     {
-        public static bool IsInteracting;
+        public static bool isInteracting;
         public static bool isFullView = true;
+        
+        [Header("Viewport")]
         [SerializeField] private RawImage viewImageFull;
         [SerializeField] private RawImage viewImageFocus;
         [SerializeField] private RawImage displayImageFull;
         [SerializeField] private RawImage displayImageFocus;
         [SerializeField] private Camera viewCam;
         [SerializeField] private Camera displayCam;
-        [SerializeField] private Color selectedColor;
-        [SerializeField] private Color backgroundColor;
         [SerializeField] private GameObject fullView;
         [SerializeField] private GameObject focusView;
         [SerializeField] private Image cachedButton;
+        
+        [Header("Select Deselect")]
+        [SerializeField] private Color selectedColor;
+        [SerializeField] private Color backgroundColor;
+        
+        [Header("UI input")]
         [SerializeField] private TMP_InputField brushSizeInput;
         [SerializeField] private Slider brushSizeSlider;
-        [SerializeField] private Button exportButton;
+        
         private CustomRenderTexture viewFullRT;
         private CustomRenderTexture viewFocusRT;
         private CustomRenderTexture displayFullRT;
@@ -35,14 +43,15 @@ namespace UI
         private RectTransform rectTransformDisplayFull;
         private RectTransform rectTransformViewFocus;
         private RectTransform rectTransformDisplayFocus;
+        readonly ExportPNG exportPNG = new ExportPNG();
 
-        private void Awake()
+        private void OnEnable()
         {
             rectTransformViewFull = viewImageFull.rectTransform;
             rectTransformViewFocus = viewImageFocus.rectTransform;
             rectTransformDisplayFull = displayImageFull.rectTransform;
             rectTransformDisplayFocus = displayImageFocus.rectTransform;
-            
+
             Vector3[] viewCorners = new Vector3[4];
             rectTransformViewFull.GetWorldCorners(viewCorners);
             int imageWidth = (int)(viewCorners[2].x - viewCorners[0].x);
@@ -82,14 +91,24 @@ namespace UI
             displayImageFull.texture = displayFullRT;
             displayImageFocus.texture = displayFocusRT;
             
-            EventSystem<float>.RaiseEvent(EventType.CHANGE_BRUSH_SIZE, brushSizeSlider.value);
+            EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSizeSlider.value);
+            EventSystem<float>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+            EventSystem<bool>.Subscribe(EventType.IS_INTERACTING, IsInteracting);
+        }
+
+        private void OnDisable()
+        {
+            EventSystem<float>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+        }
+
+        private void Start()
+        {
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
         }
 
         public void ExportResult()
         {
             DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
-            ExportPNG exportPNG = new ExportPNG();
             exportPNG.SaveImageToFile(drawingManager.drawer.rt, "");
         }
 
@@ -99,13 +118,9 @@ namespace UI
             SceneManager.LoadScene("MainMenu");
         }
 
-        public void StartInteracting()
+        private void IsInteracting(bool _isInteracting)
         {
-            IsInteracting = true;
-        }
-        public void StopInteracting()
-        {
-            IsInteracting = false;
+            isInteracting = _isInteracting;
         }
 
         public void SwitchToFullView(Image _buttonImage)
@@ -148,7 +163,14 @@ namespace UI
             {
                 brushSizeSlider.value = int.Parse(brushSizeInput.text);
             }
-            EventSystem<float>.RaiseEvent(EventType.CHANGE_BRUSH_SIZE, brushSizeSlider.value);
+            EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSizeSlider.value);
+        }
+
+        private void SetBrushSize(float _brushSize)
+        {
+            int brushSize = (int)_brushSize;
+            brushSizeInput.text = brushSize.ToString(CultureInfo.CurrentCulture);
+            brushSizeSlider.value = brushSize;
         }
     }
 }

@@ -2,22 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using Drawing;
+using Managers;
 using UI;
+using UnityEngine;
+using EventType = Managers.EventType;
 
 
 namespace Undo
 {
-    //Dont use a deleteClipCommand list but just use a list of bruhstrokeIDs and a list of List<brushStrokes>
     public class DeleteClipMultipleCommand : ICommand
     {
-        private List<List<BrushStroke>> brushStrokesList;
         private List<BrushStrokeID> brushStrokeIDs;
         private List<TimelineClip> timelineClips;
 
-        public DeleteClipMultipleCommand(List<List<BrushStroke>> _brushStrokesList, List<TimelineClip> _timelineClips)
+        public DeleteClipMultipleCommand(List<TimelineClip> _timelineClips)
         {
-            brushStrokesList = _brushStrokesList;
-            brushStrokeIDs = _timelineClips.Select(_clip => _clip.brushStrokeID).ToList();
+            brushStrokeIDs = _timelineClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             timelineClips = _timelineClips;
         }
 
@@ -25,13 +25,21 @@ namespace Undo
         {
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_STROKE, brushStrokeIDs);
             EventSystem<List<TimelineClip>>.RaiseEvent(EventType.REMOVE_STROKE, timelineClips);
-            EventSystem.RaiseEvent(EventType.CLEAR_HIGHLIGHT);
+            EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
         }
 
         public void Undo()
         {
-            EventSystem<List<List<BrushStroke>>, List<BrushStrokeID>, List<TimelineClip>>.RaiseEvent(
-                EventType.ADD_STROKE, brushStrokesList, brushStrokeIDs, timelineClips);
+            Debug.Log($"delete multiple");
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_STROKE, brushStrokeIDs);
+            foreach (var timelineClip in timelineClips)
+            {
+                EventSystem<TimelineClip>.RaiseEvent(EventType.ADD_STROKE, timelineClip);
+            }
+        }
+        public string GetCommandName()
+        {
+            return "DeleteClipMultipleCommand";
         }
     }
 }

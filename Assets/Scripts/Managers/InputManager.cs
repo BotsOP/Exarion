@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Managers;
 using UI;
 using UnityEngine;
+using EventType = Managers.EventType;
 
 public class InputManager : MonoBehaviour
 {
@@ -38,6 +40,6 @@ public class InputManager : MonoBehaviour
         currentDisplayArea.GetWorldCorners(displayAreaCorners);
         
         drawingInput.scrollZoomSensitivity = scrollZoomSensitivity;
-        drawingInput.UpdateDrawingInput(drawAreaCorners, displayAreaCorners, viewCam.transform.position, viewCam.orthographicSize);
+        drawingInput.UpdateDrawingInput(viewCam.transform.position, viewCam.orthographicSize);
     }
 }

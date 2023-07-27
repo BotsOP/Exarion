@@ -2,40 +2,46 @@
 using System.Collections.Generic;
 using System.Linq;
 using Drawing;
+using Managers;
+using UI;
+using UnityEngine;
+using EventType = Managers.EventType;
 
 namespace Undo
 {
     public class RedrawMultipleCommand : ICommand
     {
-        private List<RedrawCommand> redrawCommands;
-        
-        public RedrawMultipleCommand(List<RedrawCommand> _redrawCommands)
+        private List<TimelineClip> timelineClips;
+        private List<Vector2> clipTimeOld;
+        private List<int> timelineBars;
+
+        public RedrawMultipleCommand(List<TimelineClip> _clips)
         {
-            redrawCommands = _redrawCommands;
+            timelineClips = _clips;
+            clipTimeOld = _clips.Select(_clip => _clip.clipTimeOld).ToList();
+            timelineBars = _clips.Select(_clip => _clip.previousBar).ToList();
         }
         public void Execute()
         {
-            foreach (var redraw in redrawCommands)
-            {
-                redraw.brushStokeID.lastTime = redraw.lastTime;
-                redraw.brushStokeID.currentTime = redraw.currentTime;
-                redraw.UpdateTimelineClip(redraw.lastTime, redraw.currentTime);
-            }
             
-            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, redrawCommands.Select(_command => _command.brushStokeID).ToList());
         }
         public void Undo()
         {
-            //Updates all timeline clips
-            foreach (var redraw in redrawCommands)
+            List<BrushStrokeID> redrawStrokes = new List<BrushStrokeID>();
+            for (int i = 0; i < timelineClips.Count; i++)
             {
-                redraw.brushStokeID.lastTime = redraw.lastTimeOld;
-                redraw.brushStokeID.currentTime = redraw.currentTimeOld;
-                redraw.UpdateTimelineClip(redraw.lastTimeOld, redraw.currentTimeOld);
+                var clip = timelineClips[i];
+                clip.SetTime(clipTimeOld[i]);
+                clip.ClipTime = clipTimeOld[i];
+                EventSystem<TimelineClip, int>.RaiseEvent(EventType.UPDATE_CLIP, clip, timelineBars[i]);
+
+                redrawStrokes.AddRange(clip.GetBrushStrokeIDs());
             }
-            
-            //Updates all brushstrokes
-            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, redrawCommands.Select(_command => _command.brushStokeID).ToList());
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, redrawStrokes);
+        }
+        public string GetCommandName()
+        {
+            return "RedrawMultipleCommand";
         }
     }
 }

@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using Managers;
 using UnityEngine;
+using EventType = Managers.EventType;
 
 namespace Undo
 {
@@ -8,12 +11,22 @@ namespace Undo
         private Stack<ICommand> historyStack     = new Stack<ICommand>();
         private Stack<ICommand> redoHistoryStack = new Stack<ICommand>();
 
-        public void AddCommand(ICommand _command)
+        private void OnEnable()
         {
+            EventSystem<ICommand>.Subscribe(EventType.ADD_COMMAND, AddCommand);
+        }
+        private void OnDisable()
+        {
+            EventSystem<ICommand>.Unsubscribe(EventType.ADD_COMMAND, AddCommand);
+        }
+
+        private void AddCommand(ICommand _command)
+        {
+            Debug.Log($"Added command {_command.GetCommandName()}");
             historyStack.Push(_command);
         }
 
-        public void Undo()
+        private void Undo()
         {
             if(historyStack.Count > 0)
             {
@@ -38,11 +51,11 @@ namespace Undo
                 Undo();
                 return;
             }
-            if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.C))
-            {
-                Redo();
-                return;
-            }
+            // if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.C))
+            // {
+            //     Redo();
+            //     return;
+            // }
         }
     }
 }

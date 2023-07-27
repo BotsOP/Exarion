@@ -1,7 +1,8 @@
 namespace Undo
 {
-   public interface ICommand 
+   public interface ICommand
    {
+      string GetCommandName();
       void Execute();
 
       void Undo();
