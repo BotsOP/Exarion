@@ -27,8 +27,11 @@ namespace UI
         [SerializeField] private Slider speedSliderTimeline;
         
         [Header("Select Deselect")]
-        [SerializeField] private Color notSelectedColor;
+        public static Color notSelectedSingleColors;
+        public static Color notSelectedGroupColors;
         [SerializeField] private Color selectedColor;
+        [SerializeField] private Color notSelectedSingleColor;
+        [SerializeField] private Color notSelectedGroupColor;
         [SerializeField] private Sprite pauseSprite;
         [SerializeField] private Sprite playSprite;
 
@@ -42,16 +45,13 @@ namespace UI
         private RectTransform timelineRect;
         private RectTransform timelineAreaRect;
         private RectTransform timelineScrollRect;
-        private bool selectedInput;
         private int amountTimelineBars;
         private float minTimelineSize;
         private float maxTimelineSize;
         private float time;
         private float lastTimelineLeft;
         private float lastTimelineRight;
-        private Vector2 previousMousePos;
         private Vector3[] corners;
-        private CommandManager commandManager;
         private float timeIncrease;
         private bool shouldTimelinePause;
         private bool timelinePauseButton;
@@ -73,11 +73,13 @@ namespace UI
         private void Awake()
         {
             amountTimelineBars = timelineObject.transform.childCount;
-            commandManager = FindObjectOfType<CommandManager>();
             timelineRect = timelineObject.GetComponent<RectTransform>();
             timelineScrollRect = timelineScrollBar.GetComponent<RectTransform>();
             minTimelineSize = timelineBarObject.sizeDelta.x;
             maxTimelineSize = minTimelineSize * timelineMaxScaleMultiplier;
+
+            notSelectedSingleColors = notSelectedSingleColor;
+            notSelectedGroupColors = notSelectedGroupColor;
 
             selectedClips = new List<TimelineClip>();
             
@@ -142,8 +144,6 @@ namespace UI
             {
                 TimelineClipsInput();
             }
-            
-            previousMousePos = Input.mousePosition;
         }
 
         private void AddTime(float _addTime)
@@ -163,7 +163,7 @@ namespace UI
             {
                 shouldTimelinePause = false;
                 _image.sprite = pauseSprite;
-                _image.color = notSelectedColor;
+                _image.color = notSelectedSingleColors;
             }
             else
             {
@@ -286,10 +286,14 @@ namespace UI
                 }
             
                 //Otherwise check if you are interacting with any other timeline clips
-                if (Input.GetMouseButton(0) && isMouseInsideTimeline)
+                if (isMouseInsideTimeline)
                 {
                     if (ClickedTimelineClip())
                         return;
+                }
+                else if (lastHoverClip is not null)
+                {
+                    OnHoverExit(lastHoverClip);
                 }
             }
             
@@ -350,7 +354,7 @@ namespace UI
                 //Ungroups all unselected clips
                 if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.G) || Input.GetKeyDown(KeyCode.LeftShift) && Input.GetKey(KeyCode.G))
                 {
-                    List<TimelineClip> clips = selectedClips.Where(_clips => _clips.GetBrushStrokeIDs().Count >= 2).ToList();
+                    List<TimelineClip> clips = selectedClips.Where(_clips => _clips.GetClipType() == ClipType.Group).ToList();
                     
                     RemoveClip(clips);
                     List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
@@ -384,8 +388,8 @@ namespace UI
         {
             RectTransform rect = Instantiate(timelineClipObject, timelineBarObject).GetComponent<RectTransform>();
             RawImage clipImage = rect.GetComponent<RawImage>();
-            clipImage.color = notSelectedColor;
             TimelineClip timelineClipGroup = new TimelineClipGroup(_clips, rect, timelineBarObject, timelineRect, clipImage);
+            clipImage.color = timelineClipGroup.GetNotSelectedColor();
 
             RemoveClip(_clips);
 
@@ -475,6 +479,7 @@ namespace UI
                 }
             }
         }
+        private TimelineClip lastHoverClip;
         private bool ClickedTimelineClip()
         {
             for (int i = 0; i < clipsOrdered.Count; i++)
@@ -484,10 +489,13 @@ namespace UI
                     var clip = clipsOrdered[i][j];
                     if (!clip.IsMouseOver())
                     {
+                        OnHoverExit(clip);
                         continue;
                     }
 
-                    if (!selectedClips.Contains(clip))
+                    OnHoverEnter(clip);
+
+                    if (!selectedClips.Contains(clip) && Input.GetMouseButton(0))
                     {
                         if (Input.GetKey(KeyCode.LeftShift) && (clip != lastSelectedClip))
                         {
@@ -502,7 +510,7 @@ namespace UI
                         {
                             foreach (var _clip in selectedClips)
                             {
-                                _clip.rawImage.color = notSelectedColor;
+                                _clip.rawImage.color = _clip.GetNotSelectedColor();
                             }
 
                             firstTimeSelected = true;
@@ -520,7 +528,7 @@ namespace UI
                         clip.mouseAction = MouseAction.Nothing;
                         lastSelectedClip = clip;
                         selectedClips.Remove(clip);
-                        clip.rawImage.color = notSelectedColor;
+                        clip.rawImage.color = clip.GetNotSelectedColor();
                         firstTimeSelected = true;
                         EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, clip.GetBrushStrokeIDs());
                         return true;
@@ -529,6 +537,28 @@ namespace UI
             }
             
             return false;
+        }
+        private void OnHoverEnter(TimelineClip clip)
+        {
+            if (lastHoverClip != clip)
+            {
+                lastHoverClip = clip;
+                Debug.Log($"on hover enter");
+                if (selectedClips.Contains(clip))
+                    return;
+                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, clip.GetBrushStrokeIDs());
+            }
+        }
+        private void OnHoverExit(TimelineClip clip)
+        {
+            if (lastHoverClip == clip)
+            {
+                lastHoverClip = null;
+                Debug.Log($"on hover exit");
+                if (selectedClips.Contains(clip))
+                    return;
+                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, clip.GetBrushStrokeIDs());
+            }
         }
         private void StoppedMakingChanges()
         {
@@ -725,21 +755,12 @@ namespace UI
             // }
         }
 
-        public void SetSelect(bool _select)
-        {
-            selectedInput = _select;
-        }
-
         private void AddNewBrushClip(BrushStrokeID _brushStrokeID)
         {
             RectTransform rect = Instantiate(timelineClipObject, timelineBarObject).GetComponent<RectTransform>();
             RawImage clipImage = rect.GetComponent<RawImage>();
-            clipImage.color = notSelectedColor;
-            TimelineClip timelineClip = new TimelineClipSingle(_brushStrokeID, rect, timelineBarObject, timelineRect, clipImage)
-            {
-                ClipTime = new Vector2(_brushStrokeID.lastTime, _brushStrokeID.currentTime),
-                clipTimeOld = new Vector2(_brushStrokeID.lastTime, _brushStrokeID.currentTime),
-            };
+            TimelineClip timelineClip = new TimelineClipSingle(_brushStrokeID, rect, timelineBarObject, timelineRect, clipImage);
+            clipImage.color = timelineClip.GetNotSelectedColor();
             clipsOrdered[0].Add(timelineClip);
             CheckClipCollisions(timelineClip);
             
@@ -756,7 +777,7 @@ namespace UI
             _timelineClip.rect = rect;
             _timelineClip.currentBar = 0;
             _timelineClip.ClipTime = _timelineClip.GetTime();
-            _timelineClip.rawImage.color = notSelectedColor;
+            _timelineClip.rawImage.color = _timelineClip.GetNotSelectedColor();
             clipsOrdered[currentBar].Add(_timelineClip);
             _timelineClip.SetBar(currentBar);
             CheckClipCollisions(_timelineClip);
@@ -813,7 +834,7 @@ namespace UI
         {
             foreach (var clip in selectedClips)
             {
-                clip.rawImage.color = notSelectedColor;
+                clip.rawImage.color = clip.GetNotSelectedColor();
             }
             selectedClips.Clear();
         }
@@ -822,7 +843,7 @@ namespace UI
             List<TimelineClip> clips = clipsOrdered.SelectMany(_timeBar => _timeBar.Where(_clip => _clip.HoldingBrushStroke(_brushStrokeID))).ToList();
             foreach (var clip in clips)
             {
-                clip.rawImage.color = notSelectedColor;
+                clip.rawImage.color = clip.GetNotSelectedColor();
                 selectedClips.Remove(clip);
             }
         }

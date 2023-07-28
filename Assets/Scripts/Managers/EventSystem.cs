@@ -31,6 +31,7 @@ namespace Managers
         DUPLICATE_STROKE,
         GROUP_CLIPS,
         UNGROUP_CLIPS,
+        CHANGE_MOUSE_ICON,
     }
 
 

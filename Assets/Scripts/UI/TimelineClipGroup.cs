@@ -21,6 +21,11 @@ namespace UI
             ClipTime = brushStrokeTime;
             clipTimeOld = brushStrokeTime;
         }
+        
+        public override ClipType GetClipType()
+        {
+            return ClipType.Group;
+        }
 
         public override void SetupMovement(MouseAction _mouseAction, float _leftMostPos, float _rightMostPos)
         {
@@ -32,6 +37,12 @@ namespace UI
         {
             return allBrushStrokes;
         }
+        
+        public override Color GetNotSelectedColor()
+        {
+            return Timeline.notSelectedGroupColors;
+        }
+
         
         public override List<TimelineClip> GetClips()
         {
