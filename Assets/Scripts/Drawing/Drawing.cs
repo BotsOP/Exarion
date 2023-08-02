@@ -309,6 +309,11 @@ namespace Drawing
             Vector4 collisionBox = CombineCollisionBox(
                 _brushStrokeIDs.Select(_id => _id.GetCollisionBox()).ToArray());
 
+            if (brushStrokesID.Contains(_brushStrokeIDs[0]))
+            {
+                Debug.Log($"zit erin");
+            }
+
             for (var i = brushStrokesID.Count - 1; i >= 0; i--)
             {
                 BrushStrokeID brushStrokeID = brushStrokesID[i];
