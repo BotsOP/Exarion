@@ -16,6 +16,11 @@ namespace UI
             ClipTime = brushStrokeTime;
             clipTimeOld = brushStrokeTime;
         }
+        
+        public TimelineClipSingle(BrushStrokeID _brushStrokeID)
+        {
+            brushStrokeID = _brushStrokeID;
+        }
 
         public override Color GetNotSelectedColor()
         {

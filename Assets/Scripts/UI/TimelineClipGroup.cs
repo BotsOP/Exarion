@@ -57,8 +57,6 @@ namespace UI
                 float lastTime = oldBrushStrokeTimes[i].x.Remap(clipTimeOld.x, clipTimeOld.y, _time.x, _time.y);
                 float currentTime = oldBrushStrokeTimes[i].y.Remap(clipTimeOld.x, clipTimeOld.y, _time.x, _time.y);
 
-                Debug.Log($"{lastTime}  {currentTime}      {clipTimeOld.x} {clipTimeOld.y}     {brushStrokeID.lastTime} {brushStrokeID.currentTime}");
-
                 brushStrokeID.lastTime = lastTime;
                 brushStrokeID.currentTime = currentTime;
             }

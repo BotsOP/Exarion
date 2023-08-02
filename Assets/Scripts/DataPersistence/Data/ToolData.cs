@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Drawing;
+using UI;
 using UnityEngine;
 
 [System.Serializable]
@@ -13,6 +14,7 @@ public class ToolData
     //Variables per project
     public string projectName;
     public List<BrushStrokeID> brushStrokesID;
+    public List<CondensedClip> timelineClips;
 
     public byte[] overlayImg;
 
@@ -23,6 +25,7 @@ public class ToolData
         projectName = "";
         overlayImg = null;
         brushStrokesID = new List<BrushStrokeID>();
+        timelineClips = new List<CondensedClip>();
     }
 
     public string GetProjectName() 

@@ -12,7 +12,7 @@ using EventType = Managers.EventType;
 
 namespace UI
 {
-    public class Timeline : MonoBehaviour
+    public class Timeline : MonoBehaviour, IDataPersistence
     {
         [Header("Timeline objects")]
         [SerializeField] private RectTransform timelineBarObject;
@@ -871,6 +871,76 @@ namespace UI
         {
             return Input.mousePosition.x > _corners[0].x && Input.mousePosition.x < _corners[2].x && 
                    Input.mousePosition.y > _corners[0].y && Input.mousePosition.y < _corners[2].y;
+        }
+        public void LoadData(ToolData _data)
+        {
+            List<BrushStrokeID> savedBrushStrokes = _data.timelineClips.SelectMany(brushStrokes => brushStrokes.brushStrokeIDs).ToList();
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_STROKE, savedBrushStrokes);
+
+            foreach (var condensedClip in _data.timelineClips)
+            {
+                TimelineClip timelineClip;
+                RectTransform rect = Instantiate(timelineClipObject, timelineBarObject).GetComponent<RectTransform>();
+                RawImage clipImage = rect.GetComponent<RawImage>();
+                
+                bool isGrouped = condensedClip.childClips.Count > 1;
+                if (isGrouped)
+                {
+                    List<TimelineClip> childClips = new List<TimelineClip>();
+                    foreach (var condensedChildClip in condensedClip.childClips)
+                    {
+                        TimelineClip childTimelineClip = new TimelineClipSingle(condensedChildClip.brushStrokeIDs[0]);
+                        childTimelineClip.previousBar = condensedChildClip.currentBar;
+                        childTimelineClip.currentBar = condensedChildClip.currentBar;
+                        childClips.Add(childTimelineClip);
+                    }
+
+                    timelineClip = new TimelineClipGroup(childClips, rect, timelineBarObject, timelineRect, clipImage);
+                    timelineClip.ClipTime = new Vector2(condensedClip.lastTime, condensedClip.currentTime);
+                    timelineClip.previousBar = condensedClip.currentBar;
+                    timelineClip.currentBar = condensedClip.currentBar;
+                    clipImage.color = timelineClip.GetNotSelectedColor();
+                    clipsOrdered[condensedClip.currentBar].Add(timelineClip);
+                    CheckClipCollisions(timelineClip);
+                    return;
+                }
+
+                timelineClip = new TimelineClipSingle(condensedClip.brushStrokeIDs[0], rect, timelineBarObject, timelineRect, clipImage);
+                timelineClip.ClipTime = new Vector2(condensedClip.lastTime, condensedClip.currentTime);
+                timelineClip.previousBar = condensedClip.currentBar;
+                timelineClip.currentBar = condensedClip.currentBar;
+                clipImage.color = timelineClip.GetNotSelectedColor();
+                clipsOrdered[condensedClip.currentBar].Add(timelineClip);
+                CheckClipCollisions(timelineClip);
+            }
+        }
+
+        public void SaveData(ToolData _data)
+        {
+            List<CondensedClip> condensedTimelineClips = new List<CondensedClip>();
+            List<TimelineClip> timelineClips = clipsOrdered.SelectMany(clips => clips).ToList();
+            foreach (var clip in timelineClips)
+            {
+                CondensedClip condensedClip;
+                if (clip.GetClipType() == ClipType.Group)
+                {
+                    List<CondensedClip> childCondensedClips = new List<CondensedClip>();
+                    foreach (var childClip in clip.GetClips())
+                    {
+                        Vector2 childClipTime = new Vector2(childClip.GetBrushStrokeIDs()[0].lastTime, childClip.GetBrushStrokeIDs()[0].currentTime);
+                        CondensedClip condensedChildClip = new CondensedClip(childClipTime.x, childClipTime.y, childClip.currentBar, childClip.GetBrushStrokeIDs(),
+                                                                             new List<CondensedClip>());
+                        childCondensedClips.Add(condensedChildClip);
+                    }
+                    condensedClip = new CondensedClip(clip.ClipTime.x, clip.ClipTime.y, clip.currentBar, clip.GetBrushStrokeIDs(), childCondensedClips);
+                    condensedTimelineClips.Add(condensedClip);
+                    continue;
+                }
+                
+                condensedClip = new CondensedClip(clip.ClipTime.x, clip.ClipTime.y, clip.currentBar, clip.GetBrushStrokeIDs(), new List<CondensedClip>());
+                condensedTimelineClips.Add(condensedClip);
+            }
+            _data.timelineClips = condensedTimelineClips;
         }
     }
 }

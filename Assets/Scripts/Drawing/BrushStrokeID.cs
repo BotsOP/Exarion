@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace Drawing
@@ -18,7 +19,8 @@ namespace Drawing
         public float avgPosY;
         public float angle;
         public float size;
-
+        
+        [JsonConstructor]
         public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _lastTime, float _currentTime, Vector4 _collisionBox, int _indexWhenDrawn, Vector2 _avgPos, float _angle = 0, float _size = 1)
         {
             brushStrokes = _brushStrokes;

@@ -50,14 +50,14 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CustomTime: 0.28896332
+    - _CustomTime: 0.07440991
     - _QueueControl: 0
     - _QueueOffset: 0
     - _TimeSpeed: 10
     - _UseTexture: 1
     m_Colors:
     - _BackgroundColor: {r: 0.5960785, g: 0.7843137, b: 0.6784314, a: 0}
-    - _BackgroundColorTex: {r: 0, g: 0, b: 0, a: 0}
+    - _BackgroundColorTex: {r: 0.16470589, g: 0.16470589, b: 0.16470589, a: 1}
     - _PaintColor: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []
 --- !u!114 &6517323442413314100

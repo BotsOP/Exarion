@@ -63,11 +63,11 @@ namespace UI
         public RawImage rawImage;
         public int currentBar;
         public int barOffset;
-        public float startMousePos;
-        public float leftMostPos;
-        public float rightMostPos;
-        public float oldLeftPos;
-        public float oldRightPos;
+        private float startMousePos;
+        private float leftMostPos;
+        private float rightMostPos;
+        private float oldLeftPos;
+        private float oldRightPos;
         private RectTransform timelineBarRect;
         private RectTransform timelineAreaRect;
     
@@ -112,6 +112,8 @@ namespace UI
             timelineBarCorners = new Vector3[4];
             timelineAreaCorners = new Vector3[4];
         }
+        
+        public TimelineClip() { }
         
         public virtual Color GetNotSelectedColor() { return Color.magenta; }
 
