@@ -10,6 +10,7 @@ public class MainMenu : Menu
 {
     [Header("Menu Navigation")]
     [SerializeField] private SaveSlotsMenu saveSlotsMenu;
+    [SerializeField] private CreationMenu creationMenu;
 
     [Header("Menu Buttons")]
     [SerializeField] private Button newToolButton;
@@ -34,7 +35,7 @@ public class MainMenu : Menu
 
     public void OnNewGameClicked() 
     {
-        saveSlotsMenu.ActivateMenu(false);
+        creationMenu.ActivateMenu();
         this.DeactivateMenu();
     }
 

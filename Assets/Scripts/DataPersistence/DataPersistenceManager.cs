@@ -21,7 +21,7 @@ namespace DataPersistence
         [Header("Auto Saving Configuration")]
         [SerializeField] private float autoSaveTimeSeconds = 60f;
 
-        private ToolData toolData;
+        public ToolData toolData;
         private List<IDataPersistence> dataPersistenceObjects = new List<IDataPersistence>();
         private FileDataHandler dataHandler;
 
@@ -89,7 +89,6 @@ namespace DataPersistence
             // load the Tool, which will use that profile, updating our Tool data accordingly
             LoadProject();
         }
-
         public void DeleteProfileData(string _profileID) 
         {
             // delete the data for this profile id
@@ -189,6 +188,13 @@ namespace DataPersistence
         public bool HasGameData() 
         {
             return toolData != null;
+        }
+
+        public bool IsProfileIDTaken(string _newProfileID)
+        {
+            Dictionary<string, ToolData> saveslots = dataHandler.LoadAllProfiles();
+            bool isProfileIDTaken = saveslots.ContainsKey(_newProfileID);
+            return isProfileIDTaken;
         }
 
         public Dictionary<string, ToolData> GetAllProfilesToolData() 

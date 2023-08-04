@@ -17,13 +17,19 @@ namespace MainMenus
         [Header("Confirmation Popup")]
         [SerializeField] private ConfirmationPopupMenu confirmationPopupMenu;
 
-        private SaveSlot[] saveSlots;
+        [Header("Settings")]
+        [SerializeField] private RectTransform saveSlotContent;
+        [SerializeField] private GameObject saveSlotButton;
+
+        private List<SaveSlot> saveSlots;
+
+        //private SaveSlot[] saveSlots;
 
         private bool isLoadingTool = false;
 
         private void Awake() 
         {
-            saveSlots = this.GetComponentsInChildren<SaveSlot>();
+            //saveSlots = this.GetComponentsInChildren<SaveSlot>();
         }
 
         public void OnSaveSlotClicked(SaveSlot _saveSlot) 
@@ -105,30 +111,18 @@ namespace MainMenus
             // ensure the back button is enabled when we activate the menu
             backButton.interactable = true;
 
-            // loop through each save slot in the UI and set the content appropriately
-            GameObject firstSelected = backButton.gameObject;
-            foreach (SaveSlot saveSlot in saveSlots) 
+            foreach (var saveSlotInfo in profilesGameData)
             {
-                ToolData profileData = null;
-                profilesGameData.TryGetValue(saveSlot.GetProfileId(), out profileData);
-                saveSlot.SetData(profileData);
-                if (profileData == null && isLoadingGame) 
-                {
-                    saveSlot.SetInteractable(false);
-                }
-                else 
-                {
-                    saveSlot.SetInteractable(true);
-                    if (firstSelected.Equals(backButton.gameObject))
-                    {
-                        firstSelected = saveSlot.gameObject;
-                    }
-                }
-            }
+                GameObject saveSlotObject = Instantiate(saveSlotButton, saveSlotContent);
+                SaveSlot saveSlot = saveSlotObject.GetComponent<SaveSlot>();
+                saveSlot.profileId = saveSlotInfo.Key;
+                saveSlot.SetData(saveSlotInfo.Value);
+                saveSlot.saveSlotsMenu = this;
 
-            // set the first selected button
-            Button firstSelectedButton = firstSelected.GetComponent<Button>();
-            this.SetFirstSelected(firstSelectedButton);
+                saveSlots.Add(saveSlot);
+            }
+            
+            this.SetFirstSelected(backButton.gameObject.GetComponent<Button>());
         }
 
         public void DeactivateMenu() 
