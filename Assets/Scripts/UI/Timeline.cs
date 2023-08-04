@@ -886,15 +886,13 @@ namespace UI
                     List<TimelineClip> childClips = new List<TimelineClip>();
                     foreach (var condensedChildClip in condensedClip.childClips)
                     {
-                        TimelineClip childTimelineClip = new TimelineClipSingle(condensedChildClip.brushStrokeIDs[0]);
+                        TimelineClip childTimelineClip = new TimelineClipSingle(condensedChildClip.brushStrokeIDs[0], timelineBarObject, timelineRect);
                         childTimelineClip.previousBar = condensedChildClip.currentBar;
                         childTimelineClip.currentBar = condensedChildClip.currentBar;
                         childClips.Add(childTimelineClip);
                     }
 
                     timelineClip = new TimelineClipGroup(childClips, rect, timelineBarObject, timelineRect, clipImage);
-                    TimelineClipGroup timelineClip2 = new TimelineClipGroup(childClips, rect, timelineBarObject, timelineRect, clipImage);
-                    List<BrushStrokeID> test = timelineClip.GetBrushStrokeIDs();
                     timelineClip.ClipTime = new Vector2(condensedClip.lastTime, condensedClip.currentTime);
                     timelineClip.previousBar = condensedClip.currentBar;
                     timelineClip.SetBar(condensedClip.currentBar);

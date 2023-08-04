@@ -113,7 +113,16 @@ namespace UI
             timelineAreaCorners = new Vector3[4];
         }
         
-        public TimelineClip() { }
+        public TimelineClip(RectTransform _timelineBarRect, RectTransform _timelineAreaRect)
+        {
+            timelineBarRect = _timelineBarRect;
+            timelineAreaRect = _timelineAreaRect;
+            
+            mouseAction = MouseAction.Nothing;
+            corners = new Vector3[4];
+            timelineBarCorners = new Vector3[4];
+            timelineAreaCorners = new Vector3[4];
+        }
         
         public virtual Color GetNotSelectedColor() { return Color.magenta; }
 
@@ -280,7 +289,7 @@ namespace UI
         {
             float yPos = rect.position.y;
             float timelineBarHeight = Corners[2].y - Corners[0].y + spacing;
-            float inputOffset = Input.mousePosition.y - timelineBarHeight * barOffset;
+            float inputOffset = Input.mousePosition.y;
             if (inputOffset < TimelineAreaCorners[0].y || inputOffset > TimelineAreaCorners[2].y)
             {
                 return yPos;
@@ -288,16 +297,16 @@ namespace UI
         
             if (inputOffset < Corners[0].y - spacing)
             {
-                int amountBarsMoved = (int)((Corners[0].y - spacing - inputOffset) / (Corners[2].y - Corners[0].y));
-                currentBar += amountBarsMoved;
-                return yPos - timelineBarHeight * amountBarsMoved;
+                //int amountBarsMoved = (int)((Corners[0].y - spacing - inputOffset) / (Corners[2].y - Corners[0].y));
+                currentBar ++;
+                return yPos - timelineBarHeight;
             }
             if (inputOffset > Corners[2].y + spacing)
             {
-                float smth = Mathf.CeilToInt((inputOffset - Corners[0].y + spacing) / (Corners[2].y - Corners[0].y));
-                int amountBarsMoved = Mathf.CeilToInt(smth);
-                currentBar -= amountBarsMoved;
-                return yPos + timelineBarHeight * amountBarsMoved;
+                // float smth = Mathf.CeilToInt((inputOffset - Corners[0].y + spacing) / (Corners[2].y - Corners[0].y));
+                // int amountBarsMoved = Mathf.CeilToInt(smth);
+                currentBar --;
+                return yPos + timelineBarHeight;
             }
             return yPos;
         }

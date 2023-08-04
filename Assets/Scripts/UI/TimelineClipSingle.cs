@@ -17,7 +17,7 @@ namespace UI
             clipTimeOld = brushStrokeTime;
         }
         
-        public TimelineClipSingle(BrushStrokeID _brushStrokeID)
+        public TimelineClipSingle(BrushStrokeID _brushStrokeID, RectTransform _timelineBarRect, RectTransform _timelineAreaRect) : base(_timelineBarRect, _timelineAreaRect)
         {
             brushStrokeID = _brushStrokeID;
         }
