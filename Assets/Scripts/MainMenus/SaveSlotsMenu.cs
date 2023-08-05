@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DataPersistence;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,19 +12,13 @@ namespace MainMenus
     {
         [Header("new project")]
         [SerializeField] private CreationMenu creationMenu;
-        
-        [Header("Confirmation Popup")]
-        [SerializeField] private ConfirmationPopupMenu confirmationPopupMenu;
 
         [Header("Save slot settings")]
+        [SerializeField] private SaveSlotPopUp saveSlotPopUp;
         [SerializeField] private RectTransform saveSlotContent;
         [SerializeField] private GameObject saveSlotButton;
 
         private List<SaveSlot> saveSlots;
-
-        //private SaveSlot[] saveSlots;
-
-        private bool isLoadingTool = false;
 
         private void Start()
         {
@@ -32,34 +27,24 @@ namespace MainMenus
 
         public void OnSaveSlotClicked(SaveSlot _saveSlot) 
         {
+            saveSlotPopUp.UpdateSaveSlot(_saveSlot.toolData, _saveSlot.displayTexture);
             // disable all buttons
-            DisableMenuButtons();
-
-            if (isLoadingTool) // case - loading game
-            {
-                DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.GetProfileId());
-                SaveToolAndLoadScene();
-            }
-            confirmationPopupMenu.ActivateMenu("Starting a new Tool with this slot will override the currently saved data. Are you sure?",
-               // 'yes'
-               () => {
-                   DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.GetProfileId());
-                   DataPersistenceManager.instance.NewTool();
-                   SaveToolAndLoadScene();
-               },
-               // 'cancel'
-               () => {
-                   this.ActivateMenu();
-               }
-            );
-        }
-
-        private void SaveToolAndLoadScene() 
-        {
-            // save the game anytime before loading a new scene
-            DataPersistenceManager.instance.SaveTool();
-            // load the scene
-            SceneManager.LoadSceneAsync("DrawScene");
+            //DisableMenuButtons();
+            //DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.GetProfileId());
+            //SaveToolAndLoadScene();
+            
+            // confirmationPopupMenu.ActivateMenu("Starting a new Tool with this slot will override the currently saved data. Are you sure?",
+            //    // 'yes'
+            //    () => {
+            //        DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.GetProfileId());
+            //        DataPersistenceManager.instance.NewTool();
+            //        SaveToolAndLoadScene();
+            //    },
+            //    // 'cancel'
+            //    () => {
+            //        this.ActivateMenu();
+            //    }
+            // );
         }
 
         // public void OnClearClicked(SaveSlot saveSlot) 
@@ -83,23 +68,60 @@ namespace MainMenus
         public void ActivateMenu() 
         {
             // set this menu to be active
-            this.gameObject.SetActive(true);
+            gameObject.SetActive(true);
 
             // load all of the profiles that exist
             Dictionary<string, ToolData> profilesGameData = DataPersistenceManager.instance.GetAllProfilesToolData();
 
-            // ensure the back button is enabled when we activate the menu
+            List<ToolData> saveSlotData = profilesGameData.Values.ToList();
+            int low = 0;
+            int high = saveSlotData.Count - 1;
+            QuickSort(saveSlotData, low, high);
 
-            foreach (var saveSlotInfo in profilesGameData)
+            saveSlotData.Reverse();
+
+            foreach (var saveSlotInfo in saveSlotData)
             {
                 GameObject saveSlotObject = Instantiate(saveSlotButton, saveSlotContent);
                 SaveSlot saveSlot = saveSlotObject.GetComponent<SaveSlot>();
-                saveSlot.profileId = saveSlotInfo.Key;
-                saveSlot.SetData(saveSlotInfo.Value);
+                saveSlot.SetData(saveSlotInfo);
                 saveSlot.saveSlotsMenu = this;
 
                 saveSlots.Add(saveSlot);
             }
+        }
+        
+        private void QuickSort(List<ToolData> _dateList, int _low, int _high)
+        {
+            if (_low < _high)
+            {
+                int pi = Partition(_dateList, _low, _high);
+
+                QuickSort(_dateList, _low, pi - 1);
+                QuickSort(_dateList, pi + 1, _high);
+            }
+        }
+
+        private int Partition(List<ToolData> _dateList, int low, int high)
+        {
+            long pivot = _dateList[high].lastUpdated;
+            int i = (low - 1);
+
+            for (int j = low; j <= high - 1; j++)
+            {
+                if (_dateList[j].lastUpdated < pivot)
+                {
+                    i++;
+                    Swap(_dateList, i, j);
+                }
+            }
+            Swap(_dateList, i + 1, high);
+            return (i + 1);
+        }
+
+        private void Swap(List<ToolData> _dateList, int i, int j)
+        {
+            (_dateList[i], _dateList[j]) = (_dateList[j], _dateList[i]);
         }
 
         public void NewProjectMenu()

@@ -228,7 +228,7 @@ public class FileDataHandler
                 DateTime mostRecentDateTime = DateTime.FromBinary(profilesGameData[mostRecentProfileId].lastUpdated);
                 DateTime newDateTime = DateTime.FromBinary(gameData.lastUpdated);
                 // the greatest DateTime value is the most recent
-                if (newDateTime > mostRecentDateTime) 
+                if (newDateTime > mostRecentDateTime)
                 {
                     mostRecentProfileId = profileId;
                 }

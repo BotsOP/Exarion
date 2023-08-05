@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Display
-  m_Shader: {fileID: -6465566751694194690, guid: 8f64883a8547852438a75b4d9490b9ff,
+  m_Name: SaveSlotDisplay
+  m_Shader: {fileID: -6465566751694194690, guid: bd746fa1ad23aa14aac595875d82be45,
     type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -28,14 +28,6 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _OverlayTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _TextureShowcase:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -50,17 +42,11 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CustomTime: 0.87098306
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _TimeSpeed: 10
-    - _UseTexture: 1
-    m_Colors:
-    - _BackgroundColor: {r: 0.5960785, g: 0.7843137, b: 0.6784314, a: 0}
-    - _BackgroundColorTex: {r: 0.16470589, g: 0.16470589, b: 0.16470589, a: 1}
-    - _PaintColor: {r: 1, g: 1, b: 1, a: 0}
+    m_Colors: []
   m_BuildTextureStacks: []
---- !u!114 &6517323442413314100
+--- !u!114 &1749580635215811235
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}

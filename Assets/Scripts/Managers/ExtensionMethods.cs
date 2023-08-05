@@ -72,8 +72,10 @@ namespace Managers
         
         public static byte[] ToBytesPNG(this CustomRenderTexture _rt, int _width, int _height)
         {
-            var tempRT = RenderTexture.GetTemporary(_width, _height, 0, _rt.format);
+            var tempRT = RenderTexture.GetTemporary(_width, _height, 0, RenderTextureFormat.ARGB32);
+            Graphics.Blit(_rt, tempRT);
             var tex = new Texture2D(_width, _height);
+            tex.filterMode = FilterMode.Point;
             var tmp = RenderTexture.active;
             
             RenderTexture.active = tempRT;
