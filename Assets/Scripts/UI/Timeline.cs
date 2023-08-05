@@ -543,7 +543,6 @@ namespace UI
             if (lastHoverClip != clip)
             {
                 lastHoverClip = clip;
-                Debug.Log($"on hover enter");
                 if (selectedClips.Contains(clip))
                     return;
                 EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, clip.GetBrushStrokeIDs());
@@ -554,7 +553,6 @@ namespace UI
             if (lastHoverClip == clip)
             {
                 lastHoverClip = null;
-                Debug.Log($"on hover exit");
                 if (selectedClips.Contains(clip))
                     return;
                 EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, clip.GetBrushStrokeIDs());
