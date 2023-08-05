@@ -10,7 +10,7 @@ using EventType = Managers.EventType;
 
 namespace Drawing
 {
-    public class DrawingManager : MonoBehaviour
+    public class DrawingManager : MonoBehaviour, IDataPersistence
     {
         [Header("Materials")]
         [SerializeField] private Material drawingMat;
@@ -645,6 +645,14 @@ namespace Drawing
             drawer.brushStrokesID.Add(brushStrokeID);
             
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
+        }
+        public void LoadData(ToolData _data)
+        {
+            
+        }
+        public void SaveData(ToolData _data)
+        {
+            _data.displayImg = drawer.rt.ToBytesPNG(1024, 1024);
         }
     }
 }

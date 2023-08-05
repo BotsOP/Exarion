@@ -7,51 +7,44 @@ namespace MainMenus
 {
     public class SaveSlot : MonoBehaviour
     {
-        [NonSerialized] public string profileId = "";
 
         [Header("Content")]
-        [SerializeField] private GameObject noDataContent;
-        [SerializeField] private GameObject hasDataContent;
         [SerializeField] private TextMeshProUGUI projectName;
+        [SerializeField] private RawImage displayImg;
         
-        public bool hasData { get; private set; } = false;
+        [NonSerialized] public string profileId = "";
+        [NonSerialized] public SaveSlotsMenu saveSlotsMenu;
 
-        public SaveSlotsMenu saveSlotsMenu;
-
+        private ToolData toolData;
         private Button saveSlotButton;
 
         private void Awake() 
         {
-            saveSlotButton = this.GetComponent<Button>();
+            saveSlotButton = GetComponent<Button>();
             saveSlotButton.onClick.AddListener(OnClicked);
         }
 
-        public void OnClicked()
+        private void OnClicked()
         {
             saveSlotsMenu.OnSaveSlotClicked(this);
         }
 
-        public void SetData(ToolData data) 
+        public void SetData(ToolData _data)
         {
-            if (data == null)  // there's no data for this profileId
-            {
-                hasData = false;
-                noDataContent.SetActive(true);
-                hasDataContent.SetActive(false);
-            }
-            else             // there is data for this profileId
-            {
-                hasData = true;
-                noDataContent.SetActive(false);
-                hasDataContent.SetActive(true);
-
-                projectName.text = data.GetProjectName();
-            }
+            toolData = _data;
+            
+            projectName.text = toolData.GetProjectName();
+            
+            if (_data.displayImg is null) return;
+            if (_data.displayImg.Length <= 0) return;
+            Texture2D tex = new Texture2D(1, 1);
+            tex.LoadImage(_data.displayImg);
+            displayImg.texture = tex;
         }
 
         public string GetProfileId() 
         {
-            return this.profileId;
+            return profileId;
         }
 
         public void SetInteractable(bool interactable)

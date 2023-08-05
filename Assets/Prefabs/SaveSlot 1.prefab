@@ -208,10 +208,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbfd9ffb0f7032c4ebe98a8d32c69a93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  noDataContent: {fileID: 0}
-  hasDataContent: {fileID: 0}
   projectName: {fileID: 6932620556906608260}
-  saveSlotsMenu: {fileID: 0}
+  displayImg: {fileID: 9020370779072560046}
 --- !u!114 &2051743457
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -16,6 +16,7 @@ public class ToolData
     public List<CondensedClip> timelineClips;
 
     public byte[] overlayImg;
+    public byte[] displayImg;
 
     // the values defined in this constructor will be the default values
     // the tool starts with when there's no data to load
@@ -23,6 +24,7 @@ public class ToolData
     {
         projectName = "";
         overlayImg = null;
+        displayImg = null;
         timelineClips = new List<CondensedClip>();
     }
 

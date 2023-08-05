@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Managers;
 using UnityEngine;
 
 namespace UI
@@ -21,9 +22,10 @@ namespace UI
             tex.ReadPixels(new Rect(0, 0, _rt.width, _rt.height), 0, 0);
             tex.Apply();
             RenderTexture.active = tmp;
+            //byte[] bytes = tex.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat);
+            byte[] bytes = _rt.ToBytesEXR();
             
             string fileName = System.DateTime.Now.ToString("yyyy.MM.dd") + "_" + System.DateTime.Now.ToString("hh.mm.ss");
-            byte[] bytes = tex.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat);
             string filePath = Application.dataPath + "/Results";
             if (!Directory.Exists(filePath)) Directory.CreateDirectory(filePath);
             filePath = filePath + "/" + fileName + ".exr";

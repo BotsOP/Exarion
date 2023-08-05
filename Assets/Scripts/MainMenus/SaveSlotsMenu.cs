@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DataPersistence;
 using UnityEngine;
@@ -8,16 +9,13 @@ namespace MainMenus
 {
     public class SaveSlotsMenu : Menu
     {
-        [Header("Menu Navigation")]
-        [SerializeField] private MainMenu mainMenu;
-
-        [Header("Menu Buttons")]
-        [SerializeField] private Button backButton;
-
+        [Header("new project")]
+        [SerializeField] private CreationMenu creationMenu;
+        
         [Header("Confirmation Popup")]
         [SerializeField] private ConfirmationPopupMenu confirmationPopupMenu;
 
-        [Header("Settings")]
+        [Header("Save slot settings")]
         [SerializeField] private RectTransform saveSlotContent;
         [SerializeField] private GameObject saveSlotButton;
 
@@ -27,9 +25,9 @@ namespace MainMenus
 
         private bool isLoadingTool = false;
 
-        private void Awake() 
+        private void Start()
         {
-            //saveSlots = this.GetComponentsInChildren<SaveSlot>();
+            ActivateMenu();
         }
 
         public void OnSaveSlotClicked(SaveSlot _saveSlot) 
@@ -42,27 +40,18 @@ namespace MainMenus
                 DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.GetProfileId());
                 SaveToolAndLoadScene();
             }
-            else if (_saveSlot.hasData) // case - new game, but the save slot has data
-            {
-                confirmationPopupMenu.ActivateMenu("Starting a new Tool with this slot will override the currently saved data. Are you sure?",
-                    // 'yes'
-                    () => {
-                        DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.GetProfileId());
-                        DataPersistenceManager.instance.NewTool();
-                        SaveToolAndLoadScene();
-                    },
-                    // 'cancel'
-                    () => {
-                        this.ActivateMenu(isLoadingTool);
-                    }
-                );
-            }
-            else // case - new tool, and the save slot has no data
-            {
-                DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.GetProfileId());
-                DataPersistenceManager.instance.NewTool();
-                SaveToolAndLoadScene();
-            }
+            confirmationPopupMenu.ActivateMenu("Starting a new Tool with this slot will override the currently saved data. Are you sure?",
+               // 'yes'
+               () => {
+                   DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.GetProfileId());
+                   DataPersistenceManager.instance.NewTool();
+                   SaveToolAndLoadScene();
+               },
+               // 'cancel'
+               () => {
+                   this.ActivateMenu();
+               }
+            );
         }
 
         private void SaveToolAndLoadScene() 
@@ -73,43 +62,33 @@ namespace MainMenus
             SceneManager.LoadSceneAsync("DrawScene");
         }
 
-        public void OnClearClicked(SaveSlot saveSlot) 
-        {
-            DisableMenuButtons();
+        // public void OnClearClicked(SaveSlot saveSlot) 
+        // {
+        //     DisableMenuButtons();
+        //
+        //     confirmationPopupMenu.ActivateMenu(
+        //         "Are you sure you want to delete this saved data?",
+        //         // function to execute if we select 'yes'
+        //         () => {
+        //             DataPersistenceManager.instance.DeleteProfileData(saveSlot.GetProfileId());
+        //             ActivateMenu(isLoadingTool);
+        //         },
+        //         // function to execute if we select 'cancel'
+        //         () => {
+        //             ActivateMenu(isLoadingTool);
+        //         }
+        //     );
+        // }
 
-            confirmationPopupMenu.ActivateMenu(
-                "Are you sure you want to delete this saved data?",
-                // function to execute if we select 'yes'
-                () => {
-                    DataPersistenceManager.instance.DeleteProfileData(saveSlot.GetProfileId());
-                    ActivateMenu(isLoadingTool);
-                },
-                // function to execute if we select 'cancel'
-                () => {
-                    ActivateMenu(isLoadingTool);
-                }
-            );
-        }
-
-        public void OnBackClicked() 
-        {
-            mainMenu.ActivateMenu();
-            this.DeactivateMenu();
-        }
-
-        public void ActivateMenu(bool isLoadingGame) 
+        public void ActivateMenu() 
         {
             // set this menu to be active
             this.gameObject.SetActive(true);
-
-            // set mode
-            this.isLoadingTool = isLoadingGame;
 
             // load all of the profiles that exist
             Dictionary<string, ToolData> profilesGameData = DataPersistenceManager.instance.GetAllProfilesToolData();
 
             // ensure the back button is enabled when we activate the menu
-            backButton.interactable = true;
 
             foreach (var saveSlotInfo in profilesGameData)
             {
@@ -121,13 +100,11 @@ namespace MainMenus
 
                 saveSlots.Add(saveSlot);
             }
-            
-            this.SetFirstSelected(backButton.gameObject.GetComponent<Button>());
         }
 
-        public void DeactivateMenu() 
+        public void NewProjectMenu()
         {
-            this.gameObject.SetActive(false);
+            creationMenu.ActivateMenu();
         }
 
         private void DisableMenuButtons() 
@@ -136,7 +113,6 @@ namespace MainMenus
             {
                 saveSlot.SetInteractable(false);
             }
-            backButton.interactable = false;
         }
     }
 }

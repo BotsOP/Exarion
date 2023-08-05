@@ -41,7 +41,7 @@ public class MainMenu : Menu
 
     public void OnLoadGameClicked() 
     {
-        saveSlotsMenu.ActivateMenu(true);
+        saveSlotsMenu.ActivateMenu();
         this.DeactivateMenu();
     }
 

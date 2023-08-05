@@ -61,7 +61,7 @@ namespace Drawing
             threadGroupSize.x = Mathf.CeilToInt(_imageWidth / threadGroupSizeOut.x);
             threadGroupSize.y = Mathf.CeilToInt(_imageHeight / threadGroupSizeOut.y);
 
-            rt = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
+            rt = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
             {
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
