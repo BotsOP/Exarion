@@ -18,52 +18,16 @@ namespace MainMenus
         [SerializeField] private RectTransform saveSlotContent;
         [SerializeField] private GameObject saveSlotButton;
 
-        private List<SaveSlot> saveSlots;
 
         private void Start()
         {
             ActivateMenu();
         }
 
-        public void OnSaveSlotClicked(SaveSlot _saveSlot) 
+        public void OnSaveSlotClicked(SaveSlot _saveSlot)
         {
-            saveSlotPopUp.UpdateSaveSlot(_saveSlot.toolData, _saveSlot.displayTexture);
-            // disable all buttons
-            //DisableMenuButtons();
-            //DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.GetProfileId());
-            //SaveToolAndLoadScene();
-            
-            // confirmationPopupMenu.ActivateMenu("Starting a new Tool with this slot will override the currently saved data. Are you sure?",
-            //    // 'yes'
-            //    () => {
-            //        DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.GetProfileId());
-            //        DataPersistenceManager.instance.NewTool();
-            //        SaveToolAndLoadScene();
-            //    },
-            //    // 'cancel'
-            //    () => {
-            //        this.ActivateMenu();
-            //    }
-            // );
+            saveSlotPopUp.UpdateSaveSlot(_saveSlot);
         }
-
-        // public void OnClearClicked(SaveSlot saveSlot) 
-        // {
-        //     DisableMenuButtons();
-        //
-        //     confirmationPopupMenu.ActivateMenu(
-        //         "Are you sure you want to delete this saved data?",
-        //         // function to execute if we select 'yes'
-        //         () => {
-        //             DataPersistenceManager.instance.DeleteProfileData(saveSlot.GetProfileId());
-        //             ActivateMenu(isLoadingTool);
-        //         },
-        //         // function to execute if we select 'cancel'
-        //         () => {
-        //             ActivateMenu(isLoadingTool);
-        //         }
-        //     );
-        // }
 
         public void ActivateMenu() 
         {
@@ -86,8 +50,6 @@ namespace MainMenus
                 SaveSlot saveSlot = saveSlotObject.GetComponent<SaveSlot>();
                 saveSlot.SetData(saveSlotInfo);
                 saveSlot.saveSlotsMenu = this;
-
-                saveSlots.Add(saveSlot);
             }
         }
         
@@ -127,14 +89,6 @@ namespace MainMenus
         public void NewProjectMenu()
         {
             creationMenu.ActivateMenu();
-        }
-
-        private void DisableMenuButtons() 
-        {
-            foreach (SaveSlot saveSlot in saveSlots) 
-            {
-                saveSlot.SetInteractable(false);
-            }
         }
     }
 }

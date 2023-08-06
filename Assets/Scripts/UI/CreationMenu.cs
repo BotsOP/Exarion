@@ -15,6 +15,8 @@ public class CreationMenu : MonoBehaviour
     [Header("Input")]
     [SerializeField]
     private TMP_InputField projectName;
+    private TMP_InputField imageWidthInput;
+    private TMP_InputField imageHeightInput;
 
     private ToolData toolData;
 
@@ -32,11 +34,21 @@ public class CreationMenu : MonoBehaviour
             projectExistsText.SetActive(true);
             return;
         }
-        
+
+        int imageWidth = 2048;
+        int imageHeight = 2048;
+
+        bool success = int.TryParse(imageWidthInput.text, out int num);
+        if (success) { imageWidth = num; }
+        success = int.TryParse(imageHeightInput.text, out num);
+        if (success) { imageHeight = num; }
+
         toolData = new ToolData
         {
             lastUpdated = System.DateTime.Now.ToBinary(),
             projectName = projectName.text,
+            imageWidth = imageWidth,
+            imageHeight = imageHeight,
         };
 
         DataPersistenceManager.instance.ChangeSelectedProfileId(projectName.text);

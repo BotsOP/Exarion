@@ -18,10 +18,15 @@ public class ToolData
     public byte[] overlayImg;
     public byte[] displayImg;
 
+    public int imageWidth;
+    public int imageHeight;
+
     // the values defined in this constructor will be the default values
     // the tool starts with when there's no data to load
-    public ToolData() 
+    public ToolData()
     {
+        imageWidth = 1024;
+        imageHeight = 1024;
         projectName = "";
         overlayImg = null;
         displayImg = null;

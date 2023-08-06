@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using DataPersistence;
+using MainMenus;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,7 +11,6 @@ using UnityEngine.UI;
 
 public class SaveSlotPopUp : MonoBehaviour
 {
-    [NonSerialized] private ToolData currentToolData;
 
     [Header("Settings")]
     [SerializeField] private TMP_Text projectNameText;
@@ -20,19 +20,23 @@ public class SaveSlotPopUp : MonoBehaviour
     [SerializeField] private RawImage showcaseImage;
     [SerializeField] private Material showcaseMat;
     [SerializeField] private float timeIncrease = 0.01f;
+    [SerializeField] private ConfirmationPopupMenu confirmationPopupMenu;
 
+    private ToolData currentToolData;
+    private SaveSlot saveSlot;
     private float time;
 
-    public void UpdateSaveSlot(ToolData _data, Texture2D _displayImage)
+    public void UpdateSaveSlot(SaveSlot _saveSlot)
     {
+        currentToolData = _saveSlot.toolData;
+        saveSlot = _saveSlot;
         time = 0;
         gameObject.SetActive(true);
-        DataPersistenceManager.instance.ChangeSelectedProfileId(_data.projectName);
-        currentToolData = _data;
-        projectNameText.text = _data.projectName;
-        dateText.text = "Last save: " + DateTime.FromBinary(_data.lastUpdated).ToString(CultureInfo.InvariantCulture);
-        displayImage.texture = _displayImage;
-        showcaseImage.texture = _displayImage;
+        DataPersistenceManager.instance.ChangeSelectedProfileId(currentToolData.projectName);
+        projectNameText.text = currentToolData.projectName;
+        dateText.text = "Last save: " + DateTime.FromBinary(currentToolData.lastUpdated).ToString(CultureInfo.InvariantCulture);
+        displayImage.texture = _saveSlot.displayTexture;
+        showcaseImage.texture = _saveSlot.displayTexture;
     }
 
     private void Update()
@@ -45,6 +49,22 @@ public class SaveSlotPopUp : MonoBehaviour
     {
         DataPersistenceManager.instance.SaveTool();
         SceneManager.LoadSceneAsync("DrawScene");
+    }
+
+    public void Delete()
+    {
+        confirmationPopupMenu.ActivateMenu("This will delete the project and is irreversible",
+           // 'yes'
+           () => {
+               Destroy(saveSlot.gameObject);
+               DataPersistenceManager.instance.DeleteProfileData(currentToolData.projectName);
+               gameObject.SetActive(false);
+           },
+           // 'cancel'
+           () => {
+               
+           }
+        );
     }
 
     public void Cancel()
