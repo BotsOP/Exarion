@@ -33,6 +33,7 @@ namespace Managers
         GROUP_CLIPS,
         UNGROUP_CLIPS,
         CHANGE_MOUSE_ICON,
+        CHANGE_TOOLTYPE
     }
 
 

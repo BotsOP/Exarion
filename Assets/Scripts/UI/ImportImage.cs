@@ -13,10 +13,14 @@ public class ImportImage : MonoBehaviour, IDataPersistence
     [SerializeField] private Material displayMat;
     [SerializeField] private Slider alphaSlider;
     [SerializeField] private GameObject overlayShowcase;
+    [SerializeField] private GameObject overlaySettings;
+    
     [HideInInspector] public byte[] imgData;
 
     public void OpenFileBrowser()
     {
+        overlaySettings.SetActive(true);
+
         var bp = new BrowserProperties();
         bp.filter = "Image files (*.jpg, *.jpeg, *.jpe, *.jfif, *.png) | *.jpg; *.jpeg; *.jpe; *.jfif; *.png";
         bp.filterIndex = 0;
@@ -34,6 +38,7 @@ public class ImportImage : MonoBehaviour, IDataPersistence
         overlayMat.SetTexture("_MainTex", null);
         overlayShowcase.SetActive(false);
         displayMat.SetInt("_UseTexture", 0);
+        overlaySettings.SetActive(false);
     }
 
     private IEnumerator LoadImage(string _path)

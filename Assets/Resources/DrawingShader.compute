@@ -204,13 +204,7 @@ void Erase (uint3 id : SV_DispatchThreadID)
     if(paintColor <= 0) { return; }
 
     _IdTex[paintPos] = -1;
-    _ResultTex[paintPos] = float4(1, 1, 1, 1);
-}
-
-[numthreads(32,32,1)]
-void Clear (uint2 id : SV_DispatchThreadID)
-{
-    _IdTex[id] = -1;
+    _ResultTex[paintPos] = float4(10, 10, 10, 10);
 }
 
 

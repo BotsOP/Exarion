@@ -349,6 +349,7 @@ namespace Drawing
                     return;
                 }
             }
+            EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
         }
 
         private void DuplicateBrushStrokes()
