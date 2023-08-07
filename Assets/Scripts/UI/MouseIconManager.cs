@@ -15,6 +15,11 @@ public enum MouseIcon
 public class MouseIconManager : MonoBehaviour
 {
     [SerializeField] private Texture2D arrow;
+    [SerializeField] private Texture2D point;
+    [SerializeField] private Texture2D grab;
+    [SerializeField] private Texture2D ew;
+
+    public Vector2 test;
 
     private void OnEnable()
     {
@@ -31,7 +36,16 @@ public class MouseIconManager : MonoBehaviour
         switch (_mouseIcon)
         {
             case MouseIcon.arrow:
-                Cursor.SetCursor(arrow, Vector2.zero, CursorMode.Auto);
+                Cursor.SetCursor(arrow, test, CursorMode.Auto);
+                break;
+            case MouseIcon.point:
+                Cursor.SetCursor(point, Vector2.zero, CursorMode.Auto);
+                break;
+            case MouseIcon.grab:
+                Cursor.SetCursor(grab, Vector2.zero, CursorMode.Auto);
+                break;
+            case MouseIcon.ew:
+                Cursor.SetCursor(ew, Vector2.zero, CursorMode.Auto);
                 break;
         }
     }

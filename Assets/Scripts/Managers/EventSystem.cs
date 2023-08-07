@@ -13,6 +13,7 @@ namespace Managers
         STOPPED_SETTING_BRUSH_SIZE,
         REDRAW_STROKE,
         REDRAW_STROKES,
+        REDRAW_ALL,
         REMOVE_STROKE,
         MOVE_STROKE,
         RESIZE_STROKE,

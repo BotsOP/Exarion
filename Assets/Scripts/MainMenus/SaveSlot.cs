@@ -12,7 +12,7 @@ namespace MainMenus
         [SerializeField] private TextMeshProUGUI projectName;
         [SerializeField] private RawImage displayImg;
         
-        [NonSerialized] public SaveSlotsMenu saveSlotsMenu;
+        [NonSerialized] public MainMenu mainMenu;
 
         public Texture2D displayTexture;
         public ToolData toolData;
@@ -26,7 +26,7 @@ namespace MainMenus
 
         private void OnClicked()
         {
-            saveSlotsMenu.OnSaveSlotClicked(this);
+            mainMenu.OnSaveSlotClicked(this);
         }
         
         public void SetData(ToolData _data)

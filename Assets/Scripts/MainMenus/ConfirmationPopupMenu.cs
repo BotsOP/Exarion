@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.Events;
 using TMPro;
 
-public class ConfirmationPopupMenu : Menu
+public class ConfirmationPopupMenu : MonoBehaviour
 {
     [Header("Components")]
     [SerializeField] private TextMeshProUGUI displayText;
@@ -14,7 +14,7 @@ public class ConfirmationPopupMenu : Menu
 
     public void ActivateMenu(string displayText, UnityAction confirmAction, UnityAction cancelAction)
     {
-        this.gameObject.SetActive(true);
+        gameObject.SetActive(true);
 
         // set the display text
         this.displayText.text = displayText;
@@ -37,6 +37,6 @@ public class ConfirmationPopupMenu : Menu
 
     private void DeactivateMenu() 
     {
-        this.gameObject.SetActive(false);
+        gameObject.SetActive(false);
     }
 }

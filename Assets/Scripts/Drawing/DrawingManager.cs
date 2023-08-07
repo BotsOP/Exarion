@@ -66,6 +66,7 @@ namespace Drawing
             collisionBox = resetBox;
             
             EventSystem.Subscribe(EventType.FINISHED_STROKE, StoppedDrawing);
+            EventSystem.Subscribe(EventType.REDRAW_ALL, RedrawAll);
             EventSystem.Subscribe(EventType.CLEAR_SELECT, ClearHighlightStroke);
             EventSystem.Subscribe(EventType.STOPPED_SETTING_BRUSH_SIZE, ClearPreview);
             EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
@@ -100,6 +101,7 @@ namespace Drawing
         private void OnDisable()
         {
             EventSystem.Unsubscribe(EventType.FINISHED_STROKE, StoppedDrawing);
+            EventSystem.Unsubscribe(EventType.REDRAW_ALL, RedrawAll);
             EventSystem.Unsubscribe(EventType.CLEAR_SELECT, ClearHighlightStroke);
             EventSystem.Unsubscribe(EventType.STOPPED_SETTING_BRUSH_SIZE, ClearPreview);
             EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
@@ -134,7 +136,7 @@ namespace Drawing
         private void SetTime(float _time)
         {
             time = _time;
-            displayMat.SetFloat("_CustomTime", time);
+            displayMat.SetFloat("_CustomTime", _time);
         }
 
         private void SetBrushSize(float _brushSize)
@@ -366,6 +368,11 @@ namespace Drawing
             EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
             selectedBrushStrokes = duplicateBrushStrokeIDs;
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.SELECT_TIMELINECLIP, selectedBrushStrokes);
+        }
+
+        private void RedrawAll()
+        {
+            drawer.RedrawAll();
         }
 
         private Vector2 lastMovePos;

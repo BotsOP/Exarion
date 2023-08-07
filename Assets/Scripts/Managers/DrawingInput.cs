@@ -162,7 +162,7 @@ namespace UI
         {
             if (mouseIsDrawing)
             {
-                if (Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || time > 1 || Input.GetKeyUp(KeyCode.LeftControl))
+                if (Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || time > 1 && !Input.GetMouseButton(0) || Input.GetKeyUp(KeyCode.LeftControl))
                 {
                     if(isInteracting && Input.GetKey(KeyCode.LeftControl))
                         return;

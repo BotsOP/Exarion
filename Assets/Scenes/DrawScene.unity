@@ -10716,7 +10716,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
-  m_AdditionalShaderChannelsFlag: 1
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0
@@ -10829,12 +10829,16 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1756645825}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efd06c312150b594cadb969179eb1173, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  arrow: {fileID: 0}
+  arrow: {fileID: 2800000, guid: 2cba0697533f99a4592e5f48eea63052, type: 3}
+  point: {fileID: 2800000, guid: e0c5716ecb881e04d9dffd71738b59ec, type: 3}
+  grab: {fileID: 2800000, guid: 86c81dd426264584cae447f37212ca93, type: 3}
+  ew: {fileID: 2800000, guid: f9feb17cf49f31c4c9adcc4449d5e063, type: 3}
+  test: {x: 0, y: 0}
 --- !u!1 &1800605427
 GameObject:
   m_ObjectHideFlags: 0

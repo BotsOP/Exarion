@@ -1748,7 +1748,7 @@ GameObject:
   - component: {fileID: 273066411}
   - component: {fileID: 273066412}
   m_Layer: 5
-  m_Name: MainMenu2
+  m_Name: MainMenu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1793,7 +1793,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bda261addf237c147bd1f53a80bbccf5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  firstSelected: {fileID: 1608790632}
   creationMenu: {fileID: 1477543089}
   saveSlotPopUp: {fileID: 900795432}
   saveSlotContent: {fileID: 211544797}
@@ -3219,7 +3218,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09def380de854ab4eaa42c70110fec73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  firstSelected: {fileID: 404697093}
   displayText: {fileID: 1751573924}
   confirmButton: {fileID: 307425722}
   cancelButton: {fileID: 404697093}
@@ -5355,7 +5353,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1477543088
 RectTransform:
   m_ObjectHideFlags: 0

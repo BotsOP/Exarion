@@ -74,7 +74,7 @@ namespace Drawing
                 name = "rtID",
             };
 
-            rt.Clear(false, true, Color.white);
+            rt.Clear(false, true, new Color(10, 10, 10));
             
             Color idColor = new Color(-1, -1, -1);
             rtID.Clear(false, true, idColor);
@@ -277,10 +277,11 @@ namespace Drawing
         public void RedrawAll()
         {
             rtID.Clear(false, true, new Color(-1, -1, -1));
-            
-            for (int i = 0; i < brushStrokesID.Count; i++)
+
+            for (int i = brushStrokesID.Count - 1; i >= 0; i--)
             {
-                RedrawStroke(brushStrokesID[i]);
+                BrushStrokeID brushStrokeID = brushStrokesID[i];
+                RedrawStrokeInterpolation(brushStrokeID);
             }
         }
 

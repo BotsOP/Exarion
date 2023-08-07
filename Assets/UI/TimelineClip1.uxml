@@ -1,6 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
-    <ui:VisualElement name="TimelineClip1" class="red_box" style="width: 100px; height: 100px; background-color: rgb(255, 0, 0); align-items: auto; justify-content: flex-start; margin-top: 10px; margin-left: 10px; margin-right: 10px; margin-bottom: 10px; flex-direction: row; align-self: center; flex-wrap: nowrap;">
-        <ui:VisualElement name="TimelineEdge" style="flex-grow: 1; background-color: rgb(0, 0, 0); width: 10px; height: 100px; align-items: flex-start; justify-content: flex-start; align-self: flex-start; position: relative; flex-direction: column; flex-wrap: wrap; max-width: 10px; margin-left: 0; margin-right: 0; left: 0; right: 0; top: 0; bottom: 0;" />
-        <ui:VisualElement name="TimelineEdge" style="flex-grow: 1; background-color: rgb(0, 0, 0); width: 12px; flex-direction: column; flex-wrap: wrap-reverse; align-items: flex-end; align-self: flex-end; justify-content: space-around; transform-origin: center; position: relative; height: 100px; margin-left: auto; max-width: 10px; margin-right: 0; left: initial;" />
-    </ui:VisualElement>
-</ui:UXML>

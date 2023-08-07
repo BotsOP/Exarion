@@ -137,7 +137,7 @@ namespace UI
                 isInteracting = false;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, false);
             }
-            
+
             MoveTimelineIndicator();
             
             if (UIManager.isFullView)
@@ -203,11 +203,18 @@ namespace UI
             
             MoveTimelineTimIndicator(time);
             EventSystem<float>.RaiseEvent(EventType.TIME, time);
-            
+
             if (time > 1)
             {
-                EventSystem.RaiseEvent(EventType.RESET_TIME);
-                time = 0;
+                if (Input.GetMouseButton(0))
+                {
+                    
+                }
+                else
+                {
+                    EventSystem.RaiseEvent(EventType.RESET_TIME);
+                    time = 0;
+                }
             }
             
             timeIncrease = Time.timeSinceLevelLoad;
@@ -545,6 +552,7 @@ namespace UI
                 lastHoverClip = clip;
                 if (selectedClips.Contains(clip))
                     return;
+                
                 EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, clip.GetBrushStrokeIDs());
             }
         }
@@ -761,6 +769,11 @@ namespace UI
             clipImage.color = timelineClip.GetNotSelectedColor();
             clipsOrdered[0].Add(timelineClip);
             CheckClipCollisions(timelineClip);
+
+            if (_brushStrokeID.currentTime > 1)
+            {
+                ResizeTimeline(_brushStrokeID.currentTime - 1);
+            }
             
             ICommand draw = new DrawCommand(timelineClip);
             EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, draw);
@@ -864,6 +877,19 @@ namespace UI
             _timelineClip.SetBar(bar);
             _timelineClip.previousBar = bar;
             CheckClipCollisions(_timelineClip);
+        }
+        private void ResizeTimeline(float _sizeDelta)
+        {
+            List<TimelineClip> timelineClips = clipsOrdered.SelectMany(clips => clips).ToList();
+            foreach (var clip in timelineClips)
+            {
+                float lastTime = clip.ClipTime.x.Remap(0, 1 + _sizeDelta, 0, 1);
+                float currentTime = clip.ClipTime.y.Remap(0, 1 + _sizeDelta, 0, 1);
+                Vector2 clipTime = new Vector2(lastTime, currentTime);
+                clip.SetTime(clipTime);
+                clip.ClipTime = clipTime;
+            }
+            EventSystem.RaiseEvent(EventType.REDRAW_ALL);
         }
         private bool IsMouseOver(Vector3[] _corners)
         {
