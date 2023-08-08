@@ -69,6 +69,7 @@ namespace Drawing
             EventSystem.Subscribe(EventType.REDRAW_ALL, RedrawAll);
             EventSystem.Subscribe(EventType.CLEAR_SELECT, ClearHighlightStroke);
             EventSystem.Subscribe(EventType.STOPPED_SETTING_BRUSH_SIZE, ClearPreview);
+            EventSystem<int>.Subscribe(EventType.CHANGE_PAINTTYPE, SetPaintType);
             EventSystem<Vector2>.Subscribe(EventType.DRAW, Draw);
             EventSystem<float>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<Vector2>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
@@ -104,6 +105,7 @@ namespace Drawing
             EventSystem.Unsubscribe(EventType.REDRAW_ALL, RedrawAll);
             EventSystem.Unsubscribe(EventType.CLEAR_SELECT, ClearHighlightStroke);
             EventSystem.Unsubscribe(EventType.STOPPED_SETTING_BRUSH_SIZE, ClearPreview);
+            EventSystem<int>.Unsubscribe(EventType.CHANGE_PAINTTYPE, SetPaintType);
             EventSystem<Vector2>.Unsubscribe(EventType.DRAW, Draw);
             EventSystem<float>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<Vector2>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
@@ -131,6 +133,11 @@ namespace Drawing
             EventSystem<float, List<BrushStrokeID>>.Unsubscribe(EventType.ROTATE_STROKE, RotateStroke);
             EventSystem.Unsubscribe(EventType.DUPLICATE_STROKE, DuplicateBrushStrokes);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.SELECT_BRUSHSTROKE, HighlightStroke);
+        }
+
+        private void SetPaintType(int index)
+        {
+            paintType = (PaintType)index;
         }
 
         private void SetTime(float _time)

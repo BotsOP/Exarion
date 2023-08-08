@@ -123,6 +123,11 @@ namespace UI
             isInteracting = _isInteracting;
         }
 
+        public void UpdateBrushType(TMP_Dropdown _index)
+        {
+            EventSystem<int>.RaiseEvent(EventType.CHANGE_PAINTTYPE, _index.value);
+        }
+
         public void SwitchToFullView(Image _buttonImage)
         {
             isFullView = true;
