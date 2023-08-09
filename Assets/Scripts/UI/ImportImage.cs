@@ -30,6 +30,7 @@ public class ImportImage : MonoBehaviour, IDataPersistence
             //Load image from local path with UWR
             StartCoroutine(LoadImage(path));
         });
+        
     }
 
     public void RemoveImage()

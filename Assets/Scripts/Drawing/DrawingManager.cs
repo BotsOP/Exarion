@@ -182,8 +182,6 @@ namespace Drawing
                 firstUse = false;
             }
             
-            Debug.Log($"{_mousePos}");
-
             drawer.Draw(lastCursorPos, _mousePos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
             tempBrushStrokes.Add(new BrushStroke(lastCursorPos, _mousePos, brushSize, time, cachedTime));
 

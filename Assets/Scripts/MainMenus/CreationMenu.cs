@@ -28,6 +28,7 @@ namespace MainMenus
 
         public void OnCreate()
         {
+            projectName.text = projectName.text == "" ? "My First Project" : projectName.text;
             bool isProjectNameTaken = DataPersistenceManager.instance.IsProfileIDTaken(projectName.text);
 
             if (isProjectNameTaken)

@@ -1,8 +1,11 @@
 using System;
 using System.Globalization;
+using System.IO;
+using AnotherFileBrowser.Windows;
 using DataPersistence;
 using Drawing;
 using Managers;
+using SFB;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,9 +14,10 @@ using EventType = Managers.EventType;
 
 namespace UI
 {
-    public class UIManager : MonoBehaviour
+    public class UIManager : MonoBehaviour, IDataPersistence
     {
         public static bool isInteracting;
+        public static bool stopInteracting;
         public static bool isFullView = true;
         
         [Header("Viewport")]
@@ -34,6 +38,8 @@ namespace UI
         [Header("UI input")]
         [SerializeField] private TMP_InputField brushSizeInput;
         [SerializeField] private Slider brushSizeSlider;
+        [SerializeField] private Button pngButton;
+        [SerializeField] private Button exrButton;
         
         private CustomRenderTexture viewFullRT;
         private CustomRenderTexture viewFocusRT;
@@ -43,7 +49,9 @@ namespace UI
         private RectTransform rectTransformDisplayFull;
         private RectTransform rectTransformViewFocus;
         private RectTransform rectTransformDisplayFocus;
-        readonly ExportPNG exportPNG = new ExportPNG();
+        private bool pngToggle;
+        private string projectName;
+        private bool exportPNG;
 
         private void OnEnable()
         {
@@ -108,8 +116,10 @@ namespace UI
 
         public void ExportResult()
         {
+            string path = StandaloneFileBrowser.SaveFilePanel("Save File", "", projectName, pngToggle ? "png" : "exr");
             DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
-            exportPNG.SaveImageToFile(drawingManager.drawer.rt, "");
+            byte[] bytes = pngToggle ? drawingManager.drawer.rt.ToBytesPNG() : drawingManager.drawer.rt.ToBytesEXR();
+            File.WriteAllBytes(path, bytes);
         }
 
         public void BackToMainMenu()
@@ -117,14 +127,17 @@ namespace UI
             DataPersistenceManager.instance.SaveTool();
             SceneManager.LoadScene("MainMenu");
         }
-
-        public void SetSelectColor(Image _image)
+        public void PNGButton()
         {
-            _image.color = selectedColor;
+            pngToggle = true;
+            pngButton.transform.GetChild(2).gameObject.SetActive(true);
+            exrButton.transform.GetChild(2).gameObject.SetActive(false);
         }
-        public void SetUnselectColor(Image _image)
+        public void EXRButton()
         {
-            _image.color = backgroundColor;
+            pngToggle = false;
+            pngButton.transform.GetChild(2).gameObject.SetActive(false);
+            exrButton.transform.GetChild(2).gameObject.SetActive(true);
         }
         public void ActivateGameObject(GameObject _gameObject)
         {
@@ -145,9 +158,13 @@ namespace UI
             Application.Quit();
         }
 
-        private void IsInteracting(bool _isInteracting)
+        public void IsInteracting(bool _isInteracting)
         {
             isInteracting = _isInteracting;
+        }
+        public void StopInteracting(bool _isInteracting)
+        {
+            stopInteracting = _isInteracting;
         }
 
         public void UpdateBrushType(TMP_Dropdown _index)
@@ -203,6 +220,13 @@ namespace UI
             int brushSize = (int)_brushSize;
             brushSizeInput.text = brushSize.ToString(CultureInfo.CurrentCulture);
             brushSizeSlider.value = brushSize;
+        }
+        public void LoadData(ToolData _data)
+        {
+            projectName = _data.projectName;
+        }
+        public void SaveData(ToolData _data)
+        {
         }
     }
 }

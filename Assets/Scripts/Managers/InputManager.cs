@@ -45,7 +45,10 @@ public class InputManager : MonoBehaviour, IDataPersistence
         currentDisplayArea.GetWorldCorners(displayAreaCorners);
         
         drawingInput.scrollZoomSensitivity = scrollZoomSensitivity;
-        drawingInput.UpdateDrawingInput(viewCam.transform.position, viewCam.orthographicSize);
+        if (!UIManager.stopInteracting)
+        {
+            drawingInput.UpdateDrawingInput(viewCam.transform.position, viewCam.orthographicSize);
+        }
     }
     public void LoadData(ToolData _data)
     {
