@@ -427,7 +427,7 @@ GameObject:
   - component: {fileID: 27397677}
   - component: {fileID: 27397676}
   m_Layer: 5
-  m_Name: InputField (TMP) (2)
+  m_Name: height
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -801,7 +801,7 @@ GameObject:
   - component: {fileID: 130421835}
   - component: {fileID: 130421834}
   m_Layer: 5
-  m_Name: InputField (TMP) (1)
+  m_Name: width
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5391,6 +5391,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   projectExistsText: {fileID: 1595309069}
   projectName: {fileID: 326620423}
+  imageWidthInput: {fileID: 130421834}
+  imageHeightInput: {fileID: 27397676}
 --- !u!1 &1487644520
 GameObject:
   m_ObjectHideFlags: 0
@@ -6898,7 +6900,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 7c823323d34cde642a1885678b0b3a4e, type: 2}
+  m_Material: {fileID: 2100000, guid: 9c97c523153a2084dbc329c0d1d587c4, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}

@@ -12,8 +12,8 @@ namespace Drawing
         public float collisionBoxZ;
         public float collisionBoxW;
         public PaintType paintType;
-        public float lastTime;
-        public float currentTime;
+        public float startTime;
+        public float endTime;
         public int indexWhenDrawn;
         public float avgPosX;
         public float avgPosY;
@@ -21,12 +21,12 @@ namespace Drawing
         public float size;
         
         [JsonConstructor]
-        public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _lastTime, float _currentTime, Vector4 _collisionBox, int _indexWhenDrawn, Vector2 _avgPos, float _angle = 0, float _size = 1)
+        public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _startTime, float _endTime, Vector4 _collisionBox, int _indexWhenDrawn, Vector2 _avgPos, float _angle = 0, float _size = 1)
         {
             brushStrokes = _brushStrokes;
             paintType = _paintType;
-            lastTime = _lastTime;
-            currentTime = _currentTime;
+            startTime = _startTime;
+            endTime = _endTime;
             collisionBoxX = _collisionBox.x;
             collisionBoxY = _collisionBox.y;
             collisionBoxZ = _collisionBox.z;
@@ -42,8 +42,8 @@ namespace Drawing
         {
             brushStrokes = new List<BrushStroke>(_brushStrokeID.brushStrokes);
             paintType = _brushStrokeID.paintType;
-            lastTime = _brushStrokeID.lastTime;
-            currentTime = _brushStrokeID.currentTime;
+            startTime = _brushStrokeID.startTime;
+            endTime = _brushStrokeID.endTime;
             collisionBoxX = _brushStrokeID.collisionBoxX;
             collisionBoxY = _brushStrokeID.collisionBoxY;
             collisionBoxZ = _brushStrokeID.collisionBoxZ;
@@ -143,18 +143,18 @@ namespace Drawing
         public float currentPosX;
         public float currentPosY;
         public float strokeBrushSize;
-        public float currentTime;
-        public float lastTime;
+        public float endTime;
+        public float startTime;
 
-        public BrushStroke(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, float _currentTime, float _lastTime)
+        public BrushStroke(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, float _endTime, float _startTime)
         {
             lastPosX = _lastPos.x;
             lastPosY = _lastPos.y;
             currentPosX = _currentPos.x;
             currentPosY = _currentPos.y;
             strokeBrushSize = _strokeBrushSize;
-            currentTime = _currentTime;
-            lastTime = _lastTime;
+            endTime = _endTime;
+            startTime = _startTime;
         }
 
         public Vector2 GetLastPos()

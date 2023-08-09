@@ -14,7 +14,9 @@ namespace MainMenus
         [Header("Input")]
         [SerializeField]
         private TMP_InputField projectName;
+        [SerializeField]
         private TMP_InputField imageWidthInput;
+        [SerializeField]
         private TMP_InputField imageHeightInput;
 
         private ToolData toolData;

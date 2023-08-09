@@ -35,6 +35,7 @@ namespace Managers
         CHANGE_MOUSE_ICON,
         CHANGE_TOOLTYPE,
         CHANGE_PAINTTYPE,
+        RESIZE_TIMELINE,
     }
 
 

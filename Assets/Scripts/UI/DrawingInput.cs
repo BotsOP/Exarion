@@ -22,16 +22,20 @@ namespace UI
         private Vector3[] drawAreaCorners = new Vector3[4];
         private Vector3[] displayAreaCorners = new Vector3[4];
         private bool isInteracting;
+        private int imageWidth;
+        private int imageHeight;
         private bool isMouseInsideDrawArea => IsMouseInsideDrawArea(drawAreaCorners);
         private bool isMouseInsideDisplayArea => IsMouseInsideDrawArea(displayAreaCorners);
 
-        public DrawingInput(Camera _viewCam, Camera _displayCam, float _scrollZoomSensitivity)
+        public DrawingInput(Camera _viewCam, Camera _displayCam, float _scrollZoomSensitivity, int _imageWidth, int _imageHeight)
         {
             viewCam = _viewCam;
             displayCam = _displayCam;
             scrollZoomSensitivity = _scrollZoomSensitivity;
             startPosViewCam = _viewCam.transform.position;
             startPosDisplayCam = _displayCam.transform.position;
+            imageWidth = _imageWidth;
+            imageHeight = _imageHeight;
             
             EventSystem<float>.Subscribe(EventType.TIME, SetTime);
             EventSystem<RectTransform, RectTransform>.Subscribe(EventType.VIEW_CHANGED, SetDrawArea);
@@ -72,8 +76,8 @@ namespace UI
             }
             
             Vector4 drawCorners = GetScaledDrawingCorners(_camPos, _camZoom, drawAreaCorners);
-            float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, 2048);
-            float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, 2048);
+            float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, imageWidth);
+            float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, imageHeight);
             Vector2 mousePos = new Vector2(mousePosX, mousePosY);
 
             if (!UIManager.isInteracting || isInteracting)

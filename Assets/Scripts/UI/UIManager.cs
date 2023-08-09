@@ -118,6 +118,33 @@ namespace UI
             SceneManager.LoadScene("MainMenu");
         }
 
+        public void SetSelectColor(Image _image)
+        {
+            _image.color = selectedColor;
+        }
+        public void SetUnselectColor(Image _image)
+        {
+            _image.color = backgroundColor;
+        }
+        public void ActivateGameObject(GameObject _gameObject)
+        {
+            _gameObject.SetActive(true);
+        }
+        public void DeactivateGameObject(GameObject _gameObject)
+        {
+            _gameObject.SetActive(false);
+        }
+
+        public void SaveProject()
+        {
+            DataPersistenceManager.instance.SaveTool();
+        }
+        public void SaveExit()
+        {
+            DataPersistenceManager.instance.SaveTool();
+            Application.Quit();
+        }
+
         private void IsInteracting(bool _isInteracting)
         {
             isInteracting = _isInteracting;

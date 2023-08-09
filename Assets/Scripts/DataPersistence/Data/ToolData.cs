@@ -9,11 +9,13 @@ public class ToolData
 {
     //Data not for us
     public long lastUpdated;
+    public float timeSpentMinutes;
 
     //Data for us
     //Variables per project
     public string projectName;
     public List<CondensedClip> timelineClips;
+    public int extraTimelineBars;
 
     public byte[] overlayImg;
     public byte[] displayImg;

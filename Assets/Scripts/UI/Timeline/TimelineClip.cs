@@ -57,12 +57,12 @@ namespace UI
 
         public Vector2 clipTimeOld;
         public int previousBar;
+        public List<BrushStrokeID> selectedBrushStrokes = new List<BrushStrokeID>();
 
         public RectTransform rect;
         public MouseAction mouseAction;
         public RawImage rawImage;
         public int currentBar;
-        public int barOffset;
         private float startMousePos;
         private float leftMostPos;
         private float rightMostPos;
@@ -131,7 +131,6 @@ namespace UI
         public virtual List<BrushStrokeID> GetBrushStrokeIDs() { return new List<BrushStrokeID>(); }
         
         public virtual List<TimelineClip> GetClips() { return new List<TimelineClip>(); }
-
         public virtual void SetTime(Vector2 _time) { }
         public virtual Vector2 GetTime() { return Vector2.zero; }
 

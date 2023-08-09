@@ -48,8 +48,9 @@ namespace Drawing
         private Vector2 tempAvgPos;
         private float time;
 
-        void OnEnable()
+        private void Start()
         {
+            Debug.Log($"{imageWidth} {imageHeight}");
             drawer = new Drawing(imageWidth, imageHeight);
             highlighter = new DrawHighlight(imageWidth, imageHeight);
             previewer = new DrawPreview(imageWidth, imageHeight);
@@ -64,7 +65,10 @@ namespace Drawing
             tempBrushStrokes = new List<BrushStroke>();
             selectedBrushStrokes = new List<BrushStrokeID>();
             collisionBox = resetBox;
-            
+        }
+
+        void OnEnable()
+        {
             EventSystem.Subscribe(EventType.FINISHED_STROKE, StoppedDrawing);
             EventSystem.Subscribe(EventType.REDRAW_ALL, RedrawAll);
             EventSystem.Subscribe(EventType.CLEAR_SELECT, ClearHighlightStroke);
@@ -143,7 +147,7 @@ namespace Drawing
         private void SetTime(float _time)
         {
             time = _time;
-            displayMat.SetFloat("_CustomTime", _time);
+            displayMat.SetFloat("_CustomTime", Mathf.Clamp(_time, 0, 0.99f));
         }
 
         private void SetBrushSize(float _brushSize)
@@ -177,6 +181,8 @@ namespace Drawing
                 lastCursorPos = _mousePos;
                 firstUse = false;
             }
+            
+            Debug.Log($"{_mousePos}");
 
             drawer.Draw(lastCursorPos, _mousePos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
             tempBrushStrokes.Add(new BrushStroke(lastCursorPos, _mousePos, brushSize, time, cachedTime));
@@ -300,11 +306,11 @@ namespace Drawing
         {
             foreach (var brushStrokeID in _brushStrokeIDs)
             {
-                if (selectedBrushStrokes.Remove(brushStrokeID))
-                {
-                    highlighter.HighlightStroke(selectedBrushStrokes);
-                    return;
-                }
+                // if (selectedBrushStrokes.Remove(brushStrokeID))
+                // {
+                //     highlighter.HighlightStroke(selectedBrushStrokes);
+                //     return;
+                // }
 
                 selectedBrushStrokes.Add(brushStrokeID);
             }
@@ -663,11 +669,14 @@ namespace Drawing
         }
         public void LoadData(ToolData _data)
         {
-            
+            imageWidth = _data.imageWidth;
+            imageHeight = _data.imageHeight;
         }
         public void SaveData(ToolData _data)
         {
-            _data.displayImg = drawer.rt.ToBytesPNG(1024, 1024);
+            _data.displayImg = drawer.rt.ToBytesPNG(imageWidth, imageHeight);
+            _data.imageWidth = imageWidth;
+            _data.imageHeight = imageHeight;
         }
     }
 }

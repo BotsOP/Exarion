@@ -44,13 +44,13 @@ namespace UI
 
         public override void SetTime(Vector2 _time)
         {
-            brushStrokeID.lastTime = _time.x;
-            brushStrokeID.currentTime = _time.y;
+            brushStrokeID.startTime = _time.x;
+            brushStrokeID.endTime = _time.y;
         }
 
         public override sealed Vector2 GetTime()
         {
-            return new Vector2(brushStrokeID.lastTime, brushStrokeID.currentTime);
+            return new Vector2(brushStrokeID.startTime, brushStrokeID.endTime);
         }
 
         public override bool HoldingBrushStroke(BrushStrokeID _brushStrokeID)

@@ -12,6 +12,7 @@ namespace UI
         private List<TimelineClip> clips;
         private List<BrushStrokeID> allBrushStrokes;
         private List<Vector2> oldBrushStrokeTimes;
+        private int amountSelectedBrushStrokes;
         public TimelineClipGroup(List<TimelineClip> _clips, RectTransform _rect, RectTransform _timelineBarRect, RectTransform _timelineAreaRect, RawImage _rawImage) : base(_rect, _timelineBarRect, _timelineAreaRect, _rawImage)
         {
             clips = _clips.SelectMany(_clip => _clip.GetClips()).ToList();
@@ -30,7 +31,7 @@ namespace UI
         public override void SetupMovement(MouseAction _mouseAction, float _leftMostPos, float _rightMostPos)
         {
             base.SetupMovement(_mouseAction, _leftMostPos, _rightMostPos);
-            oldBrushStrokeTimes = allBrushStrokes.Select(_brushStroke => new Vector2(_brushStroke.lastTime, _brushStroke.currentTime)).ToList();
+            oldBrushStrokeTimes = allBrushStrokes.Select(_brushStroke => new Vector2(_brushStroke.startTime, _brushStroke.endTime)).ToList();
         }
 
         public override List<BrushStrokeID> GetBrushStrokeIDs()
@@ -57,8 +58,8 @@ namespace UI
                 float lastTime = oldBrushStrokeTimes[i].x.Remap(clipTimeOld.x, clipTimeOld.y, _time.x, _time.y);
                 float currentTime = oldBrushStrokeTimes[i].y.Remap(clipTimeOld.x, clipTimeOld.y, _time.x, _time.y);
 
-                brushStrokeID.lastTime = lastTime;
-                brushStrokeID.currentTime = currentTime;
+                brushStrokeID.startTime = lastTime;
+                brushStrokeID.endTime = currentTime;
             }
         }
 
@@ -69,13 +70,13 @@ namespace UI
             
             foreach (var brushStrokeID in allBrushStrokes)
             {
-                if (brushStrokeID.lastTime < smallest)
+                if (brushStrokeID.startTime < smallest)
                 {
-                    smallest = brushStrokeID.lastTime;
+                    smallest = brushStrokeID.startTime;
                 }
-                if (brushStrokeID.currentTime > biggest)
+                if (brushStrokeID.endTime > biggest)
                 {
-                    biggest = brushStrokeID.currentTime;
+                    biggest = brushStrokeID.endTime;
                 }
             }
             

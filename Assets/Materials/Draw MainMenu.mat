@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Draw
+  m_Name: Draw MainMenu
   m_Shader: {fileID: -6465566751694194690, guid: 0dca14d72ed6c8846ab6b61905e64f67,
     type: 3}
   m_Parent: {fileID: 0}
@@ -61,7 +61,7 @@ Material:
     m_Floats:
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _backgroundValuue: 250
+    - _backgroundValuue: 1
     m_Colors:
     - _BackgroundColor: {r: 0.16470589, g: 0.16470589, b: 0.16470589, a: 1}
     - _BrushColorDark: {r: 0.07019099, g: 0.37094966, b: 0.8584906, a: 0}

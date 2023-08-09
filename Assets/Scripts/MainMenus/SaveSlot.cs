@@ -37,7 +37,7 @@ namespace MainMenus
             
             if (_data.displayImg is null) return;
             if (_data.displayImg.Length <= 0) return;
-            displayTexture = new Texture2D(1, 1);
+            displayTexture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
             displayTexture.LoadImage(_data.displayImg);
             displayTexture.filterMode = FilterMode.Point;
             displayImg.texture = displayTexture;

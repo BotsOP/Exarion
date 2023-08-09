@@ -6,18 +6,23 @@ using UI;
 using UnityEngine;
 using EventType = Managers.EventType;
 
-public class InputManager : MonoBehaviour
+public class InputManager : MonoBehaviour, IDataPersistence
 {
     private RectTransform currentDrawArea;
     private RectTransform currentDisplayArea;
     private DrawingInput drawingInput;
+    private int imageWidth;
+    private int imageHeight;
     [SerializeField] private Camera viewCam;
     [SerializeField] private Camera displayCam;
     [SerializeField, Range(0.01f, 1f)] private float scrollZoomSensitivity;
 
+    private void Start()
+    {
+        drawingInput = new DrawingInput(viewCam, displayCam, scrollZoomSensitivity, imageWidth, imageHeight);
+    }
     private void OnEnable()
     {
-        drawingInput = new DrawingInput(viewCam, displayCam, scrollZoomSensitivity);
         EventSystem<RectTransform, RectTransform>.Subscribe(EventType.VIEW_CHANGED, SetDrawArea);
     }
     private void OnDisable()
@@ -41,5 +46,14 @@ public class InputManager : MonoBehaviour
         
         drawingInput.scrollZoomSensitivity = scrollZoomSensitivity;
         drawingInput.UpdateDrawingInput(viewCam.transform.position, viewCam.orthographicSize);
+    }
+    public void LoadData(ToolData _data)
+    {
+        imageWidth = _data.imageWidth;
+        imageHeight = _data.imageHeight;
+    }
+    public void SaveData(ToolData _data)
+    {
+        
     }
 }
