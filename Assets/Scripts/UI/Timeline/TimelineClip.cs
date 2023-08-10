@@ -224,8 +224,10 @@ namespace UI
             float sizeIncreasePercentage = ((rightMostPos - leftMostPos) + mouseDeltaX) / (rightMostPos - leftMostPos) - 1;
             float newLeftPos = (oldLeftPos - leftMostPos) * sizeIncreasePercentage + oldLeftPos;
             float newRightPos = (oldRightPos - leftMostPos) * sizeIncreasePercentage + oldRightPos;
-            newLeftPos = Mathf.Clamp(newLeftPos, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
-            newRightPos = Mathf.Clamp(newRightPos, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
+            newLeftPos = Mathf.Clamp(newLeftPos, TimelineBarCorners[0].x, newRightPos - minumunWidth);
+            newRightPos = Mathf.Clamp(newRightPos, newLeftPos + minumunWidth, TimelineBarCorners[2].x);
+            if (newLeftPos > newRightPos - minumunWidth) { return; }
+            if (newRightPos < newLeftPos + minumunWidth) { return; }
             
             rect.position = new Vector3(newLeftPos, rect.position.y, rect.position.z);
             rect.sizeDelta = new Vector2(newRightPos - newLeftPos, rect.sizeDelta.y);
@@ -237,8 +239,10 @@ namespace UI
             float sizeIncreasePercentage = ((rightMostPos - leftMostPos) + mouseDeltaX) / (rightMostPos - leftMostPos) - 1;
             float newLeftPos = (oldLeftPos - rightMostPos) * sizeIncreasePercentage + oldLeftPos;
             float newRightPos = (oldRightPos - rightMostPos) * sizeIncreasePercentage + oldRightPos;
-            newLeftPos = Mathf.Clamp(newLeftPos, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
-            newRightPos = Mathf.Clamp(newRightPos, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
+            newLeftPos = Mathf.Clamp(newLeftPos, TimelineBarCorners[0].x, newRightPos - minumunWidth);
+            newRightPos = Mathf.Clamp(newRightPos, newLeftPos + minumunWidth, TimelineBarCorners[2].x);
+            if (newLeftPos > newRightPos - minumunWidth) { return; }
+            if (newRightPos < newLeftPos + minumunWidth) { return; }
             
             rect.position = new Vector3(newRightPos, rect.position.y, rect.position.z);
             rect.sizeDelta = new Vector2(newRightPos - newLeftPos, rect.sizeDelta.y);

@@ -91,6 +91,7 @@ namespace Drawing
             EventSystem<float>.Subscribe(EventType.RESIZE_STROKE, ResizeStrokes);
             EventSystem<float>.Subscribe(EventType.ROTATE_STROKE, RotateStroke);
             EventSystem<Vector2, string>.Subscribe(EventType.SPAWN_STAMP, DrawStamp);
+            EventSystem<Vector2, int>.Subscribe(EventType.SPAWN_STAMP, DrawStamp);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem.Subscribe(EventType.MOVE_STROKE, StoppedMovingStroke);
@@ -127,6 +128,7 @@ namespace Drawing
             EventSystem<float>.Unsubscribe(EventType.RESIZE_STROKE, ResizeStrokes);
             EventSystem<float>.Unsubscribe(EventType.ROTATE_STROKE, RotateStroke);
             EventSystem<Vector2, string>.Unsubscribe(EventType.SPAWN_STAMP, DrawStamp);
+            EventSystem<Vector2, int>.Unsubscribe(EventType.SPAWN_STAMP, DrawStamp);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem.Unsubscribe(EventType.MOVE_STROKE, StoppedMovingStroke);
@@ -460,7 +462,6 @@ namespace Drawing
             if (_sizeIncrease == 1)
                 return;
 
-            Debug.Log(_sizeIncrease);
             resizeAmount -= 1 - _sizeIncrease;
             
             Vector2 allAvgPos = Vector2.zero;
@@ -658,6 +659,17 @@ namespace Drawing
         {
             BrushStrokeID brushStrokeID = drawStamp.GetStamp(_key, _mousePos, 256, drawer.brushStrokesID.Count, 
                 brushSize, time, Mathf.Clamp01(time + 0.05f));
+            EventSystem<float>.RaiseEvent(EventType.ADD_TIME, 0.05f);
+            drawer.RedrawStrokeInterpolation(brushStrokeID);
+            
+            drawer.brushStrokesID.Add(brushStrokeID);
+            
+            EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
+        }
+        private void DrawStamp(Vector2 _mousePos, int _sides)
+        {
+            BrushStrokeID brushStrokeID = drawStamp.GetPolygon(_sides, _mousePos, 256, drawer.brushStrokesID.Count, 
+                                                             brushSize, time, Mathf.Clamp01(time + 0.05f));
             EventSystem<float>.RaiseEvent(EventType.ADD_TIME, 0.05f);
             drawer.RedrawStrokeInterpolation(brushStrokeID);
             

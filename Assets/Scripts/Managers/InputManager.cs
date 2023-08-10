@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Managers;
+using TMPro;
 using UI;
 using UnityEngine;
 using EventType = Managers.EventType;

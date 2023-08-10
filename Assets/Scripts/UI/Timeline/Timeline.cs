@@ -23,8 +23,18 @@ namespace UI
         [SerializeField] private GameObject timelineObject;
         
         [Header("Timeline UI")]
-        [SerializeField] private TMP_InputField clipLeftInput;
-        [SerializeField] private TMP_InputField clipRightInput;
+        [SerializeField] private TMP_InputField startTimeInput;
+        [SerializeField] private TMP_InputField endTimeInput;
+        [SerializeField] private TMP_InputField positionXInput;
+        [SerializeField] private TMP_InputField positionYInput;
+        [SerializeField] private TMP_InputField rotationInput;
+        [SerializeField] private TMP_InputField scaleInput;
+        [SerializeField] private TMP_InputField drawOrderInput;
+        [SerializeField] private TMP_InputField brushSizeInput;
+        [SerializeField] private GameObject drawOrderSingle;
+        [SerializeField] private GameObject drawOrderGroup;
+        [SerializeField] private Button drawOrderPlus;
+        [SerializeField] private Button drawOrderMin;
         [SerializeField] private Slider speedSliderTimeline;
         
         [Header("Select Deselect")]
@@ -205,8 +215,9 @@ namespace UI
                 timeIncrease = Time.timeSinceLevelLoad;
                 return;
             }
-            
-            timeIncrease = (Time.timeSinceLevelLoad - timeIncrease) / Mathf.Pow(speedSliderTimeline.value, 8f);
+
+            float valueFlipped = speedSliderTimeline.value.Remap(1, 2, 2, 1);
+            timeIncrease = (Time.timeSinceLevelLoad - timeIncrease) / Mathf.Pow(valueFlipped, 8f);
             time += timeIncrease;
             
             MoveTimelineTimIndicator(time);
@@ -355,6 +366,7 @@ namespace UI
                     
                     ClearSelected();
                     selectedClips.Add(timelineClipGroup);
+                    UpdateClipInfo();
 
                     ICommand group = new GroupCommand(timelineClipGroup);
                     EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, group);
@@ -371,6 +383,7 @@ namespace UI
                     foreach (var groupClip in clips)
                     {
                         selectedClips.Remove(groupClip);
+                        UpdateClipInfo();
                         brushStrokeIDs.AddRange(groupClip.GetBrushStrokeIDs());
                         ungroupCommands.Add(new UnGroupCommand(groupClip.GetClips()));
                 
@@ -413,6 +426,7 @@ namespace UI
             foreach (var groupClip in _clips)
             {
                 selectedClips.Remove(groupClip);
+                UpdateClipInfo();
                 brushStrokeIDs.AddRange(groupClip.GetBrushStrokeIDs());
                 
                 foreach (var clip in groupClip.GetClips())
@@ -508,6 +522,7 @@ namespace UI
                             firstTimeSelected = true;
                             lastSelectedClip = clip;
                             selectedClips.Add(clip);
+                            UpdateClipInfo();
                             clip.selectedBrushStrokes.AddRange(clip.GetBrushStrokeIDs());
                             clip.rawImage.color = selectedColor;
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, clip.GetBrushStrokeIDs());
@@ -525,6 +540,7 @@ namespace UI
                             
                             clip.rawImage.color = selectedColor;
                             selectedClips.Add(clip);
+                            UpdateClipInfo();
                             clip.selectedBrushStrokes.AddRange(clip.GetBrushStrokeIDs());
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, clip.GetBrushStrokeIDs());
                             return true;
@@ -536,6 +552,7 @@ namespace UI
                         clip.mouseAction = MouseAction.Nothing;
                         lastSelectedClip = clip;
                         selectedClips.Remove(clip);
+                        UpdateClipInfo();
                         clip.selectedBrushStrokes.Clear();
                         clip.rawImage.color = clip.GetNotSelectedColor();
                         firstTimeSelected = true;
@@ -610,6 +627,7 @@ namespace UI
 
             RemoveClip(selectedClips);
             selectedClips.Clear();
+            UpdateClipInfo();
             EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
         }
         private bool ClickedAway()
@@ -746,22 +764,16 @@ namespace UI
         }
         #endregion
         
-        public void ChangedInput(TMP_InputField _input)
+        private void UpdateClipInfo()
         {
-            Debug.Log($"not yet implemented");
-            // if (selectedClips.Count == 1 && selectedInput)
-            // {
-            //     if (selectedClips[0].mouseAction == MouseAction.Nothing)
-            //     {
-            //         float leftSide = Mathf.Clamp01(float.Parse(clipLeftInput.text));
-            //         float rightSide = Mathf.Clamp01(float.Parse(clipRightInput.text));
-            //         if (leftSide < rightSide)
-            //         {
-            //             selectedClips[0].ClipTime = new Vector2(leftSide, rightSide);
-            //             EventSystem<BrushStrokeID>.RaiseEvent(EventType.REDRAW_STROKE, selectedClips[0].brushStrokeID);
-            //         }
-            //     }
-            // }
+            if (selectedClips.Count > 0)
+            {
+                
+            }
+            else
+            {
+                
+            }
         }
 
         private void AddNewBrushClip(BrushStrokeID _brushStrokeID)
@@ -826,6 +838,7 @@ namespace UI
                         if (brushStrokeID == _brushStrokeID)
                         {
                             selectedClips.Remove(clipsOrdered[i][j]);
+                            UpdateClipInfo();
                             clipsOrdered[i][j].selectedBrushStrokes.Remove(brushStrokeID);
                             Destroy(clipsOrdered[i][j].rect.gameObject);
                             clipsOrdered[i].RemoveAt(j);
@@ -846,6 +859,7 @@ namespace UI
                 {
                     clip.rawImage.color = selectedColor;
                     selectedClips.Add(clip);
+                    UpdateClipInfo();
                 }
                 else
                 {
@@ -866,6 +880,7 @@ namespace UI
                     {
                         clip.rawImage.color = selectedColor;
                         selectedClips.Add(clip);
+                        UpdateClipInfo();
                     }
                     else
                     {
@@ -882,6 +897,7 @@ namespace UI
             {
                 clip.rawImage.color = clip.GetNotSelectedColor();
                 selectedClips.Remove(clip);
+                UpdateClipInfo();
                 clip.selectedBrushStrokes.Remove(_brushStrokeID);
             }
         }
@@ -898,6 +914,7 @@ namespace UI
             }
             halfSelectedClips.Clear();
             selectedClips.Clear();
+            UpdateClipInfo();
         }
         private void RemoveClip(List<TimelineClip> _timelineClips)
         {

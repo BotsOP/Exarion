@@ -24,6 +24,7 @@ namespace UI
         private bool isInteracting;
         private int imageWidth;
         private int imageHeight;
+        private int shapeAmountSides = 6;
         private bool isMouseInsideDrawArea => IsMouseInsideDrawArea(drawAreaCorners);
         private bool isMouseInsideDisplayArea => IsMouseInsideDrawArea(displayAreaCorners);
 
@@ -41,6 +42,7 @@ namespace UI
             EventSystem<RectTransform, RectTransform>.Subscribe(EventType.VIEW_CHANGED, SetDrawArea);
             EventSystem.Subscribe(EventType.RESET_TIME, StopDrawing);
             EventSystem<ToolType>.Subscribe(EventType.CHANGE_TOOLTYPE, SetToolType);
+            EventSystem<int>.Subscribe(EventType.CHANGE_TOOLTYPE, SetAmountShapeSides);
         }
 
         ~DrawingInput()
@@ -49,11 +51,16 @@ namespace UI
             EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
             EventSystem.Unsubscribe(EventType.RESET_TIME, StopDrawing);
             EventSystem<ToolType>.Unsubscribe(EventType.CHANGE_TOOLTYPE, SetToolType);
+            EventSystem<int>.Unsubscribe(EventType.CHANGE_TOOLTYPE, SetAmountShapeSides);
         }
 
         private void SetToolType(ToolType _toolType)
         {
             currentToolType = _toolType;
+        }
+        private void SetAmountShapeSides(int _sides)
+        {
+            shapeAmountSides = _sides;
         }
 
         private void SetDrawArea(RectTransform _currentDrawArea, RectTransform _currentDisplayArea)
@@ -114,9 +121,9 @@ namespace UI
 
                     if (SpawnCircle(mousePos))
                         return;
-                    if (SpawnSquare(mousePos))
+                    if (SpawnLine(mousePos))
                         return;
-                    if (SpawnHexagon(mousePos))
+                    if (SpawnPolygon(mousePos))
                         return;
 
                     if(DrawInput(mousePos))
@@ -143,28 +150,27 @@ namespace UI
 
         private bool SpawnCircle(Vector2 _mousePos)
         {
-            if (Input.GetKeyDown(KeyCode.F))
+            if (currentToolType == ToolType.Circle && Input.GetMouseButtonDown(0))
             {
-                EventSystem<Vector2, string>.RaiseEvent(EventType.SPAWN_STAMP, _mousePos, "circle");
+                EventSystem<Vector2, int>.RaiseEvent(EventType.SPAWN_STAMP, _mousePos, 360);
                 return true;
             }
             return false;
         }
-        private bool SpawnSquare(Vector2 _mousePos)
+        private bool SpawnLine(Vector2 _mousePos)
         {
-            if (Input.GetKeyDown(KeyCode.G))
+            if (currentToolType == ToolType.Line && Input.GetMouseButtonDown(0))
             {
-                EventSystem<Vector2, string>.RaiseEvent(EventType.SPAWN_STAMP, _mousePos, "square");
+                EventSystem<Vector2, int>.RaiseEvent(EventType.SPAWN_STAMP, _mousePos, 2);
                 return true;
             }
             return false;
         }
-        
-        private bool SpawnHexagon(Vector2 _mousePos)
+        private bool SpawnPolygon(Vector2 _mousePos)
         {
-            if (Input.GetKeyDown(KeyCode.H))
+            if (currentToolType == ToolType.Polygon && Input.GetMouseButtonDown(0))
             {
-                EventSystem<Vector2, string>.RaiseEvent(EventType.SPAWN_STAMP, _mousePos, "hexagon");
+                EventSystem<Vector2, int>.RaiseEvent(EventType.SPAWN_STAMP, _mousePos, shapeAmountSides);
                 return true;
             }
             return false;

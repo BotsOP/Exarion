@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Managers;
+using TMPro;
 using UnityEngine;
 using EventType = Managers.EventType;
 
@@ -13,11 +14,14 @@ namespace UI
         move,
         rotate,
         resize,
+        Polygon,
+        Circle,
+        Square,
+        Line,
     }
     public class Toolbar : MonoBehaviour
     {
         [SerializeField] private GameObject currentToolSettings;
-        [SerializeField] private GameObject selectedButton;
         [SerializeField] private List<ToolButton> buttons;
         [SerializeField] private Color selectedColor;
         [SerializeField] private Color notSelectedColor;
@@ -118,6 +122,11 @@ namespace UI
             currentToolSettings.SetActive(true);
 
             EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, _toolButton.toolType);
+        }
+
+        public void ChangedShapeSides(TMP_InputField _input)
+        {
+            EventSystem<int>.RaiseEvent(EventType.CHANGE_TOOLTYPE, int.Parse(_input.text));
         }
     }
 }
