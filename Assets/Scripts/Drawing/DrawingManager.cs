@@ -395,6 +395,7 @@ namespace Drawing
             if (_dir == Vector2.zero)
                 return;
 
+            EventSystem.RaiseEvent(EventType.UPDATE_CLIP_INFO);
             lastMovePos += _dir;
             
             foreach (var brushStrokeID in selectedBrushStrokes)
@@ -459,9 +460,10 @@ namespace Drawing
         private float resizeAmount = 1;
         private void ResizeStrokes(float _sizeIncrease)
         {
-            if (_sizeIncrease == 1)
+            if (Math.Abs(_sizeIncrease - 1) < 0.001f)
                 return;
 
+            EventSystem.RaiseEvent(EventType.UPDATE_CLIP_INFO);
             resizeAmount -= 1 - _sizeIncrease;
             
             Vector2 allAvgPos = Vector2.zero;
@@ -473,6 +475,7 @@ namespace Drawing
             
             foreach (var brushStrokeID in selectedBrushStrokes)
             {
+                brushStrokeID.scale *= _sizeIncrease;
                 drawer.RedrawStroke(brushStrokeID, PaintType.Erase);
                 
                 for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
@@ -499,12 +502,10 @@ namespace Drawing
         }
         private void ResizeStrokes(float _sizeIncrease, List<BrushStrokeID> _brushStrokeIDs)
         {
-            Debug.Log(_sizeIncrease);
-            if (_sizeIncrease == 1)
+            if (Math.Abs(_sizeIncrease - 1) < 0.001f)
                 return;
 
             _sizeIncrease = 1 / _sizeIncrease;
-            Debug.Log(_sizeIncrease);
             
             Vector2 allAvgPos = Vector2.zero;
             foreach (var brushStrokeID in _brushStrokeIDs)
@@ -515,6 +516,7 @@ namespace Drawing
             
             foreach (var brushStrokeID in _brushStrokeIDs)
             {
+                brushStrokeID.scale += _sizeIncrease;
                 drawer.RedrawStroke(brushStrokeID, PaintType.Erase);
                 
                 for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
@@ -551,6 +553,7 @@ namespace Drawing
             if (_angle == 0)
                 return;
 
+            EventSystem.RaiseEvent(EventType.UPDATE_CLIP_INFO);
             rotateAmount += _angle;
             
             Vector2 allAvgPos = Vector2.zero;

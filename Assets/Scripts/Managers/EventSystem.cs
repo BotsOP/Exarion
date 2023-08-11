@@ -36,6 +36,7 @@ namespace Managers
         CHANGE_TOOLTYPE,
         CHANGE_PAINTTYPE,
         RESIZE_TIMELINE,
+        UPDATE_CLIP_INFO,
     }
 
 

@@ -74,6 +74,12 @@ namespace UI
         private float startClickPos;
         private bool isInteracting;
         private TimelineClip lastHoverClip;
+        private float startTime;
+        private float endTime;
+        private Vector2 avgPos;
+        private float avgAngle;
+        private float avgScale;
+        private float avgBrushSize;
 
         private Vector3[] Corners
         {
@@ -112,6 +118,7 @@ namespace UI
         private void OnEnable()
         {
             EventSystem.Subscribe(EventType.CLEAR_SELECT, ClearSelected);
+            EventSystem.Subscribe(EventType.UPDATE_CLIP_INFO, UpdateClipInfo);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<bool>.Subscribe(EventType.DRAW, SetTimlinePause);
             EventSystem<bool>.Subscribe(EventType.FINISHED_STROKE, SetTimlinePause);
@@ -131,6 +138,7 @@ namespace UI
         private void OnDisable()
         {
             EventSystem.Unsubscribe(EventType.CLEAR_SELECT, ClearSelected);
+            EventSystem.Unsubscribe(EventType.UPDATE_CLIP_INFO, UpdateClipInfo);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<bool>.Unsubscribe(EventType.DRAW, SetTimlinePause);
             EventSystem<bool>.Unsubscribe(EventType.FINISHED_STROKE, SetTimlinePause);
@@ -763,18 +771,209 @@ namespace UI
             return false;
         }
         #endregion
-        
+
+        #region ClipInput
+
         private void UpdateClipInfo()
         {
             if (selectedClips.Count > 0)
             {
-                
+                List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+                if (brushStrokeIDs.Count > 1)
+                {
+                    drawOrderSingle.SetActive(false);
+                    drawOrderGroup.SetActive(true);
+                    
+                    startTime = float.MaxValue;
+                    endTime = 0;
+                    avgPos = Vector2.zero;
+                    avgAngle = 0;
+                    avgScale = 0;
+                    avgBrushSize = 0;
+                    foreach (var brushStrokeID in brushStrokeIDs)
+                    {
+                        //Set this foreach selectedclips
+                        if (brushStrokeID.startTime < startTime)
+                        {
+                            startTime = brushStrokeID.startTime;
+                        }
+                        if (brushStrokeID.endTime > endTime)
+                        {
+                            endTime = brushStrokeID.endTime;
+                        }
+                        //
+                        avgPos.x += brushStrokeID.avgPosX;
+                        avgPos.y += brushStrokeID.avgPosY;
+                        avgAngle += brushStrokeID.angle;
+                        avgScale += brushStrokeID.scale;
+                        avgBrushSize += brushStrokeID.GetAverageBrushSize();
+                    }
+                    avgPos /= brushStrokeIDs.Count;
+                    avgAngle /= brushStrokeIDs.Count;
+                    avgScale /= brushStrokeIDs.Count;
+                    avgBrushSize /= brushStrokeIDs.Count;
+                    startTimeInput.text = startTime.ToString("0.###");
+                    endTimeInput.text = endTime.ToString("0.###");
+                    positionXInput.text = avgPos.x.ToString("0.#");
+                    positionYInput.text = avgPos.y.ToString("0.#");
+                    rotationInput.text = (avgAngle * (180 / Mathf.PI)).ToString("0.#");
+                    scaleInput.text = avgScale.ToString("0.###");
+                    brushSizeInput.text = avgBrushSize.ToString("0.#");
+                }
+                else
+                {
+                    drawOrderGroup.SetActive(false);
+                    drawOrderSingle.SetActive(true);
+                    
+                    startTimeInput.text = brushStrokeIDs[0].startTime.ToString("0.###");
+                    endTimeInput.text = brushStrokeIDs[0].endTime.ToString("0.###");
+                    positionXInput.text = brushStrokeIDs[0].avgPosX.ToString("0.#");
+                    positionYInput.text = brushStrokeIDs[0].avgPosY.ToString("0.#");
+                    rotationInput.text = (brushStrokeIDs[0].angle * (180 / Mathf.PI)).ToString("0.#");
+                    scaleInput.text = brushStrokeIDs[0].scale.ToString("0.###");
+                    drawOrderInput.text = brushStrokeIDs[0].indexWhenDrawn.ToString();
+                    brushSizeInput.text = brushStrokeIDs[0].GetAverageBrushSize().ToString("0.#");
+                }
             }
             else
             {
-                
+                startTimeInput.text = "";
+                endTimeInput.text = "";
+                positionXInput.text = "";
+                positionYInput.text = "";
+                rotationInput.text = "";
+                scaleInput.text = "";
+                drawOrderInput.text = "";
+                brushSizeInput.text = "";
             }
         }
+
+        public void SetStartTime()
+        {
+            if (selectedClips.Count == 0)
+            {
+                return;
+            }
+            
+            float input = float.Parse(startTimeInput.text);
+            input = Mathf.Clamp01(input);
+            foreach (var clip in selectedClips)
+            {
+                if(input > clip.ClipTime.y)
+                    continue;
+
+                clip.clipTimeOld = clip.ClipTime;
+                clip.ClipTime = new Vector2(input, clip.ClipTime.y);
+                clip.SetTime(new Vector2(input, clip.ClipTime.y));
+            }
+            
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs);
+            
+            ICommand redrawCommand = new RedrawMultipleCommand(selectedClips);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, redrawCommand);
+        }
+        public void SetEndTime()
+        {
+            if (selectedClips.Count == 0)
+            {
+                return;
+            }
+            
+            float input = float.Parse(endTimeInput.text);
+            input = Mathf.Clamp01(input);
+            foreach (var clip in selectedClips)
+            {
+                if(input < clip.ClipTime.x)
+                    continue;
+
+                clip.clipTimeOld = clip.ClipTime;
+                clip.ClipTime = new Vector2(clip.ClipTime.x, input);
+                clip.SetTime(new Vector2(clip.ClipTime.x, input));
+            }
+            
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs);
+            
+            ICommand redrawCommand = new RedrawMultipleCommand(selectedClips);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, redrawCommand);
+        }
+
+        //Recalculate all the avg values after making changes
+        public void SetPosX()
+        {
+            if (selectedClips.Count == 0)
+            {
+                return;
+            }
+            
+            float input = float.Parse(positionXInput.text);
+            input -= avgPos.x;
+
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            
+            Vector2 moveDir = new Vector2(input, 0);
+            EventSystem<Vector2, List<BrushStrokeID>>.RaiseEvent(EventType.MOVE_STROKE, moveDir, brushStrokeIDs);
+            
+            ICommand moveCommand = new MoveCommand(moveDir, brushStrokeIDs);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, moveCommand);
+        }
+        
+        public void SetPosY()
+        {
+            if (selectedClips.Count == 0)
+            {
+                return;
+            }
+            
+            float input = float.Parse(positionYInput.text);
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            input -= avgPos.y;
+
+            Vector2 moveDir = new Vector2(0, input);
+            EventSystem<Vector2, List<BrushStrokeID>>.RaiseEvent(EventType.MOVE_STROKE, moveDir, brushStrokeIDs);
+            
+            ICommand moveCommand = new MoveCommand(moveDir, brushStrokeIDs);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, moveCommand);
+        }
+
+        public void SetAngle()
+        {
+            if (selectedClips.Count == 0)
+            {
+                return;
+            }
+            
+            float input = float.Parse(rotationInput.text);
+            input *= Mathf.PI / 180;
+            input -= avgAngle;
+            
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            EventSystem<float, List<BrushStrokeID>>.RaiseEvent(EventType.ROTATE_STROKE, input, brushStrokeIDs);
+            
+            ICommand rotateCommand = new RotateCommand(input, brushStrokeIDs);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, rotateCommand);
+        }
+        
+        public void SetScale()
+        {
+            if (selectedClips.Count == 0)
+            {
+                return;
+            }
+            
+            float input = float.Parse(scaleInput.text);
+            input -= avgScale;
+            
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            EventSystem<float, List<BrushStrokeID>>.RaiseEvent(EventType.RESIZE_STROKE, input, brushStrokeIDs);
+            
+            ICommand resizeCommand = new ResizeCommand(input, brushStrokeIDs);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, resizeCommand);
+        }
+
+        #endregion
+        
 
         private void AddNewBrushClip(BrushStrokeID _brushStrokeID)
         {
@@ -930,7 +1129,6 @@ namespace UI
         }
         private void UpdateClip(TimelineClip _timelineClip, int bar)
         {
-            Debug.Log(bar);
             clipsOrdered[_timelineClip.currentBar].Remove(_timelineClip);
             clipsOrdered[bar].Add(_timelineClip);
             _timelineClip.SetBar(bar);

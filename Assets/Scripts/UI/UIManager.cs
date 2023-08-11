@@ -19,6 +19,8 @@ namespace UI
         public static bool isInteracting;
         public static bool stopInteracting;
         public static bool isFullView = true;
+        public static int imageWidth;
+        public static int imageHeight;
         
         [Header("Viewport")]
         [SerializeField] private RawImage viewImageFull;
@@ -223,6 +225,8 @@ namespace UI
         }
         public void LoadData(ToolData _data)
         {
+            imageWidth = _data.imageWidth;
+            imageHeight = _data.imageHeight;
             projectName = _data.projectName;
         }
         public void SaveData(ToolData _data)

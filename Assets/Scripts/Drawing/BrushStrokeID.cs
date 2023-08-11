@@ -18,10 +18,10 @@ namespace Drawing
         public float avgPosX;
         public float avgPosY;
         public float angle;
-        public float size;
+        public float scale;
         
         [JsonConstructor]
-        public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _startTime, float _endTime, Vector4 _collisionBox, int _indexWhenDrawn, Vector2 _avgPos, float _angle = 0, float _size = 1)
+        public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _startTime, float _endTime, Vector4 _collisionBox, int _indexWhenDrawn, Vector2 _avgPos, float _angle = 0, float _scale = 1)
         {
             brushStrokes = _brushStrokes;
             paintType = _paintType;
@@ -35,7 +35,7 @@ namespace Drawing
             avgPosX = _avgPos.x;
             avgPosY = _avgPos.y;
             angle = _angle;
-            size = _size;
+            scale = _scale;
         }
         
         public BrushStrokeID(BrushStrokeID _brushStrokeID, int _indexWhenDrawn)
@@ -51,7 +51,7 @@ namespace Drawing
             avgPosX = _brushStrokeID.avgPosX;
             avgPosY = _brushStrokeID.avgPosY;
             angle = _brushStrokeID.angle;
-            size = _brushStrokeID.size;
+            scale = _brushStrokeID.scale;
             indexWhenDrawn = _indexWhenDrawn;
         }
 
@@ -133,6 +133,16 @@ namespace Drawing
             avgPos /= brushStrokes.Count - 1;
             avgPosX = avgPos.x;
             avgPosY = avgPos.y;
+        }
+
+        public float GetAverageBrushSize()
+        {
+            float avgBrushSize = 0;
+            foreach (var brushStroke in brushStrokes)
+            {
+                avgBrushSize += brushStroke.strokeBrushSize;
+            }
+            return avgBrushSize / brushStrokes.Count;
         }
     }
 
