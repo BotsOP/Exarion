@@ -19,6 +19,7 @@ namespace UI
         public static bool isInteracting;
         public static bool stopInteracting;
         public static bool isFullView = true;
+        public static bool center = true;
         public static int imageWidth;
         public static int imageHeight;
         
@@ -31,7 +32,8 @@ namespace UI
         [SerializeField] private Camera displayCam;
         [SerializeField] private GameObject fullView;
         [SerializeField] private GameObject focusView;
-        [SerializeField] private Image cachedButton;
+        [SerializeField] private Image fullViewButton;
+        [SerializeField] private Image focusViewButton;
         
         [Header("Select Deselect")]
         [SerializeField] private Color selectedColor;
@@ -42,6 +44,8 @@ namespace UI
         [SerializeField] private Slider brushSizeSlider;
         [SerializeField] private Button pngButton;
         [SerializeField] private Button exrButton;
+        [SerializeField] private Image pivotButton;
+        [SerializeField] private Image centerButton;
         
         private CustomRenderTexture viewFullRT;
         private CustomRenderTexture viewFocusRT;
@@ -141,6 +145,19 @@ namespace UI
             pngButton.transform.GetChild(2).gameObject.SetActive(false);
             exrButton.transform.GetChild(2).gameObject.SetActive(true);
         }
+
+        public void PivotButton()
+        {
+            centerButton.color = backgroundColor;
+            pivotButton.color = selectedColor;
+            center = false;
+        }
+        public void CenterButton()
+        {
+            centerButton.color = selectedColor;
+            pivotButton.color = backgroundColor;
+            center = true;
+        }
         public void ActivateGameObject(GameObject _gameObject)
         {
             _gameObject.SetActive(true);
@@ -177,9 +194,8 @@ namespace UI
         public void SwitchToFullView(Image _buttonImage)
         {
             isFullView = true;
-            _buttonImage.GetComponent<Image>().color = selectedColor;
-            if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
-            cachedButton = _buttonImage;
+            fullViewButton.color = selectedColor;
+            focusViewButton.color = backgroundColor;
             
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
             viewCam.targetTexture = viewFullRT;
@@ -192,9 +208,8 @@ namespace UI
         public void SwitchToFocusView(Image _buttonImage)
         {
             isFullView = false;
-            _buttonImage.GetComponent<Image>().color = selectedColor;
-            if(cachedButton) { cachedButton.GetComponent<Image>().color = backgroundColor; }
-            cachedButton = _buttonImage;
+            fullViewButton.color = backgroundColor;
+            focusViewButton.color = selectedColor;
             
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFocus, rectTransformDisplayFocus);
             viewCam.targetTexture = viewFocusRT;

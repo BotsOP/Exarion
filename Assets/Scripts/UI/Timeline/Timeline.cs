@@ -932,9 +932,9 @@ namespace UI
             input *= Mathf.PI / 180;
             input -= avgAngle;
             
-            EventSystem<float, List<BrushStrokeID>>.RaiseEvent(EventType.ROTATE_STROKE, input, brushStrokeIDs);
+            EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.ROTATE_STROKE, input, UIManager.center, brushStrokeIDs);
             
-            ICommand rotateCommand = new RotateCommand(input, brushStrokeIDs);
+            ICommand rotateCommand = new RotateCommand(input, UIManager.center, brushStrokeIDs);
             EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, rotateCommand);
         }
         
@@ -950,9 +950,9 @@ namespace UI
             float input = float.Parse(scaleInput.text);
             input -= avgScale;
             
-            EventSystem<float, List<BrushStrokeID>>.RaiseEvent(EventType.RESIZE_STROKE, input, brushStrokeIDs);
+            EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.RESIZE_STROKE, input, UIManager.center, brushStrokeIDs);
             
-            ICommand resizeCommand = new ResizeCommand(input, brushStrokeIDs);
+            ICommand resizeCommand = new ResizeCommand(input, UIManager.center, brushStrokeIDs);
             EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, resizeCommand);
         }
         
@@ -1028,8 +1028,9 @@ namespace UI
                 float sizeDelta = _brushStrokeID.endTime - 1;
                 ResizeTimeline(sizeDelta);
                 
+                Debug.Log($"delta: {delta}");
                 draw = new DrawCommand(timelineClip);
-                ICommand resizeTimelineCommand = new ResizeTimelineCommand(-(sizeDelta - delta));
+                ICommand resizeTimelineCommand = new ResizeTimelineCommand(-(1 - _brushStrokeID.startTime));
                 List<ICommand> commands = new List<ICommand> { draw, resizeTimelineCommand };
                 ICommand multiCommand = new MultiCommand(commands);
                 EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, multiCommand);
@@ -1166,6 +1167,7 @@ namespace UI
         }
         private void ResizeTimeline(float _sizeDelta)
         {
+            Debug.Log(_sizeDelta);
             List<TimelineClip> timelineClips = clipsOrdered.SelectMany(clips => clips).ToList();
             foreach (var clip in timelineClips)
             {

@@ -248,7 +248,7 @@ namespace UI
                 isInteracting = true;
                 isRotating = true;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
-                EventSystem<float>.RaiseEvent(EventType.ROTATE_STROKE, (_mousePos.x - lastMousePos.x) / 1000);
+                EventSystem<float, bool>.RaiseEvent(EventType.ROTATE_STROKE, (_mousePos.x - lastMousePos.x) / 1000, UIManager.center);
                 lastMousePos = _mousePos;
                 return true;
             }
@@ -269,7 +269,7 @@ namespace UI
                 isResizing = true;
                 float resizeAmount = 1 + Mathf.Clamp((_mousePos.x - lastMousePos.x) / 1000, -1f, 1f);
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
-                EventSystem<float>.RaiseEvent(EventType.RESIZE_STROKE, resizeAmount);
+                EventSystem<float, bool>.RaiseEvent(EventType.RESIZE_STROKE, resizeAmount, UIManager.center);
                 lastMousePos = _mousePos;
                 return true;
             }
