@@ -38,7 +38,8 @@ namespace Managers
         RESIZE_TIMELINE,
         UPDATE_CLIP_INFO,
         CHANGE_DRAW_ORDER,
-        CHANGE_BRUSH_SIZE
+        CHANGE_BRUSH_SIZE,
+        TIMELINE_PAUSE,
     }
 
 

@@ -31,6 +31,7 @@ namespace UI
         [SerializeField] private TMP_InputField scaleInput;
         [SerializeField] private TMP_InputField brushSizeInput;
         [SerializeField] private Slider speedSliderTimeline;
+        [SerializeField] private Image pauseImage;
         
         [Header("Select Deselect")]
         public static Color notSelectedSingleColors;
@@ -108,6 +109,7 @@ namespace UI
         {
             EventSystem.Subscribe(EventType.CLEAR_SELECT, ClearSelected);
             EventSystem.Subscribe(EventType.UPDATE_CLIP_INFO, UpdateClipInfo);
+            EventSystem.Subscribe(EventType.TIMELINE_PAUSE, SetTimelinePauseButton);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<bool>.Subscribe(EventType.DRAW, SetTimlinePause);
             EventSystem<bool>.Subscribe(EventType.FINISHED_STROKE, SetTimlinePause);
@@ -128,6 +130,7 @@ namespace UI
         {
             EventSystem.Unsubscribe(EventType.CLEAR_SELECT, ClearSelected);
             EventSystem.Unsubscribe(EventType.UPDATE_CLIP_INFO, UpdateClipInfo);
+            EventSystem.Unsubscribe(EventType.TIMELINE_PAUSE, SetTimelinePauseButton);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<bool>.Unsubscribe(EventType.DRAW, SetTimlinePause);
             EventSystem<bool>.Unsubscribe(EventType.FINISHED_STROKE, SetTimlinePause);
@@ -172,19 +175,19 @@ namespace UI
             EventSystem<float>.RaiseEvent(EventType.TIME, time);
             MoveTimelineTimIndicator(time);
         }
-        public void SetTimelinePauseButton(Image _image)
+        public void SetTimelinePauseButton()
         {
             if (timelinePauseButton)
             {
                 shouldTimelinePause = false;
-                _image.sprite = pauseSprite;
-                _image.color = notSelectedSingleColors;
+                pauseImage.sprite = pauseSprite;
+                pauseImage.color = notSelectedSingleColors;
             }
             else
             {
                 shouldTimelinePause = true;
-                _image.sprite = playSprite;
-                _image.color = selectedColor;
+                pauseImage.sprite = playSprite;
+                pauseImage.color = selectedColor;
             }
             
             timelinePauseButton = !timelinePauseButton;
@@ -292,25 +295,32 @@ namespace UI
         }
 
         #region ClipInput
+
+        private bool holdingClip;
         private void TimelineClipsInput()
         {
             if (!UIManager.isInteracting || isInteracting)
             {
-                //If you are already interacting with a timelineclip check that one first
-                if ((Input.GetMouseButton(0)) && selectedClips.Count > 0 && !Input.GetKey(KeyCode.LeftShift) && !Input.GetMouseButtonUp(0))
-                {
-                    ChangeSelectedTimelineClips();
-                }
-            
-                //Otherwise check if you are interacting with any other timeline clips
                 if (isMouseInsideTimeline)
                 {
-                    if (ClickedTimelineClip())
-                        return;
+                    ClickedTimelineClip();
                 }
                 else if (lastHoverClip is not null)
                 {
                     OnHoverExit(lastHoverClip);
+                }
+                //If you are already interacting with a timelineclip check that one first
+                if (Input.GetMouseButtonDown(0) && selectedClips.Count > 0 && !Input.GetKey(KeyCode.LeftShift) && isMouseInsideTimeline)
+                {
+                    holdingClip = ChangeSelectedTimelineClips();
+                }
+                if (Input.GetMouseButtonUp(0))
+                {
+                    holdingClip = false;
+                }
+                if (holdingClip)
+                {
+                    ChangeSelectedTimelineClips();
                 }
             }
             
@@ -328,7 +338,7 @@ namespace UI
             }
             
             //Once you are done making changes 
-            if (Input.GetMouseButtonUp(0) && selectedClips.Count > 0)
+            if (Input.GetMouseButtonUp(0))
             {
                 StoppedMakingChanges();
             }
@@ -433,7 +443,7 @@ namespace UI
             }
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, brushStrokeIDs);
         }
-        private void ChangeSelectedTimelineClips()
+        private bool ChangeSelectedTimelineClips()
         {
             TimelineClip selectedClip = null;
             foreach (var clip in selectedClips)
@@ -445,57 +455,61 @@ namespace UI
                     selectedClip = clip;
                 }
             }
-            
-            if (selectedClip != null)
+
+            if (selectedClip == null)
             {
-                float leftMostPos = Mathf.Infinity;
-                float rightMostPos = 0;
-                if (lastMouseAction is MouseAction.ResizeClipRight or MouseAction.ResizeClipLeft)
-                {
-                    Vector3[] clipCorners = new Vector3[4];
-                    foreach (var clip in selectedClips)
-                    {
-                        clip.rect.GetWorldCorners(clipCorners);
-                        if (clipCorners[0].x < leftMostPos)
-                            leftMostPos = clipCorners[0].x;
-                        if (clipCorners[2].x > rightMostPos)
-                            rightMostPos = clipCorners[2].x;
-                    }
-                }
-                
-                if (firstTimeSelected)
-                {
-                    foreach (TimelineClip clip in selectedClips)
-                    {
-                        clip.previousBar = clip.currentBar;
-                        clip.clipTimeOld = clip.ClipTime;
+                return false;
+            }
 
-                        clip.SetupMovement(lastMouseAction, leftMostPos, rightMostPos);
-                    }
-                    firstTimeSelected = false;
-                }
-
-                List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
-                for (int i = 0; i < selectedClips.Count; i++)
+            float leftMostPos = Mathf.Infinity;
+            float rightMostPos = 0;
+            if (lastMouseAction is MouseAction.ResizeClipRight or MouseAction.ResizeClipLeft)
+            {
+                Vector3[] clipCorners = new Vector3[4];
+                foreach (var clip in selectedClips)
                 {
-                    var clip = selectedClips[i];
-                    clip.mouseAction = lastMouseAction;
-
-                    clip.UpdateTransform();
-
-                    //if clip changed
-                    if (Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) > 0.001 ||
-                        Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) > 0.001)
-                    {
-                        clip.SetTime(clip.ClipTime);
-                        brushStrokeIDs.AddRange(clip.GetBrushStrokeIDs());
-                    }
-                }
-                if (brushStrokeIDs.Count > 0)
-                {
-                    EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs);
+                    clip.rect.GetWorldCorners(clipCorners);
+                    if (clipCorners[0].x < leftMostPos)
+                        leftMostPos = clipCorners[0].x;
+                    if (clipCorners[2].x > rightMostPos)
+                        rightMostPos = clipCorners[2].x;
                 }
             }
+            
+            if (firstTimeSelected)
+            {
+                foreach (TimelineClip clip in selectedClips)
+                {
+                    clip.previousBar = clip.currentBar;
+                    clip.clipTimeOld = clip.ClipTime;
+
+                    clip.SetupMovement(lastMouseAction, leftMostPos, rightMostPos);
+                }
+                firstTimeSelected = false;
+            }
+
+            List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
+            for (int i = 0; i < selectedClips.Count; i++)
+            {
+                var clip = selectedClips[i];
+                clip.mouseAction = lastMouseAction;
+
+                clip.UpdateTransform();
+
+                //if clip changed
+                if (Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) > 0.001 ||
+                    Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) > 0.001)
+                {
+                    clip.SetTime(clip.ClipTime);
+                    brushStrokeIDs.AddRange(clip.GetBrushStrokeIDs());
+                }
+            }
+            if (brushStrokeIDs.Count > 0)
+            {
+                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs);
+            }
+
+            return true;
         }
         private bool ClickedTimelineClip()
         {
@@ -563,6 +577,10 @@ namespace UI
         }
         private void OnHoverEnter(TimelineClip clip)
         {
+            if (lastHoverClip != null)
+            {
+                OnHoverExit(lastHoverClip);
+            }
             if (lastHoverClip != clip)
             {
                 lastHoverClip = clip;
@@ -629,7 +647,7 @@ namespace UI
         }
         private bool ClickedAway()
         {
-            if (Input.GetMouseButtonDown(0) && selectedClips.Count > 0 && !UIManager.isInteracting && !Input.GetKey(
+            if (Input.GetMouseButtonUp(0) && selectedClips.Count > 0 && !UIManager.isInteracting && !Input.GetKey(
                     KeyCode.LeftShift) && isMouseInsideTimeline)
             {
                 Vector3[] clipCorners = new Vector3[4];

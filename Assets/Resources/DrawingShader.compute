@@ -4,7 +4,6 @@
 #pragma kernel PaintOverOwnLine
 #pragma kernel Erase
 
-
 RWTexture2D<float> _ResultTex;
 RWTexture2D<int> _IdTex;
 

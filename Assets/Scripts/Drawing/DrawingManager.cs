@@ -741,8 +741,8 @@ namespace Drawing
                 brushStrokeID.SetBrushSize(_amount);
                 brushStrokeID.RecalculateCollisionBox();
             }
-            HighlightStroke(_brushStrokeIDs);
-            drawer.RedrawAllDirect(_brushStrokeIDs);
+            highlighter.HighlightStroke(selectedBrushStrokes);
+            drawer.RedrawAllSafe(_brushStrokeIDs);
         }
         private void ChangeBrushStrokeBrushSize(List<BrushStrokeID> _brushStrokeIDs, List<float> _amount)
         {

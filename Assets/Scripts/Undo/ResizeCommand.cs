@@ -19,14 +19,10 @@ namespace Undo
             center = _center;
             brushStrokeIDs = _brushStrokeIDs;
         }
-
-        public void Execute()
-        {
-            throw new System.NotImplementedException();
-        }
+        
         public void Undo()
         {
-            EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.RESIZE_STROKE, resizeAmount, UIManager.center, brushStrokeIDs);
+            EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.RESIZE_STROKE, resizeAmount, center, brushStrokeIDs);
         }
         public string GetCommandName()
         {

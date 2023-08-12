@@ -50,6 +50,11 @@ public class InputManager : MonoBehaviour, IDataPersistence
         {
             drawingInput.UpdateDrawingInput(viewCam.transform.position, viewCam.orthographicSize);
         }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            EventSystem.RaiseEvent(EventType.TIMELINE_PAUSE);
+        }
     }
     public void LoadData(ToolData _data)
     {

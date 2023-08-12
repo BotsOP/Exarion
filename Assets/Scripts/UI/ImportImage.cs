@@ -19,8 +19,6 @@ public class ImportImage : MonoBehaviour, IDataPersistence
 
     public void OpenFileBrowser()
     {
-        overlaySettings.SetActive(true);
-
         var bp = new BrowserProperties();
         bp.filter = "Image files (*.jpg, *.jpeg, *.jpe, *.jfif, *.png) | *.jpg; *.jpeg; *.jpe; *.jfif; *.png";
         bp.filterIndex = 0;
@@ -60,6 +58,7 @@ public class ImportImage : MonoBehaviour, IDataPersistence
                 displayMat.SetTexture("_OverlayTex", uwrTexture);
                 displayMat.SetInt("_UseTexture", 1);
                 overlayShowcase.SetActive(true);
+                overlaySettings.SetActive(true);
                 imgData = uwrTexture.EncodeToPNG();
             }
         }
@@ -82,6 +81,7 @@ public class ImportImage : MonoBehaviour, IDataPersistence
         Debug.Log(imgData.Length);
         tex.LoadImage(imgData);
         overlayShowcase.SetActive(true);
+        overlaySettings.SetActive(true);
         overlayMat.SetTexture("_MainTex", tex);
         displayMat.SetTexture("_OverlayTex", tex);
         displayMat.SetInt("_UseTexture", 1);
