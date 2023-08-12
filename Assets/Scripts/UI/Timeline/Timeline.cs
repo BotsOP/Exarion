@@ -29,12 +29,7 @@ namespace UI
         [SerializeField] private TMP_InputField positionYInput;
         [SerializeField] private TMP_InputField rotationInput;
         [SerializeField] private TMP_InputField scaleInput;
-        [SerializeField] private TMP_InputField drawOrderInput;
         [SerializeField] private TMP_InputField brushSizeInput;
-        [SerializeField] private GameObject drawOrderSingle;
-        [SerializeField] private GameObject drawOrderGroup;
-        [SerializeField] private Button drawOrderPlus;
-        [SerializeField] private Button drawOrderMin;
         [SerializeField] private Slider speedSliderTimeline;
         
         [Header("Select Deselect")]
@@ -74,12 +69,6 @@ namespace UI
         private float startClickPos;
         private bool isInteracting;
         private TimelineClip lastHoverClip;
-        private float startTime;
-        private float endTime;
-        private Vector2 avgPos;
-        private float avgAngle;
-        private float avgScale;
-        private float avgBrushSize;
 
         private Vector3[] Corners
         {
@@ -308,7 +297,7 @@ namespace UI
             if (!UIManager.isInteracting || isInteracting)
             {
                 //If you are already interacting with a timelineclip check that one first
-                if ((Input.GetMouseButton(0) || Input.GetMouseButtonUp(0)) && selectedClips.Count > 0 && !Input.GetKey(KeyCode.LeftShift))
+                if ((Input.GetMouseButton(0)) && selectedClips.Count > 0 && !Input.GetKey(KeyCode.LeftShift) && !Input.GetMouseButtonUp(0))
                 {
                     ChangeSelectedTimelineClips();
                 }
@@ -772,7 +761,7 @@ namespace UI
         }
         #endregion
 
-        #region ClipInput
+        #region ClipInfo
 
         private void UpdateClipInfo()
         {
@@ -781,15 +770,12 @@ namespace UI
                 List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
                 if (brushStrokeIDs.Count > 1)
                 {
-                    drawOrderSingle.SetActive(false);
-                    drawOrderGroup.SetActive(true);
-                    
-                    startTime = float.MaxValue;
-                    endTime = 0;
-                    avgPos = Vector2.zero;
-                    avgAngle = 0;
-                    avgScale = 0;
-                    avgBrushSize = 0;
+                    float startTime = float.MaxValue;
+                    float endTime = 0;
+                    Vector2 avgPos = Vector2.zero;
+                    float avgAngle = 0;
+                    float avgScale = 0;
+                    float avgBrushSize = 0;
                     foreach (var brushStrokeID in brushStrokeIDs)
                     {
                         //Set this foreach selectedclips
@@ -822,16 +808,12 @@ namespace UI
                 }
                 else
                 {
-                    drawOrderGroup.SetActive(false);
-                    drawOrderSingle.SetActive(true);
-                    
                     startTimeInput.text = brushStrokeIDs[0].startTime.ToString("0.###");
                     endTimeInput.text = brushStrokeIDs[0].endTime.ToString("0.###");
                     positionXInput.text = brushStrokeIDs[0].avgPosX.ToString("0.#");
                     positionYInput.text = brushStrokeIDs[0].avgPosY.ToString("0.#");
                     rotationInput.text = (brushStrokeIDs[0].angle * (180 / Mathf.PI)).ToString("0.#");
                     scaleInput.text = brushStrokeIDs[0].scale.ToString("0.###");
-                    drawOrderInput.text = brushStrokeIDs[0].indexWhenDrawn.ToString();
                     brushSizeInput.text = brushStrokeIDs[0].GetAverageBrushSize().ToString("0.#");
                 }
             }
@@ -843,7 +825,6 @@ namespace UI
                 positionYInput.text = "";
                 rotationInput.text = "";
                 scaleInput.text = "";
-                drawOrderInput.text = "";
                 brushSizeInput.text = "";
             }
         }
@@ -907,11 +888,11 @@ namespace UI
                 return;
             }
             
-            float input = float.Parse(positionXInput.text);
-            input -= avgPos.x;
-
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
-            
+            float avgPosX = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.avgPosX).ToList().Average();
+            float input = float.Parse(positionXInput.text);
+            input -= avgPosX;
+
             Vector2 moveDir = new Vector2(input, 0);
             EventSystem<Vector2, List<BrushStrokeID>>.RaiseEvent(EventType.MOVE_STROKE, moveDir, brushStrokeIDs);
             
@@ -926,9 +907,10 @@ namespace UI
                 return;
             }
             
-            float input = float.Parse(positionYInput.text);
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
-            input -= avgPos.y;
+            float avgPosY = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.avgPosY).ToList().Average();
+            float input = float.Parse(positionYInput.text);
+            input -= avgPosY;
 
             Vector2 moveDir = new Vector2(0, input);
             EventSystem<Vector2, List<BrushStrokeID>>.RaiseEvent(EventType.MOVE_STROKE, moveDir, brushStrokeIDs);
@@ -944,11 +926,12 @@ namespace UI
                 return;
             }
             
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            float avgAngle = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.angle).ToList().Average();
             float input = float.Parse(rotationInput.text);
             input *= Mathf.PI / 180;
             input -= avgAngle;
             
-            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             EventSystem<float, List<BrushStrokeID>>.RaiseEvent(EventType.ROTATE_STROKE, input, brushStrokeIDs);
             
             ICommand rotateCommand = new RotateCommand(input, brushStrokeIDs);
@@ -962,14 +945,60 @@ namespace UI
                 return;
             }
             
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            float avgScale = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.scale).ToList().Average();
             float input = float.Parse(scaleInput.text);
             input -= avgScale;
             
-            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             EventSystem<float, List<BrushStrokeID>>.RaiseEvent(EventType.RESIZE_STROKE, input, brushStrokeIDs);
             
             ICommand resizeCommand = new ResizeCommand(input, brushStrokeIDs);
             EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, resizeCommand);
+        }
+        
+        public void DrawOrderDown()
+        {
+            if (selectedClips.Count == 0)
+            {
+                return;
+            }
+            
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            EventSystem<List<BrushStrokeID>, int>.RaiseEvent(EventType.CHANGE_DRAW_ORDER, brushStrokeIDs, 1);
+            
+            ICommand drawOrderCommand = new DrawOrderCommand(brushStrokeIDs, 1);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, drawOrderCommand);
+        }
+        
+        public void DrawOrderUp()
+        {
+            if (selectedClips.Count == 0)
+            {
+                return;
+            }
+            
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            EventSystem<List<BrushStrokeID>, int>.RaiseEvent(EventType.CHANGE_DRAW_ORDER, brushStrokeIDs, -1);
+            
+            ICommand drawOrderCommand = new DrawOrderCommand(brushStrokeIDs, -1);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, drawOrderCommand);
+        }
+
+        public void ChangeBrushSize()
+        {
+            if (selectedClips.Count == 0)
+            {
+                return;
+            }
+            
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            List<float> values = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.GetAverageBrushSize()).ToList();
+            float input = float.Parse(brushSizeInput.text);
+            
+            EventSystem<List<BrushStrokeID>, float>.RaiseEvent(EventType.CHANGE_BRUSH_SIZE, brushStrokeIDs, input);
+
+            ICommand brushSizeCommand = new BrushSizeCommand(brushStrokeIDs, values);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, brushSizeCommand);
         }
 
         #endregion
@@ -1148,6 +1177,7 @@ namespace UI
             }
             EventSystem.RaiseEvent(EventType.REDRAW_ALL);
         }
+        
         private bool IsMouseOver(Vector3[] _corners)
         {
             return Input.mousePosition.x > _corners[0].x && Input.mousePosition.x < _corners[2].x && 

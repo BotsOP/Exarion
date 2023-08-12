@@ -37,12 +37,14 @@ namespace Managers
         CHANGE_PAINTTYPE,
         RESIZE_TIMELINE,
         UPDATE_CLIP_INFO,
+        CHANGE_DRAW_ORDER,
+        CHANGE_BRUSH_SIZE
     }
 
 
     public static class EventSystem
     {
-        private static Dictionary<EventType, System.Action> eventRegister = new Dictionary<EventType, System.Action>();
+        private static Dictionary<EventType, System.Action> eventRegister = new();
 
         public static void Subscribe(EventType _evt, System.Action _func)
         {
