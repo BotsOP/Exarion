@@ -20,7 +20,11 @@ namespace UI
         [SerializeField] private List<RectTransform> timelineBarObjects;
         [SerializeField] private GameObject timelineClipObject;
         [SerializeField] private GameObject timelineScrollBar;
+        [SerializeField] private GameObject timelineScrollBarFullView;
+        [SerializeField] private GameObject timelineScrollBarFocusView;
         [SerializeField] private GameObject timelineObject;
+        [SerializeField] private RectTransform timelineRectFullView;
+        [SerializeField] private RectTransform timelineRectFocusView;
         
         [Header("Timeline UI")]
         [SerializeField] private TMP_InputField startTimeInput;
@@ -50,7 +54,6 @@ namespace UI
         private List<TimelineClip> selectedClips;
         private List<TimelineClip> halfSelectedClips;
         private TimelineClip lastSelectedClip;
-        private RectTransform timelineRect;
         private RectTransform timelineAreaRect;
         private RectTransform timelineScrollRect;
         private int amountTimelineBars;
@@ -74,7 +77,12 @@ namespace UI
         private Vector3[] Corners
         {
             get {
-                timelineRect.GetWorldCorners(corners);
+                if (UIManager.isFullView)
+                {
+                    timelineRectFullView.GetWorldCorners(corners);
+                    return corners;
+                }
+                timelineRectFocusView.GetWorldCorners(corners);
                 return corners;
             }
         }
@@ -83,7 +91,6 @@ namespace UI
         private void Awake()
         {
             amountTimelineBars = timelineObject.transform.childCount;
-            timelineRect = timelineObject.GetComponent<RectTransform>();
             timelineScrollRect = timelineScrollBar.GetComponent<RectTransform>();
             minTimelineSize = timelineBarObject.sizeDelta.x;
             maxTimelineSize = minTimelineSize * timelineMaxScaleMultiplier;
@@ -113,6 +120,7 @@ namespace UI
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<bool>.Subscribe(EventType.DRAW, SetTimlinePause);
             EventSystem<bool>.Subscribe(EventType.FINISHED_STROKE, SetTimlinePause);
+            EventSystem<bool>.Subscribe(EventType.VIEW_CHANGED, SwitchedView);
             EventSystem<BrushStrokeID>.Subscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
             EventSystem<TimelineClip>.Subscribe(EventType.ADD_STROKE, AddNewBrushClip);
             EventSystem<TimelineClip, int>.Subscribe(EventType.UPDATE_CLIP, UpdateClip);
@@ -134,6 +142,7 @@ namespace UI
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveClip);
             EventSystem<bool>.Unsubscribe(EventType.DRAW, SetTimlinePause);
             EventSystem<bool>.Unsubscribe(EventType.FINISHED_STROKE, SetTimlinePause);
+            EventSystem<bool>.Unsubscribe(EventType.VIEW_CHANGED, SwitchedView);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.FINISHED_STROKE, AddNewBrushClip);
             EventSystem<TimelineClip>.Unsubscribe(EventType.ADD_STROKE, AddNewBrushClip);
             EventSystem<TimelineClip, int>.Unsubscribe(EventType.UPDATE_CLIP, UpdateClip);
@@ -145,6 +154,17 @@ namespace UI
             EventSystem<float>.Unsubscribe(EventType.RESIZE_TIMELINE, ResizeTimeline);
             EventSystem<List<TimelineClip>>.Unsubscribe(EventType.GROUP_CLIPS, GroupClips);
             EventSystem<List<TimelineClip>>.Unsubscribe(EventType.UNGROUP_CLIPS, UnGroupClips);
+        }
+
+        private void SwitchedView(bool _fullView)
+        {
+            timelineScrollBar.transform.SetParent(_fullView ? timelineScrollBarFullView.transform : timelineScrollBarFocusView.transform);
+            GameObject timelineObjectTemp = _fullView ? timelineScrollBarFullView : timelineScrollBarFocusView;
+            Vector3[] timelineCorners = new Vector3[4];
+            timelineObjectTemp.GetComponent<RectTransform>().GetWorldCorners(timelineCorners);
+            float size = timelineCorners[2].y - timelineCorners[0].y;
+            timelineScrollBar.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size);
+            timelineScrollBar.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
         }
 
         private void Update()
@@ -161,6 +181,39 @@ namespace UI
             {
                 TimelineClipsInput();
             }
+        }
+        
+        private void MoveTimelineIndicator()
+        {
+            if (!UIManager.isInteracting)
+            {
+                if (PlaceTimelineIndicator())
+                    return;
+            }
+            
+            if (ScaleTimeline())
+                return;
+
+            if (shouldTimelinePause)
+            {
+                timeIncrease = Time.timeSinceLevelLoad;
+                return;
+            }
+
+            float valueFlipped = speedSliderTimeline.value.Remap(1, 2, 2, 1);
+            timeIncrease = (Time.timeSinceLevelLoad - timeIncrease) / Mathf.Pow(valueFlipped, 8f);
+            time += timeIncrease;
+            
+            MoveTimelineTimIndicator(time);
+            EventSystem<float>.RaiseEvent(EventType.TIME, time);
+
+            if (time > 1 && !Input.GetMouseButton(0) && !timelinePauseButton)
+            {
+                EventSystem.RaiseEvent(EventType.RESET_TIME);
+                time = 0;
+            }
+            
+            timeIncrease = Time.timeSinceLevelLoad;
         }
 
         private void AddTime(float _addTime)
@@ -199,38 +252,7 @@ namespace UI
                 shouldTimelinePause = _pause;
             }
         }
-        private void MoveTimelineIndicator()
-        {
-            if (!UIManager.isInteracting)
-            {
-                if (PlaceTimelineIndicator())
-                    return;
-            }
-            
-            if (ScaleTimeline())
-                return;
-
-            if (shouldTimelinePause)
-            {
-                timeIncrease = Time.timeSinceLevelLoad;
-                return;
-            }
-
-            float valueFlipped = speedSliderTimeline.value.Remap(1, 2, 2, 1);
-            timeIncrease = (Time.timeSinceLevelLoad - timeIncrease) / Mathf.Pow(valueFlipped, 8f);
-            time += timeIncrease;
-            
-            MoveTimelineTimIndicator(time);
-            EventSystem<float>.RaiseEvent(EventType.TIME, time);
-
-            if (time > 1 && !Input.GetMouseButton(0) && !timelinePauseButton)
-            {
-                EventSystem.RaiseEvent(EventType.RESET_TIME);
-                time = 0;
-            }
-            
-            timeIncrease = Time.timeSinceLevelLoad;
-        }
+        
         private bool PlaceTimelineIndicator()
         {
             if (Input.GetMouseButtonDown(1) && isMouseInsideTimeline)
@@ -242,7 +264,7 @@ namespace UI
                 shouldMoveTimeline = false;
             }
             
-            if (!UIManager.isFullView || !shouldMoveTimeline)
+            if (!shouldMoveTimeline)
                 return false;
             
             var position = timelineScrollRect.position;
@@ -264,7 +286,7 @@ namespace UI
 
         private bool ScaleTimeline()
         {
-            if (isMouseInsideTimeline && Input.mouseScrollDelta.y != 0 && Input.GetKey(KeyCode.LeftShift))
+            if (isMouseInsideTimeline && Input.mouseScrollDelta.y != 0 && Input.GetKey(KeyCode.LeftShift) && UIManager.isFullView)
             {
                 List<Vector2> timelineValues = clipsOrdered.SelectMany(_list => _list.Select(_clip => _clip.ClipTime)).ToList();
                 foreach (var timelineBar in timelineBarObjects)
@@ -362,7 +384,7 @@ namespace UI
                     RectTransform rect = Instantiate(timelineClipObject, timelineBarObject).GetComponent<RectTransform>();
                     RawImage clipImage = rect.GetComponent<RawImage>();
                     clipImage.color = selectedColor;
-                    TimelineClip timelineClipGroup = new TimelineClipGroup(new List<TimelineClip>(selectedClips), rect, timelineBarObject, timelineRect, clipImage);
+                    TimelineClip timelineClipGroup = new TimelineClipGroup(new List<TimelineClip>(selectedClips), rect, timelineBarObject, timelineRectFullView, clipImage);
 
                     RemoveClip(selectedClips);
 
@@ -416,7 +438,7 @@ namespace UI
         {
             RectTransform rect = Instantiate(timelineClipObject, timelineBarObject).GetComponent<RectTransform>();
             RawImage clipImage = rect.GetComponent<RawImage>();
-            TimelineClip timelineClipGroup = new TimelineClipGroup(_clips, rect, timelineBarObject, timelineRect, clipImage);
+            TimelineClip timelineClipGroup = new TimelineClipGroup(_clips, rect, timelineBarObject, timelineRectFullView, clipImage);
             clipImage.color = timelineClipGroup.GetNotSelectedColor();
 
             RemoveClip(_clips);
@@ -727,7 +749,7 @@ namespace UI
             
             //There is no space anywhere create a new one timeline bar
             amountTimelineBars++;
-            RectTransform timelineBar = Instantiate(timelineBarObjects[0], timelineRect);
+            RectTransform timelineBar = Instantiate(timelineBarObjects[0], timelineRectFullView);
             timelineBar.transform.SetAsFirstSibling();
             timelineBarObjects.Add(timelineBar);
             clipsOrdered.Add(new List<TimelineClip>());
@@ -1035,7 +1057,7 @@ namespace UI
                 _brushStrokeID.endTime -= delta;
             }
 
-            TimelineClip timelineClip = new TimelineClipSingle(_brushStrokeID, rect, timelineBarObject, timelineRect, clipImage);
+            TimelineClip timelineClip = new TimelineClipSingle(_brushStrokeID, rect, timelineBarObject, timelineRectFullView, clipImage);
             clipImage.color = timelineClip.GetNotSelectedColor();
             clipsOrdered[0].Add(timelineClip);
             CheckClipCollisions(timelineClip);
@@ -1208,7 +1230,7 @@ namespace UI
             for (int i = 0; i < _data.extraTimelineBars; i++)
             {
                 amountTimelineBars++;
-                RectTransform timelineBar = Instantiate(timelineBarObjects[0], timelineRect);
+                RectTransform timelineBar = Instantiate(timelineBarObjects[0], timelineRectFullView);
                 timelineBar.transform.SetAsFirstSibling();
                 timelineBarObjects.Add(timelineBar);
                 clipsOrdered.Add(new List<TimelineClip>());
@@ -1226,13 +1248,13 @@ namespace UI
                     List<TimelineClip> childClips = new List<TimelineClip>();
                     foreach (var condensedChildClip in condensedClip.childClips)
                     {
-                        TimelineClip childTimelineClip = new TimelineClipSingle(condensedChildClip.brushStrokeIDs[0], timelineBarObject, timelineRect);
+                        TimelineClip childTimelineClip = new TimelineClipSingle(condensedChildClip.brushStrokeIDs[0], timelineBarObject, timelineRectFullView);
                         childTimelineClip.previousBar = condensedChildClip.currentBar;
                         childTimelineClip.currentBar = condensedChildClip.currentBar;
                         childClips.Add(childTimelineClip);
                     }
 
-                    timelineClip = new TimelineClipGroup(childClips, rect, timelineBarObject, timelineRect, clipImage);
+                    timelineClip = new TimelineClipGroup(childClips, rect, timelineBarObject, timelineRectFullView, clipImage);
                     timelineClip.ClipTime = new Vector2(condensedClip.lastTime, condensedClip.currentTime);
                     timelineClip.previousBar = condensedClip.currentBar;
                     timelineClip.SetBar(condensedClip.currentBar);
@@ -1242,7 +1264,7 @@ namespace UI
                     continue;
                 }
 
-                timelineClip = new TimelineClipSingle(condensedClip.brushStrokeIDs[0], rect, timelineBarObject, timelineRect, clipImage);
+                timelineClip = new TimelineClipSingle(condensedClip.brushStrokeIDs[0], rect, timelineBarObject, timelineRectFullView, clipImage);
                 timelineClip.ClipTime = new Vector2(condensedClip.lastTime, condensedClip.currentTime);
                 timelineClip.previousBar = condensedClip.currentBar;
                 timelineClip.SetBar(condensedClip.currentBar);

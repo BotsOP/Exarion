@@ -34,6 +34,12 @@ namespace UI
         [SerializeField] private GameObject focusView;
         [SerializeField] private Image fullViewButton;
         [SerializeField] private Image focusViewButton;
+        [SerializeField] private RectTransform overlayControl;
+        [SerializeField] private RectTransform overlayFullView;
+        [SerializeField] private RectTransform overlayFocusView;
+        [SerializeField] private RectTransform timelineControl;
+        [SerializeField] private RectTransform timelineFullView;
+        [SerializeField] private RectTransform timelineFocusView;
         
         [Header("Select Deselect")]
         [SerializeField] private Color selectedColor;
@@ -196,8 +202,13 @@ namespace UI
             isFullView = true;
             fullViewButton.color = selectedColor;
             focusViewButton.color = backgroundColor;
+            overlayControl.transform.SetParent(overlayFullView.transform);
+            timelineControl.transform.SetParent(timelineFullView.transform);
+            overlayControl.anchoredPosition = Vector3.zero;
+            timelineControl.anchoredPosition = Vector3.zero;
             
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
+            EventSystem<bool>.RaiseEvent(EventType.VIEW_CHANGED, true);
             viewCam.targetTexture = viewFullRT;
             displayCam.targetTexture = displayFullRT;
         
@@ -210,8 +221,13 @@ namespace UI
             isFullView = false;
             fullViewButton.color = backgroundColor;
             focusViewButton.color = selectedColor;
+            overlayControl.transform.SetParent(overlayFocusView.transform);
+            timelineControl.transform.SetParent(timelineFocusView.transform);
+            overlayControl.anchoredPosition = Vector3.zero;
+            timelineControl.anchoredPosition = Vector3.zero;
             
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFocus, rectTransformDisplayFocus);
+            EventSystem<bool>.RaiseEvent(EventType.VIEW_CHANGED, false);
             viewCam.targetTexture = viewFocusRT;
             displayCam.targetTexture = displayFocusRT;
         
