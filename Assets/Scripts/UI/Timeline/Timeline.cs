@@ -207,7 +207,7 @@ namespace UI
             MoveTimelineTimIndicator(time);
             EventSystem<float>.RaiseEvent(EventType.TIME, time);
 
-            if (time > 1 && !Input.GetMouseButton(0) && !timelinePauseButton)
+            if (time > 1 && !timelinePauseButton && !(Input.GetMouseButton(0) && UIManager.IsMouseInsideDrawArea()))
             {
                 EventSystem.RaiseEvent(EventType.RESET_TIME);
                 time = 0;
@@ -270,7 +270,7 @@ namespace UI
             var position = timelineScrollRect.position;
             float mousePosX = Mathf.Clamp(Input.mousePosition.x, Corners[0].x, Corners[2].x);
             timelineScrollRect.position = new Vector3(mousePosX, position.y, position.z);
-            time = Input.mousePosition.x.Remap(Corners[0].x, Corners[2].x, 0, 1);
+            time = mousePosX.Remap(Corners[0].x, Corners[2].x, 0, 1);
             timeIncrease = Time.timeSinceLevelLoad;
             EventSystem<float>.RaiseEvent(EventType.TIME, time);
             return true;
@@ -927,17 +927,32 @@ namespace UI
             {
                 return;
             }
-            
-            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
-            float avgPosX = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.avgPosX).ToList().Average();
-            float input = float.Parse(positionXInput.text);
-            input -= avgPosX;
 
-            Vector2 moveDir = new Vector2(input, 0);
-            EventSystem<Vector2, List<BrushStrokeID>>.RaiseEvent(EventType.MOVE_STROKE, moveDir, brushStrokeIDs);
+            List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            if (UIManager.center)
+            {
+                float avgPosX = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.avgPosX).ToList().Average();
+                float input = float.Parse(positionXInput.text);
+                input -= avgPosX;
+
+                Vector2 moveDir = new Vector2(input, 0);
+                EventSystem<Vector2, List<BrushStrokeID>>.RaiseEvent(EventType.MOVE_STROKE, moveDir, brushStrokeIDs);
             
-            ICommand moveCommand = new MoveCommand(moveDir, brushStrokeIDs);
-            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, moveCommand);
+                ICommand moveCommand = new MoveCommand(moveDir, brushStrokeIDs);
+                EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, moveCommand);
+            }
+            else
+            {
+                float input = float.Parse(positionXInput.text);
+                Vector2 pos = new Vector2(input, -1);
+
+                List<Vector2> moveDirs = brushStrokeIDs.Select(brushStrokeID => brushStrokeID.GetAvgPos()).ToList();
+                ICommand moveCommand = new MoveSetCommand(moveDirs, brushStrokeIDs);
+                EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, moveCommand);
+                
+                EventSystem<List<BrushStrokeID>, Vector2>.RaiseEvent(EventType.MOVE_STROKE, brushStrokeIDs, pos);
+            }
+            
         }
         
         public void SetPosY()
@@ -948,15 +963,30 @@ namespace UI
             }
             
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
-            float avgPosY = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.avgPosY).ToList().Average();
-            float input = float.Parse(positionYInput.text);
-            input -= avgPosY;
+            if (UIManager.center)
+            {
+                float avgPosY = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.avgPosY).ToList().Average();
+                float input = float.Parse(positionYInput.text);
+                input -= avgPosY;
 
-            Vector2 moveDir = new Vector2(0, input);
-            EventSystem<Vector2, List<BrushStrokeID>>.RaiseEvent(EventType.MOVE_STROKE, moveDir, brushStrokeIDs);
+                Vector2 moveDir = new Vector2(0, input);
+                EventSystem<Vector2, List<BrushStrokeID>>.RaiseEvent(EventType.MOVE_STROKE, moveDir, brushStrokeIDs);
             
-            ICommand moveCommand = new MoveCommand(moveDir, brushStrokeIDs);
-            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, moveCommand);
+                ICommand moveCommand = new MoveCommand(moveDir, brushStrokeIDs);
+                EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, moveCommand);
+            }
+            else
+            {
+                float input = float.Parse(positionYInput.text);
+                Vector2 pos = new Vector2(-1, input);
+
+                List<Vector2> moveDirs = brushStrokeIDs.Select(brushStrokeID => brushStrokeID.GetAvgPos()).ToList();
+                ICommand moveCommand = new MoveSetCommand(moveDirs, brushStrokeIDs);
+                EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, moveCommand);
+                
+                EventSystem<List<BrushStrokeID>, Vector2>.RaiseEvent(EventType.MOVE_STROKE, brushStrokeIDs, pos);
+            }
+            
         }
 
         public void SetAngle()
@@ -967,15 +997,28 @@ namespace UI
             }
             
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
-            float avgAngle = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.angle).ToList().Average();
-            float input = float.Parse(rotationInput.text);
-            input *= Mathf.PI / 180;
-            input -= avgAngle;
+            if (UIManager.center)
+            {
+                float avgAngle = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.angle).ToList().Average();
+                float input = float.Parse(rotationInput.text);
+                input *= Mathf.PI / 180;
+                input -= avgAngle;
             
-            EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.ROTATE_STROKE, input, UIManager.center, brushStrokeIDs);
+                EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.ROTATE_STROKE, input, UIManager.center, brushStrokeIDs);
             
-            ICommand rotateCommand = new RotateCommand(input, UIManager.center, brushStrokeIDs);
-            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, rotateCommand);
+                ICommand rotateCommand = new RotateCommand(input, UIManager.center, brushStrokeIDs);
+                EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, rotateCommand);
+            }
+            else
+            {
+                float input = float.Parse(rotationInput.text);
+                input *= Mathf.PI / 180;
+            
+                EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.ROTATE_STROKE, input, UIManager.center, brushStrokeIDs);
+            
+                ICommand rotateCommand = new RotateCommand(input, UIManager.center, brushStrokeIDs);
+                EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, rotateCommand);
+            }
         }
         
         public void SetScale()
@@ -986,14 +1029,26 @@ namespace UI
             }
             
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
-            float avgScale = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.scale).ToList().Average();
-            float input = float.Parse(scaleInput.text);
-            input -= avgScale;
+            if (UIManager.center)
+            {
+                float avgScale = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.scale).ToList().Average();
+                float input = float.Parse(scaleInput.text);
+                input /= avgScale;
             
-            EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.RESIZE_STROKE, input, UIManager.center, brushStrokeIDs);
+                EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.RESIZE_STROKE, input, UIManager.center, brushStrokeIDs);
             
-            ICommand resizeCommand = new ResizeCommand(input, UIManager.center, brushStrokeIDs);
-            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, resizeCommand);
+                ICommand resizeCommand = new ResizeCommand(1 / input, UIManager.center, brushStrokeIDs);
+                EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, resizeCommand);
+            }
+            else
+            {
+                float input = float.Parse(scaleInput.text);
+            
+                EventSystem<List<BrushStrokeID>, float, bool>.RaiseEvent(EventType.RESIZE_STROKE, brushStrokeIDs, input, UIManager.center);
+            
+                ICommand resizeCommand = new ResizeCommand(1 / input, UIManager.center, brushStrokeIDs);
+                EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, resizeCommand);
+            }
         }
         
         public void DrawOrderDown()

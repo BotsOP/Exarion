@@ -123,6 +123,8 @@ namespace UI
                         return;
                     if (SpawnLine(mousePos))
                         return;
+                    if (SpawnSquare(mousePos))
+                        return;
                     if (SpawnPolygon(mousePos))
                         return;
 
@@ -162,6 +164,15 @@ namespace UI
             if (currentToolType == ToolType.Line && Input.GetMouseButtonDown(0))
             {
                 EventSystem<Vector2, int>.RaiseEvent(EventType.SPAWN_STAMP, _mousePos, 2);
+                return true;
+            }
+            return false;
+        }
+        private bool SpawnSquare(Vector2 _mousePos)
+        {
+            if (currentToolType == ToolType.Square && Input.GetMouseButtonDown(0))
+            {
+                EventSystem<Vector2, int>.RaiseEvent(EventType.SPAWN_STAMP, _mousePos, 4);
                 return true;
             }
             return false;

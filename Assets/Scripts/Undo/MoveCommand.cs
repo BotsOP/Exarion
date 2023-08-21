@@ -17,11 +17,6 @@ namespace Undo
             moveDir = _moveDir;
             brushStrokeIDs = _brushStrokeIDs;
         }
-
-        public void Execute()
-        {
-            throw new System.NotImplementedException();
-        }
         public void Undo()
         {
             EventSystem<Vector2, List<BrushStrokeID>>.RaiseEvent(EventType.MOVE_STROKE, -moveDir, brushStrokeIDs);

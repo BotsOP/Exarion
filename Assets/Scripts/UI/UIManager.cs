@@ -57,9 +57,9 @@ namespace UI
         private CustomRenderTexture viewFocusRT;
         private CustomRenderTexture displayFullRT;
         private CustomRenderTexture displayFocusRT;
-        private RectTransform rectTransformViewFull;
+        private static RectTransform rectTransformViewFull;
         private RectTransform rectTransformDisplayFull;
-        private RectTransform rectTransformViewFocus;
+        private static RectTransform rectTransformViewFocus;
         private RectTransform rectTransformDisplayFocus;
         private bool pngToggle;
         private string projectName;
@@ -124,6 +124,21 @@ namespace UI
         private void Start()
         {
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
+        }
+
+        public static bool IsMouseInsideDrawArea()
+        {
+            Vector3[] viewCorners = new Vector3[4];
+            if (isFullView)
+            {
+                rectTransformViewFull.GetWorldCorners(viewCorners);
+            }
+            else
+            {
+                rectTransformViewFocus.GetWorldCorners(viewCorners);
+            }
+            return Input.mousePosition.x > viewCorners[0].x && Input.mousePosition.x < viewCorners[2].x && 
+                   Input.mousePosition.y > viewCorners[0].y && Input.mousePosition.y < viewCorners[2].y;
         }
 
         public void ExportResult()
