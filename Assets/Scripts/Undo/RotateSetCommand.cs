@@ -9,19 +9,18 @@ namespace Undo
 {
     public class RotateSetCommand : ICommand
     {
-        private float rotateAmount;
+        private List<float> rotateAmounts;
         private bool center;
         private List<BrushStrokeID> brushStrokeIDs;
 
-        public RotateSetCommand(float _rotateAmount, bool _center, List<BrushStrokeID> _brushStrokeIDs)
+        public RotateSetCommand(List<BrushStrokeID> _brushStrokeIDs, List<float> _rotateAmounts)
         {
-            rotateAmount = _rotateAmount;
-            center = _center;
+            rotateAmounts = _rotateAmounts;
             brushStrokeIDs = _brushStrokeIDs;
         }
         public void Undo()
         {
-            EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.ROTATE_STROKE, -rotateAmount, center, brushStrokeIDs);
+            EventSystem<List<BrushStrokeID>, List<float>>.RaiseEvent(EventType.ROTATE_STROKE, brushStrokeIDs, rotateAmounts);
         }
         public string GetCommandName()
         {

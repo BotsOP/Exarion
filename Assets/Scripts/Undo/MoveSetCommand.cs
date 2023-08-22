@@ -19,11 +19,7 @@ namespace Undo
         }
         public void Undo()
         {
-            for (int i = 0; i < brushStrokeIDs.Count; i++)
-            {
-                var brushStrokeID = brushStrokeIDs[i];
-                EventSystem<List<BrushStrokeID>, Vector2>.RaiseEvent(EventType.MOVE_STROKE, new List<BrushStrokeID> { brushStrokeID }, moveDirs[i]);
-            }
+            EventSystem<List<BrushStrokeID>, List<Vector2>>.RaiseEvent(EventType.MOVE_STROKE, brushStrokeIDs, moveDirs);
         }
         public string GetCommandName()
         {

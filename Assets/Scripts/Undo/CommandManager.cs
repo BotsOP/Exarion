@@ -30,6 +30,7 @@ namespace Undo
             if(historyStack.Count > 0)
             {
                 historyStack.Pop().Undo();
+                EventSystem.RaiseEvent(EventType.UPDATE_CLIP_INFO);
             }
         }
 

@@ -50,6 +50,15 @@ namespace UI
         [SerializeField] private float timelineScaleSensitivity = 10;
         [SerializeField] private float timelineMaxScaleMultiplier = 20;
         
+        private string startTimeInputCached;
+        private string endTimeInputCached;
+        private string positionXInputCached;
+        private string positionYInputCached;
+        private string rotationInputCached;
+        private string scaleInputCached;
+        private string brushSizeInputCached;
+        private bool centerCached;
+        
         private List<List<TimelineClip>> clipsOrdered;
         private List<TimelineClip> selectedClips;
         private List<TimelineClip> halfSelectedClips;
@@ -97,6 +106,8 @@ namespace UI
 
             notSelectedSingleColors = notSelectedSingleColor;
             notSelectedGroupColors = notSelectedGroupColor;
+
+            centerCached = UIManager.center;
 
             selectedClips = new List<TimelineClip>();
             halfSelectedClips = new List<TimelineClip>();
@@ -177,7 +188,7 @@ namespace UI
 
             MoveTimelineIndicator();
             
-            if (UIManager.isFullView)
+            if (UIManager.isFullView && !UIManager.stopInteracting)
             {
                 TimelineClipsInput();
             }
@@ -635,8 +646,7 @@ namespace UI
                 {
                     var clip = selectedClips[i];
                     if (Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) < 0.001f &&
-                        Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) < 0.001f &&
-                        clip.previousBar == clip.currentBar)
+                        Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) < 0.001f)
                     {
                         continue;
                     }
@@ -856,6 +866,13 @@ namespace UI
                     scaleInput.text = brushStrokeIDs[0].scale.ToString("0.###");
                     brushSizeInput.text = brushStrokeIDs[0].GetAverageBrushSize().ToString("0.#");
                 }
+                startTimeInputCached = startTimeInput.text;
+                endTimeInputCached = endTimeInput.text;
+                positionXInputCached = positionXInput.text;
+                positionYInputCached = positionYInput.text;
+                rotationInputCached = rotationInput.text;
+                scaleInputCached = scaleInput.text;
+                brushSizeInputCached = brushSizeInput.text;
             }
             else
             {
@@ -871,10 +888,12 @@ namespace UI
 
         public void SetStartTime()
         {
-            if (selectedClips.Count == 0)
+            if (selectedClips.Count == 0 || centerCached == UIManager.center && startTimeInput.text == startTimeInputCached || startTimeInput.text == "")
             {
                 return;
             }
+            centerCached = UIManager.center;
+            startTimeInputCached = startTimeInput.text;
             
             float input = float.Parse(startTimeInput.text);
             input = Mathf.Clamp01(input);
@@ -896,10 +915,12 @@ namespace UI
         }
         public void SetEndTime()
         {
-            if (selectedClips.Count == 0)
+            if (selectedClips.Count == 0 || centerCached == UIManager.center && endTimeInput.text == endTimeInputCached || endTimeInput.text == "")
             {
                 return;
             }
+            centerCached = UIManager.center;
+            endTimeInputCached = endTimeInput.text;
             
             float input = float.Parse(endTimeInput.text);
             input = Mathf.Clamp01(input);
@@ -923,10 +944,12 @@ namespace UI
         //Recalculate all the avg values after making changes
         public void SetPosX()
         {
-            if (selectedClips.Count == 0)
+            if (selectedClips.Count == 0 || centerCached == UIManager.center && positionXInput.text == positionXInputCached || positionXInput.text == "")
             {
                 return;
             }
+            centerCached = UIManager.center;
+            positionXInputCached = positionXInput.text;
 
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             if (UIManager.center)
@@ -957,10 +980,12 @@ namespace UI
         
         public void SetPosY()
         {
-            if (selectedClips.Count == 0)
+            if (selectedClips.Count == 0 || centerCached == UIManager.center && positionYInput.text == positionYInputCached || positionYInput.text == "")
             {
                 return;
             }
+            centerCached = UIManager.center;
+            positionYInputCached = positionYInput.text;
             
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             if (UIManager.center)
@@ -991,10 +1016,12 @@ namespace UI
 
         public void SetAngle()
         {
-            if (selectedClips.Count == 0)
+            if (selectedClips.Count == 0 || centerCached == UIManager.center && rotationInput.text == rotationInputCached || rotationInput.text == "")
             {
                 return;
             }
+            centerCached = UIManager.center;
+            rotationInputCached = rotationInput.text;
             
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             if (UIManager.center)
@@ -1011,30 +1038,35 @@ namespace UI
             }
             else
             {
+                List<float> resizeAmounts = brushStrokeIDs.Select(brushStrokeID => brushStrokeID.angle).ToList();
+                ICommand rotateCommand = new RotateSetCommand(brushStrokeIDs, resizeAmounts);
+                EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, rotateCommand);
+                
                 float input = float.Parse(rotationInput.text);
                 input *= Mathf.PI / 180;
-            
-                EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.ROTATE_STROKE, input, UIManager.center, brushStrokeIDs);
-            
-                ICommand rotateCommand = new RotateCommand(input, UIManager.center, brushStrokeIDs);
-                EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, rotateCommand);
+                EventSystem<List<BrushStrokeID>, float>.RaiseEvent(EventType.ROTATE_STROKE, brushStrokeIDs, input);
             }
         }
         
         public void SetScale()
         {
-            if (selectedClips.Count == 0)
+            if (selectedClips.Count == 0 || centerCached == UIManager.center && scaleInput.text == scaleInputCached || scaleInput.text == "")
             {
                 return;
             }
-            
+            centerCached = UIManager.center;
+            scaleInputCached = scaleInput.text;
+
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             if (UIManager.center)
             {
                 float avgScale = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.scale).ToList().Average();
                 float input = float.Parse(scaleInput.text);
-                input /= avgScale;
-            
+                if (avgScale != 0)
+                {
+                    input /= avgScale;
+                }
+
                 EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.RESIZE_STROKE, input, UIManager.center, brushStrokeIDs);
             
                 ICommand resizeCommand = new ResizeCommand(1 / input, UIManager.center, brushStrokeIDs);
@@ -1042,12 +1074,12 @@ namespace UI
             }
             else
             {
-                float input = float.Parse(scaleInput.text);
-            
-                EventSystem<List<BrushStrokeID>, float, bool>.RaiseEvent(EventType.RESIZE_STROKE, brushStrokeIDs, input, UIManager.center);
-            
-                ICommand resizeCommand = new ResizeCommand(1 / input, UIManager.center, brushStrokeIDs);
+                List<float> resizeAmounts = brushStrokeIDs.Select(brushStrokeID => brushStrokeID.scale).ToList();
+                ICommand resizeCommand = new ResizeSetCommand(brushStrokeIDs, resizeAmounts);
                 EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, resizeCommand);
+                
+                float input = float.Parse(scaleInput.text);
+                EventSystem<List<BrushStrokeID>, float>.RaiseEvent(EventType.RESIZE_STROKE, brushStrokeIDs, input);
             }
         }
         
@@ -1057,6 +1089,7 @@ namespace UI
             {
                 return;
             }
+            centerCached = UIManager.center;
             
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             EventSystem<List<BrushStrokeID>, int>.RaiseEvent(EventType.CHANGE_DRAW_ORDER, brushStrokeIDs, 1);
@@ -1071,6 +1104,7 @@ namespace UI
             {
                 return;
             }
+            centerCached = UIManager.center;
             
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             EventSystem<List<BrushStrokeID>, int>.RaiseEvent(EventType.CHANGE_DRAW_ORDER, brushStrokeIDs, -1);
@@ -1081,10 +1115,12 @@ namespace UI
 
         public void ChangeBrushSize()
         {
-            if (selectedClips.Count == 0)
+            if (selectedClips.Count == 0 || brushSizeInput.text == brushSizeInputCached || brushSizeInput.text == "")
             {
                 return;
             }
+            centerCached = UIManager.center;
+            brushSizeInputCached = brushSizeInput.text;
             
             List<BrushStrokeID> brushStrokeIDs = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
             List<float> values = brushStrokeIDs.Select(_brushStrokeID => _brushStrokeID.GetAverageBrushSize()).ToList();
