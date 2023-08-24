@@ -36,7 +36,14 @@ namespace Undo
 
         private void Update()
         {
-            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.C))
+            #if UNITY_EDITOR
+                if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.C))
+                {
+                    Undo();
+                }
+                return;
+            #endif
+            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Z))
             {
                 Undo();
             }

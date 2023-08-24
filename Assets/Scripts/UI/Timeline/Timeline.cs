@@ -645,14 +645,14 @@ namespace UI
                 for (int i = 0; i < selectedClips.Count; i++)
                 {
                     var clip = selectedClips[i];
+                    clip.mouseAction = MouseAction.Nothing;
+                    CheckClipCollisions(clip);
+                    
                     if (Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) < 0.001f &&
                         Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) < 0.001f)
                     {
                         continue;
                     }
-                    
-                    clip.mouseAction = MouseAction.Nothing;
-                    CheckClipCollisions(clip);
 
                     redraws.Add(clip);
                 }
@@ -1214,7 +1214,6 @@ namespace UI
             foreach (var clip in clips)
             {
                 if(!clip.selectedBrushStrokes.Contains(_brushStrokeID)) { clip.selectedBrushStrokes.Add(_brushStrokeID); }
-                Debug.Log($"{clip.GetBrushStrokeIDs().Count} {clip.selectedBrushStrokes.Count}");
                 if (clip.GetBrushStrokeIDs().Count == clip.selectedBrushStrokes.Count)
                 {
                     clip.rawImage.color = selectedColor;

@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DataPersistence;
+using Managers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using EventType = Managers.EventType;
 
 namespace MainMenus
 {
@@ -18,12 +20,30 @@ namespace MainMenus
         [SerializeField] private RectTransform saveSlotContent;
         [SerializeField] private GameObject saveSlotButton;
 
+        private void OnEnable()
+        {
+            EventSystem.Subscribe(EventType.SAVED, SaveTool);
+        }
+
+        private void OnDisable()
+        {
+            EventSystem.Unsubscribe(EventType.SAVED, SaveTool);
+        }
+
+        private void SaveTool()
+        {
+            
+        }
 
         private void Start()
         {
             ActivateMenu();
         }
-        
+
+        public void Quit()
+        {
+            Application.Quit();
+        }
 
         public void OnSaveSlotClicked(SaveSlot _saveSlot)
         {

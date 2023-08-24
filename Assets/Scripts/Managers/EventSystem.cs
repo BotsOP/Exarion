@@ -40,6 +40,7 @@ namespace Managers
         CHANGE_DRAW_ORDER,
         CHANGE_BRUSH_SIZE,
         TIMELINE_PAUSE,
+        SAVED,
     }
 
 

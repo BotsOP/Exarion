@@ -28,10 +28,13 @@ namespace UI
         [SerializeField] private RawImage viewImageFocus;
         [SerializeField] private RawImage displayImageFull;
         [SerializeField] private RawImage displayImageFocus;
+        [SerializeField] private RawImage saveIcon;
+        [SerializeField] private AnimationCurve saveIconCurve;
         [SerializeField] private Camera viewCam;
         [SerializeField] private Camera displayCam;
         [SerializeField] private GameObject fullView;
         [SerializeField] private GameObject focusView;
+        [SerializeField] private GameObject fileMenu;
         [SerializeField] private Image fullViewButton;
         [SerializeField] private Image focusViewButton;
         [SerializeField] private RectTransform overlayControl;
@@ -44,6 +47,10 @@ namespace UI
         [Header("Select Deselect")]
         [SerializeField] private Color selectedColor;
         [SerializeField] private Color backgroundColor;
+        
+        [Header("Select Deselect 2")]
+        [SerializeField] private Color selectedColor2;
+        [SerializeField] private Color backgroundColor2;
         
         [Header("UI input")]
         [SerializeField] private TMP_InputField brushSizeInput;
@@ -64,6 +71,8 @@ namespace UI
         private bool pngToggle;
         private string projectName;
         private bool exportPNG;
+        private bool toggleSave;
+        private float startTime;
 
         private void OnEnable()
         {
@@ -114,16 +123,50 @@ namespace UI
             EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSizeSlider.value);
             EventSystem<float>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<bool>.Subscribe(EventType.IS_INTERACTING, IsInteracting);
+            EventSystem.Subscribe(EventType.SAVED, Saved);
         }
 
         private void OnDisable()
         {
             EventSystem<float>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+            EventSystem<bool>.Unsubscribe(EventType.IS_INTERACTING, IsInteracting);
+            EventSystem.Unsubscribe(EventType.SAVED, Saved);
         }
 
         private void Start()
         {
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
+        }
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                fileMenu.SetActive(!fileMenu.activeSelf);
+            }
+
+            if (toggleSave)
+            {
+                toggleSave = false;
+                startTime = Time.time;
+            }
+            float newTime = Time.time - startTime;
+            if (newTime < 1)
+            {
+                float alpha = saveIconCurve.Evaluate(newTime);
+                Color color = new Color(0.8f, 0.8f, 0.8f, alpha);
+                saveIcon.color = color;
+            }
+
+            if (Input.GetKeyDown(KeyCode.S))
+            {
+                SaveProject();
+            }
+        }
+
+        private void Saved()
+        {
+            toggleSave = true;
         }
 
         public static bool IsMouseInsideDrawArea()
@@ -151,6 +194,7 @@ namespace UI
 
         public void BackToMainMenu()
         {
+            EventSystem.RaiseEvent(EventType.SAVED);
             DataPersistenceManager.instance.SaveTool();
             SceneManager.LoadScene("MainMenu");
         }
@@ -169,14 +213,14 @@ namespace UI
 
         public void PivotButton()
         {
-            centerButton.color = backgroundColor;
-            pivotButton.color = selectedColor;
+            centerButton.color = backgroundColor2;
+            pivotButton.color = selectedColor2;
             center = false;
         }
         public void CenterButton()
         {
-            centerButton.color = selectedColor;
-            pivotButton.color = backgroundColor;
+            centerButton.color = selectedColor2;
+            pivotButton.color = backgroundColor2;
             center = true;
         }
         public void ActivateGameObject(GameObject _gameObject)
@@ -190,10 +234,12 @@ namespace UI
 
         public void SaveProject()
         {
+            EventSystem.RaiseEvent(EventType.SAVED);
             DataPersistenceManager.instance.SaveTool();
         }
         public void SaveExit()
         {
+            EventSystem.RaiseEvent(EventType.SAVED);
             DataPersistenceManager.instance.SaveTool();
             Application.Quit();
         }

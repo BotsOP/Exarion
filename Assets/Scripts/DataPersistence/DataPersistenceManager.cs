@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Managers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using EventType = Managers.EventType;
 
 namespace DataPersistence
 {
@@ -208,6 +210,7 @@ namespace DataPersistence
             {
                 yield return new WaitForSeconds(autoSaveTimeSeconds);
                 SaveTool();
+                EventSystem.RaiseEvent(EventType.SAVED);
                 Debug.Log("Auto Saved Tool");
             }
         }
