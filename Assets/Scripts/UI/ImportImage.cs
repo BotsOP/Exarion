@@ -13,6 +13,8 @@ public class ImportImage : MonoBehaviour, IDataPersistence
     [SerializeField] private Material displayMat;
     [SerializeField] private Slider alphaSlider;
     [SerializeField] private GameObject overlayShowcase;
+    [SerializeField] private GameObject overlaySettings;
+    
     [HideInInspector] public byte[] imgData;
 
     public void OpenFileBrowser()
@@ -26,6 +28,7 @@ public class ImportImage : MonoBehaviour, IDataPersistence
             //Load image from local path with UWR
             StartCoroutine(LoadImage(path));
         });
+        
     }
 
     public void RemoveImage()
@@ -34,6 +37,7 @@ public class ImportImage : MonoBehaviour, IDataPersistence
         overlayMat.SetTexture("_MainTex", null);
         overlayShowcase.SetActive(false);
         displayMat.SetInt("_UseTexture", 0);
+        overlaySettings.SetActive(false);
     }
 
     private IEnumerator LoadImage(string _path)
@@ -54,6 +58,7 @@ public class ImportImage : MonoBehaviour, IDataPersistence
                 displayMat.SetTexture("_OverlayTex", uwrTexture);
                 displayMat.SetInt("_UseTexture", 1);
                 overlayShowcase.SetActive(true);
+                overlaySettings.SetActive(true);
                 imgData = uwrTexture.EncodeToPNG();
             }
         }
@@ -76,6 +81,7 @@ public class ImportImage : MonoBehaviour, IDataPersistence
         Debug.Log(imgData.Length);
         tex.LoadImage(imgData);
         overlayShowcase.SetActive(true);
+        overlaySettings.SetActive(true);
         overlayMat.SetTexture("_MainTex", tex);
         displayMat.SetTexture("_OverlayTex", tex);
         displayMat.SetInt("_UseTexture", 1);

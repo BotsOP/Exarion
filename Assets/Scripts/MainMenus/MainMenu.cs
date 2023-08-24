@@ -1,73 +1,115 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using DataPersistence;
-using MainMenus;
+using Managers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using EventType = Managers.EventType;
 
-public class MainMenu : Menu
+namespace MainMenus
 {
-    [Header("Menu Navigation")]
-    [SerializeField] private SaveSlotsMenu saveSlotsMenu;
-
-    [Header("Menu Buttons")]
-    [SerializeField] private Button newToolButton;
-    [SerializeField] private Button continueToolButton;
-    [SerializeField] private Button loadToolButton;
-
-    public int sceneIndex;
-
-    private void Start() 
+    public class MainMenu : MonoBehaviour
     {
-        DisableButtonsDependingOnData();
-    }
+        [Header("new project")]
+        [SerializeField] private CreationMenu creationMenu;
 
-    private void DisableButtonsDependingOnData() 
-    {
-        if (!DataPersistenceManager.instance.HasGameData()) 
+        [Header("Save slot settings")]
+        [SerializeField] private SaveSlotPopUp saveSlotPopUp;
+        [SerializeField] private RectTransform saveSlotContent;
+        [SerializeField] private GameObject saveSlotButton;
+
+        private void OnEnable()
         {
-            continueToolButton.interactable = false;
-            loadToolButton.interactable = false;
+            EventSystem.Subscribe(EventType.SAVED, SaveTool);
         }
-    }
 
-    public void OnNewGameClicked() 
-    {
-        saveSlotsMenu.ActivateMenu(false);
-        this.DeactivateMenu();
-    }
+        private void OnDisable()
+        {
+            EventSystem.Unsubscribe(EventType.SAVED, SaveTool);
+        }
 
-    public void OnLoadGameClicked() 
-    {
-        saveSlotsMenu.ActivateMenu(true);
-        this.DeactivateMenu();
-    }
+        private void SaveTool()
+        {
+            
+        }
 
-    public void OnContinueGameClicked() 
-    {
-        DisableMenuButtons();
-        // save the game anytime before loading a new scene
-        DataPersistenceManager.instance.SaveTool();
-        // load the next scene - which will in turn load the game because of 
-        // OnSceneLoaded() in the DataPersistenceManager
-        SceneManager.LoadSceneAsync("DrawScene");
-    }
+        private void Start()
+        {
+            ActivateMenu();
+        }
 
-    private void DisableMenuButtons() 
-    {
-        loadToolButton.interactable = false;
-        continueToolButton.interactable = false;
-    }
+        public void Quit()
+        {
+            Application.Quit();
+        }
 
-    public void ActivateMenu() 
-    {
-        this.gameObject.SetActive(true);
-        DisableButtonsDependingOnData();
-    }
+        public void OnSaveSlotClicked(SaveSlot _saveSlot)
+        {
+            saveSlotPopUp.UpdateSaveSlot(_saveSlot);
+        }
 
-    public void DeactivateMenu() 
-    {
-        this.gameObject.SetActive(false);
+        public void ActivateMenu() 
+        {
+            // set this menu to be active
+            gameObject.SetActive(true);
+
+            // load all of the profiles that exist
+            Dictionary<string, ToolData> profilesGameData = DataPersistenceManager.instance.GetAllProfilesToolData();
+
+            List<ToolData> saveSlotData = profilesGameData.Values.ToList();
+            int low = 0;
+            int high = saveSlotData.Count - 1;
+            QuickSort(saveSlotData, low, high);
+
+            saveSlotData.Reverse();
+
+            foreach (var saveSlotInfo in saveSlotData)
+            {
+                GameObject saveSlotObject = Instantiate(saveSlotButton, saveSlotContent);
+                SaveSlot saveSlot = saveSlotObject.GetComponent<SaveSlot>();
+                saveSlot.SetData(saveSlotInfo);
+                saveSlot.mainMenu = this;
+            }
+        }
+        
+        private void QuickSort(List<ToolData> _dateList, int _low, int _high)
+        {
+            if (_low < _high)
+            {
+                int pi = Partition(_dateList, _low, _high);
+
+                QuickSort(_dateList, _low, pi - 1);
+                QuickSort(_dateList, pi + 1, _high);
+            }
+        }
+
+        private int Partition(List<ToolData> _dateList, int low, int high)
+        {
+            long pivot = _dateList[high].lastUpdated;
+            int i = (low - 1);
+
+            for (int j = low; j <= high - 1; j++)
+            {
+                if (_dateList[j].lastUpdated < pivot)
+                {
+                    i++;
+                    Swap(_dateList, i, j);
+                }
+            }
+            Swap(_dateList, i + 1, high);
+            return (i + 1);
+        }
+
+        private void Swap(List<ToolData> _dateList, int i, int j)
+        {
+            (_dateList[i], _dateList[j]) = (_dateList[j], _dateList[i]);
+        }
+
+        public void NewProjectMenu()
+        {
+            creationMenu.ActivateMenu();
+        }
     }
 }

@@ -16,7 +16,6 @@ namespace Drawing
         public BrushStrokeID Circle(Vector2 _middlePos, float _circleRadius, int _indexWhenDrawn, 
             float _brushSize = 50, float _startTime = 0, float _endTime = 0)
         {
-            _middlePos = new Vector2(1024, 1024);
             int amountCircleLines = 360;
             List<BrushStroke> brushStrokes = new List<BrushStroke>();
             
@@ -62,7 +61,6 @@ namespace Drawing
         public BrushStrokeID Square(Vector2 _middlePos, float _squareWidth, int _indexWhenDrawn, 
             float _brushSize = 50, float _startTime = 0, float _endTime = 0)
         {
-            _middlePos = new Vector2(1024, 1024);
             _squareWidth /= 2;
             float collisionBoxX = _middlePos.x - _squareWidth - _brushSize;
             float collisionBoxY = _middlePos.y - _squareWidth - _brushSize;
@@ -94,7 +92,6 @@ namespace Drawing
         public BrushStrokeID Hexagon(Vector2 _middlePos, float _squareWidth, int _indexWhenDrawn, 
             float _brushSize = 50, float _startTime = 0, float _endTime = 0)
         {
-            _middlePos = new Vector2(1024, 1024);
             _squareWidth /= 2;
             float collisionBoxX = _middlePos.x - _squareWidth - _brushSize;
             float collisionBoxY = _middlePos.y - _squareWidth - _brushSize;
@@ -129,6 +126,40 @@ namespace Drawing
             return new BrushStrokeID(brushStrokes, PaintType.PaintUnderEverything, _startTime, 
                 _endTime, collisionBox, _indexWhenDrawn, _middlePos);
         }
+        
+        public BrushStrokeID Polygon(Vector2 _middlePos, int _amountAngles, float _size, int _indexWhenDrawn, 
+            float _brushSize = 50, float _startTime = 0, float _endTime = 0)
+        {
+            _size /= 2;
+            float collisionBoxX = _middlePos.x - _size - _brushSize;
+            float collisionBoxY = _middlePos.y - _size - _brushSize;
+            float collisionBoxZ = _middlePos.x + _size + _brushSize;
+            float collisionBoxW = _middlePos.y + _size + _brushSize;
+            Vector4 collisionBox = new Vector4(collisionBoxX, collisionBoxY, collisionBoxZ, collisionBoxW);
+            
+            List<BrushStroke> brushStrokes = new List<BrushStroke>();
+            
+            float angleStep = 2 * Mathf.PI / _amountAngles;
+            Vector2 lastPos = new Vector2(Mathf.Cos(0), Mathf.Sin(0)) * _size + _middlePos;
+            for (int i = 0; i < _amountAngles; i++)
+            {
+                float angle = i * angleStep;
+                Vector2 localPos = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * _size + _middlePos;
+                BrushStroke brushStroke = new BrushStroke(lastPos, localPos, _brushSize, 0, 0);
+                brushStrokes.Add(brushStroke);
+                lastPos = localPos;
+            }
+
+            {
+                float angle = 0 * angleStep;
+                Vector2 localPos = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * _size + _middlePos;
+                BrushStroke brushStroke = new BrushStroke(lastPos, localPos, _brushSize, 0, 0);
+                brushStrokes.Add(brushStroke);
+            }
+
+            return new BrushStrokeID(brushStrokes, PaintType.PaintUnderEverything, _startTime, 
+                                     _endTime, collisionBox, _indexWhenDrawn, _middlePos);
+        }
 
         public BrushStrokeID GetStamp(string key, Vector2 _middlePos, float _squareWidth, int _indexWhenDrawn, 
             float _brushSize = 50, float _startTime = 0, float _endTime = 0)
@@ -139,14 +170,21 @@ namespace Drawing
                     return Circle(_middlePos, _squareWidth, _indexWhenDrawn, _brushSize, _startTime, _endTime);
                 case "square":
                     return Square(_middlePos, _squareWidth, _indexWhenDrawn, _brushSize, _startTime, _endTime);
+                // case "hexagon":
+                //     return Hexagon(_middlePos, _squareWidth, _indexWhenDrawn, _brushSize, _startTime, _endTime);
                 case "hexagon":
-                    return Hexagon(_middlePos, _squareWidth, _indexWhenDrawn, _brushSize, _startTime, _endTime);
+                    return Polygon(_middlePos, 8, _squareWidth, _indexWhenDrawn, _brushSize, _startTime, _endTime);
                 default:
                     Debug.Log($"failed to find string");
                     return stamps[key];
             }
         }
         
-        
+        public BrushStrokeID GetPolygon(int _sides, Vector2 _middlePos, float _squareWidth, int _indexWhenDrawn, 
+            float _brushSize = 50, float _startTime = 0, float _endTime = 0)
+        {
+            return Polygon(_middlePos, _sides, _squareWidth, _indexWhenDrawn, _brushSize, _startTime, _endTime);
+        }
+
     }
 }

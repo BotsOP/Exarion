@@ -4,8 +4,7 @@
 #pragma kernel PaintOverOwnLine
 #pragma kernel Erase
 
-
-RWTexture2D<float4> _ResultTex;
+RWTexture2D<float> _ResultTex;
 RWTexture2D<int> _IdTex;
 
 float2 _CursorPos;
@@ -40,8 +39,7 @@ float2 ClosestPointOnLine(const float2 lineStart, const float2 lineEnd, const fl
 
 float cubicBezierCircle(float t)
 {
-    float oneMinusT = 1.0 - t;
-    return 3.0 * oneMinusT * oneMinusT * t * 0.0 + t * t * t;
+    return t * t * t;
 }
 
 float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
@@ -122,14 +120,14 @@ void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
     {
         paintColor = _PreviousTimeColor;
 
-        _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+        _ResultTex[paintPos] = paintColor;
         _IdTex[paintPos] = _StrokeID;
         return;
     }
     
     paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPosPlusBrushSize);
 
-    _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+    _ResultTex[paintPos] = paintColor;
     _IdTex[paintPos] = _StrokeID;
 }
 
@@ -162,7 +160,7 @@ void PaintOverOwnLine (uint3 id : SV_DispatchThreadID)
     paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
 
     _IdTex[paintPos] = _StrokeID;
-    _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+    _ResultTex[paintPos] = paintColor;
 }
 
 [numthreads(32,32,1)]
@@ -188,7 +186,7 @@ void PaintOverEverything (uint3 id : SV_DispatchThreadID)
 
     paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
 
-    _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
+    _ResultTex[paintPos] = paintColor;
     _IdTex[paintPos] = _StrokeID;
 }
 
@@ -204,7 +202,7 @@ void Erase (uint3 id : SV_DispatchThreadID)
     if(paintColor <= 0) { return; }
 
     _IdTex[paintPos] = -1;
-    _ResultTex[paintPos] = float4(1, 1, 1, 1);
+    _ResultTex[paintPos] = 250;
 }
 
 

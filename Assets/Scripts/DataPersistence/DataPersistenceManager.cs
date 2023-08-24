@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Managers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using EventType = Managers.EventType;
 
 namespace DataPersistence
 {
@@ -21,7 +23,7 @@ namespace DataPersistence
         [Header("Auto Saving Configuration")]
         [SerializeField] private float autoSaveTimeSeconds = 60f;
 
-        private ToolData toolData;
+        public ToolData toolData;
         private List<IDataPersistence> dataPersistenceObjects = new List<IDataPersistence>();
         private FileDataHandler dataHandler;
 
@@ -89,7 +91,6 @@ namespace DataPersistence
             // load the Tool, which will use that profile, updating our Tool data accordingly
             LoadProject();
         }
-
         public void DeleteProfileData(string _profileID) 
         {
             // delete the data for this profile id
@@ -191,6 +192,13 @@ namespace DataPersistence
             return toolData != null;
         }
 
+        public bool IsProfileIDTaken(string _newProfileID)
+        {
+            Dictionary<string, ToolData> saveslots = dataHandler.LoadAllProfiles();
+            bool isProfileIDTaken = saveslots.ContainsKey(_newProfileID);
+            return isProfileIDTaken;
+        }
+
         public Dictionary<string, ToolData> GetAllProfilesToolData() 
         {
             return dataHandler.LoadAllProfiles();
@@ -202,6 +210,7 @@ namespace DataPersistence
             {
                 yield return new WaitForSeconds(autoSaveTimeSeconds);
                 SaveTool();
+                EventSystem.RaiseEvent(EventType.SAVED);
                 Debug.Log("Auto Saved Tool");
             }
         }

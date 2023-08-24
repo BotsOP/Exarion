@@ -13,6 +13,7 @@ namespace Managers
         STOPPED_SETTING_BRUSH_SIZE,
         REDRAW_STROKE,
         REDRAW_STROKES,
+        REDRAW_ALL,
         REMOVE_STROKE,
         MOVE_STROKE,
         RESIZE_STROKE,
@@ -31,12 +32,21 @@ namespace Managers
         DUPLICATE_STROKE,
         GROUP_CLIPS,
         UNGROUP_CLIPS,
+        CHANGE_MOUSE_ICON,
+        CHANGE_TOOLTYPE,
+        CHANGE_PAINTTYPE,
+        RESIZE_TIMELINE,
+        UPDATE_CLIP_INFO,
+        CHANGE_DRAW_ORDER,
+        CHANGE_BRUSH_SIZE,
+        TIMELINE_PAUSE,
+        SAVED,
     }
 
 
     public static class EventSystem
     {
-        private static Dictionary<EventType, System.Action> eventRegister = new Dictionary<EventType, System.Action>();
+        private static Dictionary<EventType, System.Action> eventRegister = new();
 
         public static void Subscribe(EventType _evt, System.Action _func)
         {

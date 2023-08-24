@@ -10,19 +10,19 @@ namespace Undo
     public class ResizeCommand : ICommand
     {
         private float resizeAmount;
+        private bool center;
         private List<BrushStrokeID> brushStrokeIDs;
-        public ResizeCommand(float _resizeAmount, List<BrushStrokeID> _brushStrokeIDs)
+
+        public ResizeCommand(float _resizeAmount, bool _center, List<BrushStrokeID> _brushStrokeIDs)
         {
             resizeAmount = _resizeAmount;
+            center = _center;
             brushStrokeIDs = _brushStrokeIDs;
         }
-        public void Execute()
-        {
-            throw new System.NotImplementedException();
-        }
+        
         public void Undo()
         {
-            EventSystem<float, List<BrushStrokeID>>.RaiseEvent(EventType.RESIZE_STROKE, resizeAmount, brushStrokeIDs);
+            EventSystem<float, bool, List<BrushStrokeID>>.RaiseEvent(EventType.RESIZE_STROKE, resizeAmount, center, brushStrokeIDs);
         }
         public string GetCommandName()
         {

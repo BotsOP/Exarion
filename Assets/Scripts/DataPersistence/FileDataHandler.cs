@@ -186,16 +186,8 @@ public class FileDataHandler
 
             // load the game data for this profile and put it in the dictionary
             ToolData profileData = Load(profileId);
-            // defensive programming - ensure the profile data isn't null,
-            // because if it is then something went wrong and we should let ourselves know
-            if (profileData != null) 
-            {
-                profileDictionary.Add(profileId, profileData);
-            }
-            else 
-            {
-                Debug.LogError("Tried to load profile but something went wrong. ProfileId: " + profileId);
-            }
+            profileData.projectName = profileId;
+            profileDictionary.Add(profileId, profileData);
         }
 
         return profileDictionary;
@@ -228,7 +220,7 @@ public class FileDataHandler
                 DateTime mostRecentDateTime = DateTime.FromBinary(profilesGameData[mostRecentProfileId].lastUpdated);
                 DateTime newDateTime = DateTime.FromBinary(gameData.lastUpdated);
                 // the greatest DateTime value is the most recent
-                if (newDateTime > mostRecentDateTime) 
+                if (newDateTime > mostRecentDateTime)
                 {
                     mostRecentProfileId = profileId;
                 }

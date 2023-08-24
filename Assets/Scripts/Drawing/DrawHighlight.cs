@@ -81,14 +81,14 @@ namespace Drawing
             ClearHighlight();
             foreach (var brushStroke in _brushStrokeID.brushStrokes)
             {
-                float highlightBrushThickness = Mathf.Clamp(brushStroke.strokeBrushSize / 2, 5, 1024);
+                float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
 
-                Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Paint, highlightBrushThickness);
+                Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
             }
             
             foreach (var brushStroke in _brushStrokeID.brushStrokes)
             {
-                Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Erase, -5);
+                Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, HighlightType.Erase, -5);
             }
         }
         
@@ -99,10 +99,10 @@ namespace Drawing
             {
                 foreach (var brushStroke in brushStrokeID.brushStrokes)
                 {
-                    float highlightBrushThickness = Mathf.Clamp(brushStroke.strokeBrushSize / 2, 5, 1024);
+                    float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
                     highlightBrushThickness = 0;
 
-                    Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Paint, highlightBrushThickness);
+                    Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
                 }
             }
             
@@ -110,9 +110,9 @@ namespace Drawing
             {
                 foreach (var brushStroke in brushStrokeID.brushStrokes)
                 {
-                    float highlightBrushThickness = Mathf.Clamp(brushStroke.strokeBrushSize / 2, 5, 1024);
+                    float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
                     
-                    Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.strokeBrushSize, HighlightType.Erase, -highlightBrushThickness);
+                    Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, HighlightType.Erase, -highlightBrushThickness);
                 }
             }
         }
