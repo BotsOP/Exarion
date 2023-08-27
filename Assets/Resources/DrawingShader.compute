@@ -3,8 +3,10 @@
 #pragma kernel PaintOverEverything
 #pragma kernel PaintOverOwnLine
 #pragma kernel Erase
+#pragma kernel ReverseRtoB
 
 RWTexture2D<float> _ResultTex;
+RWTexture2D<float2> _ResultTexReverse;
 RWTexture2D<int> _IdTex;
 
 float2 _CursorPos;
@@ -203,6 +205,19 @@ void Erase (uint3 id : SV_DispatchThreadID)
 
     _IdTex[paintPos] = -1;
     _ResultTex[paintPos] = 250;
+}
+
+[numthreads(32,32,1)]
+void ReverseRtoB (uint2 id : SV_DispatchThreadID)
+{
+    float2 value = float2(_ResultTex[id].r, _ResultTex[id].r);
+    
+    if(_ResultTex[id].r < 250)
+    {
+        value.g = 1 - _ResultTex[id].r;
+    }
+
+    _ResultTexReverse[id] = value;
 }
 
 

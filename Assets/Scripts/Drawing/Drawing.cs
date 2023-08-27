@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Managers;
+using UI;
 using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -339,6 +340,23 @@ namespace Drawing
                 BrushStrokeID brushStrokeID = brushStrokesID[i];
                 RedrawStrokeOptimized(brushStrokeID, collisionBox);
             }
+        }
+
+        public CustomRenderTexture ReverseRtoB()
+        {
+            CustomRenderTexture tempRT = new CustomRenderTexture(UIManager.imageWidth, UIManager.imageHeight, RenderTextureFormat.RG32, RenderTextureReadWrite.Linear)
+            {
+                filterMode = FilterMode.Point,
+                enableRandomWrite = true,
+                name = "rt",
+            };
+
+            int kernelReverse = paintShader.FindKernel("ReverseRtoB");
+            
+            paintShader.SetTexture(kernelReverse, "_ResultTexReverse", tempRT);
+            paintShader.SetTexture(kernelReverse, "_ResultTex", rt);
+            paintShader.Dispatch(kernelReverse, Mathf.CeilToInt(UIManager.imageWidth / 32f), Mathf.CeilToInt(UIManager.imageHeight / 32f), 1);
+            return tempRT;
         }
 
         private Vector4 CombineCollisionBox(Vector4[] collisionBoxes)

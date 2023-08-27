@@ -1009,6 +1009,10 @@ namespace Drawing
             
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
         }
+        public CustomRenderTexture ReverseRtoB()
+        {
+            return drawer.ReverseRtoB();
+        }
         public void LoadData(ToolData _data)
         {
             imageWidth = _data.imageWidth;
