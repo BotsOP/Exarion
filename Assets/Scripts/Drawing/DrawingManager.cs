@@ -217,6 +217,14 @@ namespace Drawing
         void Update()
         {
             cachedTime = time;
+
+            if (Input.GetKeyDown(KeyCode.J) && selectedBrushStrokes.Count > 0)
+            {
+                foreach (var brushStrokeID in selectedBrushStrokes)
+                {
+                    drawer.ReverseBrushStroke(brushStrokeID);
+                }
+            }
         }
 
         private void StoppedDrawing()
@@ -281,7 +289,7 @@ namespace Drawing
         {
             foreach (BrushStroke brushStroke in _brushStrokeID.brushStrokes)
             {
-                drawer.Draw(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, PaintType.Erase);
+                drawer.Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, PaintType.Erase);
             }
 
             selectedBrushStrokes.Remove(_brushStrokeID);
@@ -297,7 +305,7 @@ namespace Drawing
             {
                 foreach (var brushStroke in brushStrokeID.brushStrokes)
                 {
-                    drawer.Draw(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, PaintType.Erase);
+                    drawer.Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, PaintType.Erase);
                 }
 
                 selectedBrushStrokes.Remove(brushStrokeID);
@@ -421,10 +429,10 @@ namespace Drawing
                 for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[i];
-                    brushStroke.lastPosX += _dir.x;
-                    brushStroke.lastPosY += _dir.y;
-                    brushStroke.currentPosX += _dir.x;
-                    brushStroke.currentPosY += _dir.y;
+                    brushStroke.startPosX += _dir.x;
+                    brushStroke.startPosY += _dir.y;
+                    brushStroke.endPosX += _dir.x;
+                    brushStroke.endPosY += _dir.y;
                     brushStrokeID.brushStrokes[i] = brushStroke;
                 }
                 brushStrokeID.avgPosX += _dir.x;
@@ -450,10 +458,10 @@ namespace Drawing
                 for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[i];
-                    brushStroke.lastPosX += _dir.x;
-                    brushStroke.lastPosY += _dir.y;
-                    brushStroke.currentPosX += _dir.x;
-                    brushStroke.currentPosY += _dir.y;
+                    brushStroke.startPosX += _dir.x;
+                    brushStroke.startPosY += _dir.y;
+                    brushStroke.endPosX += _dir.x;
+                    brushStroke.endPosY += _dir.y;
                     brushStrokeID.brushStrokes[i] = brushStroke;
                 }
                 brushStrokeID.avgPosX += _dir.x;
@@ -485,10 +493,10 @@ namespace Drawing
                 for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[i];
-                    brushStroke.lastPosX += dir.x;
-                    brushStroke.lastPosY += dir.y;
-                    brushStroke.currentPosX += dir.x;
-                    brushStroke.currentPosY += dir.y;
+                    brushStroke.startPosX += dir.x;
+                    brushStroke.startPosY += dir.y;
+                    brushStroke.endPosX += dir.x;
+                    brushStroke.endPosY += dir.y;
                     brushStrokeID.brushStrokes[i] = brushStroke;
                 }
                 
@@ -523,10 +531,10 @@ namespace Drawing
                 for (int j = 0; j < brushStrokeID.brushStrokes.Count; j++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[j];
-                    brushStroke.lastPosX += dir.x;
-                    brushStroke.lastPosY += dir.y;
-                    brushStroke.currentPosX += dir.x;
-                    brushStroke.currentPosY += dir.y;
+                    brushStroke.startPosX += dir.x;
+                    brushStroke.startPosY += dir.y;
+                    brushStroke.endPosX += dir.x;
+                    brushStroke.endPosY += dir.y;
                     brushStrokeID.brushStrokes[j] = brushStroke;
                 }
 
@@ -581,8 +589,8 @@ namespace Drawing
                 for (int j = 0; j < brushStrokeID.brushStrokes.Count; j++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[j];
-                    Vector2 lastPos = brushStroke.GetLastPos();
-                    Vector2 currentPos = brushStroke.GetCurrentPos();
+                    Vector2 lastPos = brushStroke.GetStartPos();
+                    Vector2 currentPos = brushStroke.GetEndPos();
                     Vector2 lastPosDir = (lastPos - allAvgPos);
                     Vector2 currentPosDir = (currentPos - allAvgPos);
 
@@ -598,10 +606,10 @@ namespace Drawing
                     Vector2 lastPosRotated = new Vector2(lastPosRotatedX, lastPosRotatedY) + allAvgPos;
                     Vector2 currentPosRotated = new Vector2(currentPosRotatedX, currentPosRotatedY) + allAvgPos;
 
-                    brushStroke.lastPosX = lastPosRotated.x;
-                    brushStroke.lastPosY = lastPosRotated.y;
-                    brushStroke.currentPosX = currentPosRotated.x;
-                    brushStroke.currentPosY = currentPosRotated.y;
+                    brushStroke.startPosX = lastPosRotated.x;
+                    brushStroke.startPosY = lastPosRotated.y;
+                    brushStroke.endPosX = currentPosRotated.x;
+                    brushStroke.endPosY = currentPosRotated.y;
                     brushStrokeID.brushStrokes[j] = brushStroke;
                 }
                 brushStrokeID.RecalculateCollisionBoxAndAvgPos();
@@ -638,8 +646,8 @@ namespace Drawing
                 for (int j = 0; j < brushStrokeID.brushStrokes.Count; j++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[j];
-                    Vector2 lastPos = brushStroke.GetLastPos();
-                    Vector2 currentPos = brushStroke.GetCurrentPos();
+                    Vector2 lastPos = brushStroke.GetStartPos();
+                    Vector2 currentPos = brushStroke.GetEndPos();
                     Vector2 lastPosDir = (lastPos - allAvgPos);
                     Vector2 currentPosDir = (currentPos - allAvgPos);
 
@@ -655,10 +663,10 @@ namespace Drawing
                     Vector2 lastPosRotated = new Vector2(lastPosRotatedX, lastPosRotatedY) + allAvgPos;
                     Vector2 currentPosRotated = new Vector2(currentPosRotatedX, currentPosRotatedY) + allAvgPos;
 
-                    brushStroke.lastPosX = lastPosRotated.x;
-                    brushStroke.lastPosY = lastPosRotated.y;
-                    brushStroke.currentPosX = currentPosRotated.x;
-                    brushStroke.currentPosY = currentPosRotated.y;
+                    brushStroke.startPosX = lastPosRotated.x;
+                    brushStroke.startPosY = lastPosRotated.y;
+                    brushStroke.endPosX = currentPosRotated.x;
+                    brushStroke.endPosY = currentPosRotated.y;
                     brushStrokeID.brushStrokes[j] = brushStroke;
                 }
                 brushStrokeID.RecalculateCollisionBoxAndAvgPos();
@@ -679,8 +687,8 @@ namespace Drawing
                 for (int j = 0; j < brushStrokeID.brushStrokes.Count; j++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[j];
-                    Vector2 lastPos = brushStroke.GetLastPos();
-                    Vector2 currentPos = brushStroke.GetCurrentPos();
+                    Vector2 lastPos = brushStroke.GetStartPos();
+                    Vector2 currentPos = brushStroke.GetEndPos();
                     Vector2 lastPosDir = (lastPos - allAvgPos);
                     Vector2 currentPosDir = (currentPos - allAvgPos);
 
@@ -696,10 +704,10 @@ namespace Drawing
                     Vector2 lastPosRotated = new Vector2(lastPosRotatedX, lastPosRotatedY) + allAvgPos;
                     Vector2 currentPosRotated = new Vector2(currentPosRotatedX, currentPosRotatedY) + allAvgPos;
 
-                    brushStroke.lastPosX = lastPosRotated.x;
-                    brushStroke.lastPosY = lastPosRotated.y;
-                    brushStroke.currentPosX = currentPosRotated.x;
-                    brushStroke.currentPosY = currentPosRotated.y;
+                    brushStroke.startPosX = lastPosRotated.x;
+                    brushStroke.startPosY = lastPosRotated.y;
+                    brushStroke.endPosX = currentPosRotated.x;
+                    brushStroke.endPosY = currentPosRotated.y;
                     brushStrokeID.brushStrokes[j] = brushStroke;
                 }
                 brushStrokeID.RecalculateCollisionBoxAndAvgPos();
@@ -721,8 +729,8 @@ namespace Drawing
                 for (int j = 0; j < brushStrokeID.brushStrokes.Count; j++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[j];
-                    Vector2 lastPos = brushStroke.GetLastPos();
-                    Vector2 currentPos = brushStroke.GetCurrentPos();
+                    Vector2 lastPos = brushStroke.GetStartPos();
+                    Vector2 currentPos = brushStroke.GetEndPos();
                     Vector2 lastPosDir = (lastPos - allAvgPos);
                     Vector2 currentPosDir = (currentPos - allAvgPos);
 
@@ -738,10 +746,10 @@ namespace Drawing
                     Vector2 lastPosRotated = new Vector2(lastPosRotatedX, lastPosRotatedY) + allAvgPos;
                     Vector2 currentPosRotated = new Vector2(currentPosRotatedX, currentPosRotatedY) + allAvgPos;
 
-                    brushStroke.lastPosX = lastPosRotated.x;
-                    brushStroke.lastPosY = lastPosRotated.y;
-                    brushStroke.currentPosX = currentPosRotated.x;
-                    brushStroke.currentPosY = currentPosRotated.y;
+                    brushStroke.startPosX = lastPosRotated.x;
+                    brushStroke.startPosY = lastPosRotated.y;
+                    brushStroke.endPosX = currentPosRotated.x;
+                    brushStroke.endPosY = currentPosRotated.y;
                     brushStrokeID.brushStrokes[j] = brushStroke;
                 }
                 brushStrokeID.RecalculateCollisionBoxAndAvgPos();
@@ -788,17 +796,17 @@ namespace Drawing
                 for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[i];
-                    Vector2 lastPos = brushStroke.GetLastPos();
-                    Vector2 currentPos = brushStroke.GetCurrentPos();
+                    Vector2 lastPos = brushStroke.GetStartPos();
+                    Vector2 currentPos = brushStroke.GetEndPos();
                     Vector2 lastPosDir = (lastPos - allAvgPos);
                     Vector2 currentPosDir = (currentPos - allAvgPos);
                     lastPos = allAvgPos + lastPosDir * _sizeIncrease;
                     currentPos = allAvgPos + currentPosDir * _sizeIncrease;
                     
-                    brushStroke.lastPosX = lastPos.x;
-                    brushStroke.lastPosY = lastPos.y;
-                    brushStroke.currentPosX = currentPos.x;
-                    brushStroke.currentPosY = currentPos.y;
+                    brushStroke.startPosX = lastPos.x;
+                    brushStroke.startPosY = lastPos.y;
+                    brushStroke.endPosX = currentPos.x;
+                    brushStroke.endPosY = currentPos.y;
                     brushStrokeID.brushStrokes[i] = brushStroke;
                 }
                 brushStrokeID.RecalculateCollisionBoxAndAvgPos();
@@ -834,17 +842,17 @@ namespace Drawing
                 for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[i];
-                    Vector2 lastPos = brushStroke.GetLastPos();
-                    Vector2 currentPos = brushStroke.GetCurrentPos();
+                    Vector2 lastPos = brushStroke.GetStartPos();
+                    Vector2 currentPos = brushStroke.GetEndPos();
                     Vector2 lastPosDir = (lastPos - allAvgPos);
                     Vector2 currentPosDir = (currentPos - allAvgPos);
                     lastPos = allAvgPos + lastPosDir * _sizeIncrease;
                     currentPos = allAvgPos + currentPosDir * _sizeIncrease;
                     
-                    brushStroke.lastPosX = lastPos.x;
-                    brushStroke.lastPosY = lastPos.y;
-                    brushStroke.currentPosX = currentPos.x;
-                    brushStroke.currentPosY = currentPos.y;
+                    brushStroke.startPosX = lastPos.x;
+                    brushStroke.startPosY = lastPos.y;
+                    brushStroke.endPosX = currentPos.x;
+                    brushStroke.endPosY = currentPos.y;
                     brushStrokeID.brushStrokes[i] = brushStroke;
                 }
                 brushStrokeID.RecalculateCollisionBoxAndAvgPos();
@@ -865,17 +873,17 @@ namespace Drawing
                 for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[i];
-                    Vector2 lastPos = brushStroke.GetLastPos();
-                    Vector2 currentPos = brushStroke.GetCurrentPos();
+                    Vector2 lastPos = brushStroke.GetStartPos();
+                    Vector2 currentPos = brushStroke.GetEndPos();
                     Vector2 lastPosDir = (lastPos - allAvgPos);
                     Vector2 currentPosDir = (currentPos - allAvgPos);
                     lastPos = allAvgPos + lastPosDir * sizeIncrease;
                     currentPos = allAvgPos + currentPosDir * sizeIncrease;
                     
-                    brushStroke.lastPosX = lastPos.x;
-                    brushStroke.lastPosY = lastPos.y;
-                    brushStroke.currentPosX = currentPos.x;
-                    brushStroke.currentPosY = currentPos.y;
+                    brushStroke.startPosX = lastPos.x;
+                    brushStroke.startPosY = lastPos.y;
+                    brushStroke.endPosX = currentPos.x;
+                    brushStroke.endPosY = currentPos.y;
                     brushStrokeID.brushStrokes[i] = brushStroke;
                 }
                 brushStrokeID.RecalculateCollisionBoxAndAvgPos();
@@ -897,17 +905,17 @@ namespace Drawing
                 for (int j = 0; j < brushStrokeID.brushStrokes.Count; j++)
                 {
                     var brushStroke = brushStrokeID.brushStrokes[j];
-                    Vector2 lastPos = brushStroke.GetLastPos();
-                    Vector2 currentPos = brushStroke.GetCurrentPos();
+                    Vector2 lastPos = brushStroke.GetStartPos();
+                    Vector2 currentPos = brushStroke.GetEndPos();
                     Vector2 lastPosDir = (lastPos - allAvgPos);
                     Vector2 currentPosDir = (currentPos - allAvgPos);
                     lastPos = allAvgPos + lastPosDir * sizeIncrease;
                     currentPos = allAvgPos + currentPosDir * sizeIncrease;
 
-                    brushStroke.lastPosX = lastPos.x;
-                    brushStroke.lastPosY = lastPos.y;
-                    brushStroke.currentPosX = currentPos.x;
-                    brushStroke.currentPosY = currentPos.y;
+                    brushStroke.startPosX = lastPos.x;
+                    brushStroke.startPosY = lastPos.y;
+                    brushStroke.endPosX = currentPos.x;
+                    brushStroke.endPosY = currentPos.y;
                     brushStrokeID.brushStrokes[j] = brushStroke;
                 }
                 brushStrokeID.RecalculateCollisionBoxAndAvgPos();
@@ -1009,10 +1017,7 @@ namespace Drawing
             
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
         }
-        public CustomRenderTexture ReverseRtoB()
-        {
-            return drawer.ReverseRtoB();
-        }
+
         public void LoadData(ToolData _data)
         {
             imageWidth = _data.imageWidth;

@@ -189,7 +189,7 @@ namespace UI
             string path = StandaloneFileBrowser.SaveFilePanel("Save File", "", projectName, pngToggle ? "png" : "exr");
             DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
             //byte[] bytes = pngToggle ? drawingManager.drawer.rt.ToBytesPNG() : drawingManager.drawer.rt.ToBytesEXR();
-            byte[] bytes = pngToggle ? drawingManager.ReverseRtoB().ToBytesPNG() : drawingManager.ReverseRtoB().ToBytesEXR();
+            byte[] bytes = pngToggle ? drawingManager.drawer.ReverseRtoB().ToBytesPNG() : drawingManager.drawer.ReverseRtoB().ToBytesEXR();
             File.WriteAllBytes(path, bytes);
         }
 

@@ -71,7 +71,7 @@ namespace Drawing
             for (var i = 1; i < brushStrokes.Count; i++)
             {
                 var brushStroke = brushStrokes[i];
-                avgPos += brushStroke.GetCurrentPos();
+                avgPos += brushStroke.GetEndPos();
             }
 
             avgPos /= brushStrokes.Count - 1;
@@ -85,15 +85,15 @@ namespace Drawing
             
             foreach (var brushStroke in brushStrokes)
             {
-                if (collisionBox.x > brushStroke.currentPosX - brushStroke.brushSize) { collisionBox.x = brushStroke.currentPosX - brushStroke.brushSize; }
-                if (collisionBox.y > brushStroke.currentPosY - brushStroke.brushSize) { collisionBox.y = brushStroke.currentPosY - brushStroke.brushSize; }
-                if (collisionBox.z < brushStroke.currentPosX + brushStroke.brushSize) { collisionBox.z = brushStroke.currentPosX + brushStroke.brushSize; }
-                if (collisionBox.w < brushStroke.currentPosY + brushStroke.brushSize) { collisionBox.w = brushStroke.currentPosY + brushStroke.brushSize; }
+                if (collisionBox.x > brushStroke.endPosX - brushStroke.brushSize) { collisionBox.x = brushStroke.endPosX - brushStroke.brushSize; }
+                if (collisionBox.y > brushStroke.endPosY - brushStroke.brushSize) { collisionBox.y = brushStroke.endPosY - brushStroke.brushSize; }
+                if (collisionBox.z < brushStroke.endPosX + brushStroke.brushSize) { collisionBox.z = brushStroke.endPosX + brushStroke.brushSize; }
+                if (collisionBox.w < brushStroke.endPosY + brushStroke.brushSize) { collisionBox.w = brushStroke.endPosY + brushStroke.brushSize; }
                 
-                if (collisionBox.x > brushStroke.lastPosX - brushStroke.brushSize) { collisionBox.x = brushStroke.lastPosX - brushStroke.brushSize; }
-                if (collisionBox.y > brushStroke.lastPosY - brushStroke.brushSize) { collisionBox.y = brushStroke.lastPosY - brushStroke.brushSize; }
-                if (collisionBox.z < brushStroke.lastPosX + brushStroke.brushSize) { collisionBox.z = brushStroke.lastPosX + brushStroke.brushSize; }
-                if (collisionBox.w < brushStroke.lastPosY + brushStroke.brushSize) { collisionBox.w = brushStroke.lastPosY + brushStroke.brushSize; }
+                if (collisionBox.x > brushStroke.startPosX - brushStroke.brushSize) { collisionBox.x = brushStroke.startPosX - brushStroke.brushSize; }
+                if (collisionBox.y > brushStroke.startPosY - brushStroke.brushSize) { collisionBox.y = brushStroke.startPosY - brushStroke.brushSize; }
+                if (collisionBox.z < brushStroke.startPosX + brushStroke.brushSize) { collisionBox.z = brushStroke.startPosX + brushStroke.brushSize; }
+                if (collisionBox.w < brushStroke.startPosY + brushStroke.brushSize) { collisionBox.w = brushStroke.startPosY + brushStroke.brushSize; }
             }
             
             collisionBoxX = collisionBox.x;
@@ -109,20 +109,20 @@ namespace Drawing
 
             foreach (var brushStroke in brushStrokes)
             {
-                if (collisionBox.x > brushStroke.currentPosX - brushStroke.brushSize) { collisionBox.x = brushStroke.currentPosX - brushStroke.brushSize; }
-                if (collisionBox.y > brushStroke.currentPosY - brushStroke.brushSize) { collisionBox.y = brushStroke.currentPosY - brushStroke.brushSize; }
-                if (collisionBox.z < brushStroke.currentPosX + brushStroke.brushSize) { collisionBox.z = brushStroke.currentPosX + brushStroke.brushSize; }
-                if (collisionBox.w < brushStroke.currentPosY + brushStroke.brushSize) { collisionBox.w = brushStroke.currentPosY + brushStroke.brushSize; }
+                if (collisionBox.x > brushStroke.endPosX - brushStroke.brushSize) { collisionBox.x = brushStroke.endPosX - brushStroke.brushSize; }
+                if (collisionBox.y > brushStroke.endPosY - brushStroke.brushSize) { collisionBox.y = brushStroke.endPosY - brushStroke.brushSize; }
+                if (collisionBox.z < brushStroke.endPosX + brushStroke.brushSize) { collisionBox.z = brushStroke.endPosX + brushStroke.brushSize; }
+                if (collisionBox.w < brushStroke.endPosY + brushStroke.brushSize) { collisionBox.w = brushStroke.endPosY + brushStroke.brushSize; }
                 
-                if (collisionBox.x > brushStroke.lastPosX - brushStroke.brushSize) { collisionBox.x = brushStroke.lastPosX - brushStroke.brushSize; }
-                if (collisionBox.y > brushStroke.lastPosY - brushStroke.brushSize) { collisionBox.y = brushStroke.lastPosY - brushStroke.brushSize; }
-                if (collisionBox.z < brushStroke.lastPosX + brushStroke.brushSize) { collisionBox.z = brushStroke.lastPosX + brushStroke.brushSize; }
-                if (collisionBox.w < brushStroke.lastPosY + brushStroke.brushSize) { collisionBox.w = brushStroke.lastPosY + brushStroke.brushSize; }
+                if (collisionBox.x > brushStroke.startPosX - brushStroke.brushSize) { collisionBox.x = brushStroke.startPosX - brushStroke.brushSize; }
+                if (collisionBox.y > brushStroke.startPosY - brushStroke.brushSize) { collisionBox.y = brushStroke.startPosY - brushStroke.brushSize; }
+                if (collisionBox.z < brushStroke.startPosX + brushStroke.brushSize) { collisionBox.z = brushStroke.startPosX + brushStroke.brushSize; }
+                if (collisionBox.w < brushStroke.startPosY + brushStroke.brushSize) { collisionBox.w = brushStroke.startPosY + brushStroke.brushSize; }
                 
-                if(brushStroke.GetLastPos() == brushStroke.GetCurrentPos())
+                if(brushStroke.GetStartPos() == brushStroke.GetEndPos())
                     continue;
                 
-                avgPos += brushStroke.GetCurrentPos();
+                avgPos += brushStroke.GetEndPos();
             }
             
             collisionBoxX = collisionBox.x;
@@ -154,49 +154,71 @@ namespace Drawing
                 brushStrokes[i] = brushStroke;
             }
         }
+
+        public void Reverse()
+        {
+            brushStrokes.RemoveAt(0);
+            brushStrokes.Add(brushStrokes[^1]);
+            brushStrokes.Reverse();
+
+            for (int i = 0; i < brushStrokes.Count; i++)
+            {
+                var brushStroke = brushStrokes[i];
+                float newStartTime = brushStroke.endTime;
+                float newEndTime = brushStroke.startTime;
+                Vector2 newStartPos = brushStroke.GetEndPos();
+                Vector2 newEndPos = brushStroke.GetStartPos();
+                
+                brushStroke.startTime = newStartTime;
+                brushStroke.endTime = newEndTime;
+
+                brushStroke.startPosX = newStartPos.x;
+                brushStroke.startPosY = newStartPos.y;
+                brushStroke.endPosX = newEndPos.x;
+                brushStroke.endPosY = newEndPos.y;
+            
+                brushStrokes[i] = brushStroke;
+            }
+
+            BrushStroke startBrushStroke = brushStrokes[0];
+            startBrushStroke.endPosX = startBrushStroke.startPosX;
+            startBrushStroke.endPosY = startBrushStroke.startPosY;
+            brushStrokes[0] = startBrushStroke;
+        }
     }
 
     public struct BrushStroke
     {
-        public float lastPosX;
-        public float lastPosY;
-        public float currentPosX;
-        public float currentPosY;
+        public float startPosX;
+        public float startPosY;
+        public float endPosX;
+        public float endPosY;
         public float brushSize;
         public float endTime;
         public float startTime;
 
         public BrushStroke(Vector2 _lastPos, Vector2 _currentPos, float _brushSize, float _endTime, float _startTime)
         {
-            lastPosX = _lastPos.x;
-            lastPosY = _lastPos.y;
-            currentPosX = _currentPos.x;
-            currentPosY = _currentPos.y;
+            startPosX = _lastPos.x;
+            startPosY = _lastPos.y;
+            endPosX = _currentPos.x;
+            endPosY = _currentPos.y;
             brushSize = _brushSize;
             endTime = _endTime;
             startTime = _startTime;
         }
 
-        public Vector2 GetLastPos()
-        {
-            return new Vector2(lastPosX, lastPosY);
-        }
-        public Vector2 GetCurrentPos()
-        {
-            return new Vector2(currentPosX, currentPosY);
-        }
-        public Vector4 GetCollisionBox()
-        {
-            return new Vector4(lastPosX, lastPosY, currentPosX, currentPosY);
-        }
-        
         public Vector2 GetStartPos()
         {
-            return new Vector2(lastPosX, lastPosY);
+            return new Vector2(startPosX, startPosY);
         }
         public Vector2 GetEndPos()
         {
-            return new Vector2(currentPosX, currentPosY);
+            return new Vector2(endPosX, endPosY);
+        }
+        public Vector4 GetCollisionBox()
+        {
+            return new Vector4(startPosX, startPosY, endPosX, endPosY);
         }
     }
 }

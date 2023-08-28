@@ -83,12 +83,12 @@ namespace Drawing
             {
                 float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
 
-                Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
+                Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
             }
             
             foreach (var brushStroke in _brushStrokeID.brushStrokes)
             {
-                Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, HighlightType.Erase, -5);
+                Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Erase, -5);
             }
         }
         
@@ -102,7 +102,7 @@ namespace Drawing
                     float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
                     highlightBrushThickness = 0;
 
-                    Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
+                    Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
                 }
             }
             
@@ -112,7 +112,7 @@ namespace Drawing
                 {
                     float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
                     
-                    Highlight(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, HighlightType.Erase, -highlightBrushThickness);
+                    Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Erase, -highlightBrushThickness);
                 }
             }
         }
