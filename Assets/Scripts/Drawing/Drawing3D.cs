@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,20 +8,9 @@ using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-
-public enum PaintType
-{
-    PaintUnderOwnLine,
-    PaintUnderEverything,
-    PaintOverOwnLine,
-    PaintOverEverything,
-    Erase
-}
-
-
 namespace Drawing
 {
-    public class Drawing
+    public class Drawing3D
     {
         public readonly CustomRenderTexture rt;
         public readonly CustomRenderTexture rtID;
@@ -42,7 +31,7 @@ namespace Drawing
         {
             return Random.Range(1, 2147483647);
         }
-        public Drawing(int _imageWidth, int _imageHeight)
+        public Drawing3D(int _imageWidth, int _imageHeight)
         {
             paintShader = Resources.Load<ComputeShader>("DrawingShader");
 
