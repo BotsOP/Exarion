@@ -157,6 +157,11 @@ namespace Drawing
 
         public void Reverse()
         {
+            if (brushStrokes.Count < 2)
+            {
+                return;
+            }
+            
             brushStrokes.RemoveAt(0);
             brushStrokes.Add(brushStrokes[^1]);
             brushStrokes.Reverse();
