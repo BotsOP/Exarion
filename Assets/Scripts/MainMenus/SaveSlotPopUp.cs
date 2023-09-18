@@ -48,7 +48,8 @@ public class SaveSlotPopUp : MonoBehaviour
     public void LoadProject()
     {
         DataPersistenceManager.instance.SaveTool();
-        SceneManager.LoadSceneAsync("DrawScene");
+        //SceneManager.LoadSceneAsync("DrawScene");
+        SceneManager.LoadSceneAsync("3DDrawScene");
     }
 
     public void Delete()

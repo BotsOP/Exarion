@@ -73,7 +73,7 @@ void PaintUnderOwnLine (uint3 id : SV_DispatchThreadID)
         return;
     }
 
-    if(distance(paintPos, _LastCursorPos) < _BrushSize + 1)
+    if(distance(paintPos, _LastCursorPos) < _BrushSize)
     {
         float2 AtoB = _CursorPos - _LastCursorPos;
         float2 paintPosToA = _LastCursorPos - paintPos;

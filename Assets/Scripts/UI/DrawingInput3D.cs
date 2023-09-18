@@ -94,7 +94,7 @@ namespace UI
                 StopDrawing();
                 
                 RaycastHit hit;
-                if (Physics.Raycast(ray, out hit)) 
+                if (Physics.Raycast(ray, out hit) && Input.GetMouseButton(0)) 
                 {
                     EventSystem<Vector3>.RaiseEvent(EventType.DRAW, hit.point);
                 }
