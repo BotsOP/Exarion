@@ -56,7 +56,7 @@ namespace MainMenus
             DataPersistenceManager.instance.ChangeSelectedProfileId(projectName.text);
             DataPersistenceManager.instance.toolData = toolData;
             DataPersistenceManager.instance.SaveTool();
-            SceneManager.LoadSceneAsync("DrawScene");
+            SceneManager.LoadSceneAsync("3DDrawScene");
         }
 
         public void ActivateMenu()

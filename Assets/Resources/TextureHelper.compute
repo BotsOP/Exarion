@@ -1,0 +1,21 @@
+#pragma kernel CopyFloat4
+
+Texture2D<float4> _OrgTex4;
+RWTexture2D<float4> _FinalTex4;
+
+Texture2D<float4> _OrgTexInt;
+RWTexture2D<float4> _FinalTexInt;
+
+[numthreads(32,32,1)]
+void CopyFloat4 (uint2 id : SV_DispatchThreadID)
+{
+    if(_OrgTex4[id].x > 0)
+    {
+        _FinalTex4[id] = _OrgTex4[id];
+        _FinalTexInt[id] = _OrgTexInt[id];
+    }
+}
+
+
+
+

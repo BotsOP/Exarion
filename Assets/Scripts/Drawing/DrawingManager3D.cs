@@ -27,7 +27,9 @@ namespace Drawing
         
         [Header("Testing")]
         [SerializeField] private GameObject sphere1;
-        
+        [SerializeField] private Renderer rend;
+        [SerializeField] private RenderTexture rt;
+        [SerializeField] private RenderTexture rtID;
     
         private RenderTexture drawingRenderTexture;
         private int kernelID;
@@ -43,7 +45,7 @@ namespace Drawing
         private DrawPreview previewer;
         private DrawStamp drawStamp;
         private float brushSize;
-        private int newBrushStrokeID;
+        private float newBrushStrokeID;
         private float cachedTime;
         private float startBrushStrokeTime;
         private Vector4 collisionBox;
@@ -53,10 +55,13 @@ namespace Drawing
 
         private void Start()
         {
-            drawer = new Drawing3D(imageWidth, imageHeight);
+            drawer = new Drawing3D(rend, imageWidth, imageHeight);
             highlighter = new DrawHighlight(imageWidth, imageHeight);
             previewer = new DrawPreview(imageWidth, imageHeight);
             drawStamp = new DrawStamp();
+
+            rt = drawer.rt;
+            rtID = drawer.rtID;
             
             drawingMat.SetTexture("_MainTex", drawer.rt);
             displayMat.SetTexture("_MainTex", drawer.rt);
@@ -206,12 +211,12 @@ namespace Drawing
 
             sphere1.transform.position = _mousePos;
 
-            // drawer.Draw(lastCursorPos, _mousePos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
+            drawer.Draw(lastCursorPos, _mousePos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
             // tempBrushStrokes.Add(new BrushStroke(lastCursorPos, _mousePos, brushSize, time, cachedTime));
             //
             // tempAvgPos += (lastCursorPos + _mousePos) / 2;
             //
-            // lastCursorPos = _mousePos;
+            lastCursorPos = _mousePos;
             //     
             // if (collisionBox.x > _mousePos.x - brushSize) { collisionBox.x = _mousePos.x - brushSize; }
             // if (collisionBox.y > _mousePos.y - brushSize) { collisionBox.y = _mousePos.y - brushSize; }
@@ -248,6 +253,7 @@ namespace Drawing
             collisionBox = resetBox;
             tempBrushStrokes.Clear();
             firstUse = true;
+            Debug.Log($"test");
         }
 
         private void RedrawStroke(BrushStrokeID _brushStrokeID)
