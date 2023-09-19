@@ -236,9 +236,9 @@ namespace Drawing
                 float lastTime = _brushstrokeID.startTime;
                 
                 BrushStroke strokeStartReference = _brushstrokeID.brushStrokes[1];
-                Vector2 lineDir = (strokeStartReference.GetEndPos() - strokeStartReference.GetStartPos()).normalized * strokeStartReference.brushSize;
-                Vector2 currentPos = strokeStartReference.GetEndPos() + lineDir;
-                float distLine = Vector2.Distance(strokeStartReference.GetStartPos(), currentPos);
+                Vector3 lineDir = (strokeStartReference.GetEndPos() - strokeStartReference.GetStartPos()).normalized * strokeStartReference.brushSize;
+                Vector3 currentPos = strokeStartReference.GetEndPos() + lineDir;
+                float distLine = Vector3.Distance(strokeStartReference.GetStartPos(), currentPos);
                 timePadding = strokeStartReference.brushSize.Remap(0, distLine, 0, newTime - lastTime);
 
                 BrushStroke strokeStart = _brushstrokeID.brushStrokes[0];
@@ -256,9 +256,9 @@ namespace Drawing
                 float newTime = _brushstrokeID.startTime + extraTime * (1 + extraTime + extraTime) * (i + 1);
                 float lastTime = _brushstrokeID.startTime + extraTime * (1 + extraTime + extraTime) * (i);
 
-                Vector2 lineDir = (brushStroke.GetEndPos() - brushStroke.GetStartPos()).normalized * brushStroke.brushSize;
-                Vector2 currentPos = brushStroke.GetEndPos() + lineDir;
-                float distLine = Vector2.Distance(brushStroke.GetStartPos(), currentPos);
+                Vector3 lineDir = (brushStroke.GetEndPos() - brushStroke.GetStartPos()).normalized * brushStroke.brushSize;
+                Vector3 currentPos = brushStroke.GetEndPos() + lineDir;
+                float distLine = Vector3.Distance(brushStroke.GetStartPos(), currentPos);
                 float brushSizeTime = brushStroke.brushSize.Remap(0, distLine, 0, newTime - lastTime);
 
                 lastTime -= brushSizeTime;

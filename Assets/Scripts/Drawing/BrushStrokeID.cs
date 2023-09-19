@@ -67,7 +67,7 @@ namespace Drawing
 
         public void RecalculateAvgPos()
         {
-            Vector2 avgPos = Vector2.zero;
+            Vector3 avgPos = Vector2.zero;
             for (var i = 1; i < brushStrokes.Count; i++)
             {
                 var brushStroke = brushStrokes[i];
@@ -105,7 +105,7 @@ namespace Drawing
         public void RecalculateCollisionBoxAndAvgPos()
         {
             Vector4 collisionBox = new Vector4(Mathf.Infinity, Mathf.Infinity, 0, 0);
-            Vector2 avgPos = Vector2.zero;
+            Vector3 avgPos = Vector2.zero;
 
             foreach (var brushStroke in brushStrokes)
             {
@@ -196,30 +196,47 @@ namespace Drawing
     {
         public float startPosX;
         public float startPosY;
+        public float startPosZ;
         public float endPosX;
         public float endPosY;
+        public float endPosZ;
         public float brushSize;
         public float endTime;
         public float startTime;
 
-        public BrushStroke(Vector2 _lastPos, Vector2 _currentPos, float _brushSize, float _endTime, float _startTime)
+        public BrushStroke(Vector2 _startPos, Vector2 _endPos, float _brushSize, float _endTime, float _startTime)
         {
-            startPosX = _lastPos.x;
-            startPosY = _lastPos.y;
-            endPosX = _currentPos.x;
-            endPosY = _currentPos.y;
+            startPosX = _startPos.x;
+            startPosY = _startPos.y;
+            endPosX = _endPos.x;
+            endPosY = _endPos.y;
+            brushSize = _brushSize;
+            endTime = _endTime;
+            startTime = _startTime;
+            startPosZ = 0;
+            endPosZ = 0;
+        }
+        
+        public BrushStroke(Vector3 _startPos, Vector3 _endPos, float _brushSize, float _endTime, float _startTime)
+        {
+            startPosX = _startPos.x;
+            startPosY = _startPos.y;
+            endPosX = _endPos.x;
+            endPosY = _endPos.y;
+            startPosZ = _startPos.z;
+            endPosZ = _endPos.z;
             brushSize = _brushSize;
             endTime = _endTime;
             startTime = _startTime;
         }
 
-        public Vector2 GetStartPos()
+        public Vector3 GetStartPos()
         {
-            return new Vector2(startPosX, startPosY);
+            return new Vector3(startPosX, startPosY, startPosZ);
         }
-        public Vector2 GetEndPos()
+        public Vector3 GetEndPos()
         {
-            return new Vector2(endPosX, endPosY);
+            return new Vector3(endPosX, endPosY, endPosZ);
         }
         public Vector4 GetCollisionBox()
         {

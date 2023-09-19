@@ -58,9 +58,6 @@
             "m_Id": "7289303eeb1f42779e4c5e4540d68f70"
         },
         {
-            "m_Id": "a413b77fd8d147008f97307b5b1a0764"
-        },
-        {
             "m_Id": "f88300dfa1ef40dfb4cddb1befc7e8de"
         },
         {
@@ -251,9 +248,6 @@
         "m_Blocks": [
             {
                 "m_Id": "38b22200adba43c4af8baa6df5bf7a2d"
-            },
-            {
-                "m_Id": "a413b77fd8d147008f97307b5b1a0764"
             },
             {
                 "m_Id": "502c28844f14406aacf088e138ca26fd"
@@ -1065,21 +1059,6 @@
 
 {
     "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
-    "m_ObjectId": "6adf138eea104a4899ba5f971605dc0d",
-    "m_Id": 0,
-    "m_DisplayName": "Alpha",
-    "m_SlotType": 0,
-    "m_Hidden": false,
-    "m_ShaderOutputName": "Alpha",
-    "m_StageCapability": 2,
-    "m_Value": 1.0,
-    "m_DefaultValue": 1.0,
-    "m_Labels": []
-}
-
-{
-    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.ColorRGBMaterialSlot",
     "m_ObjectId": "6cd3a55218aa443d9822944d79b836b0",
     "m_Id": 0,
@@ -1384,40 +1363,6 @@
 {
     "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.BlockNode",
-    "m_ObjectId": "a413b77fd8d147008f97307b5b1a0764",
-    "m_Group": {
-        "m_Id": ""
-    },
-    "m_Name": "SurfaceDescription.Alpha",
-    "m_DrawState": {
-        "m_Expanded": true,
-        "m_Position": {
-            "serializedVersion": "2",
-            "x": 0.0,
-            "y": 0.0,
-            "width": 0.0,
-            "height": 0.0
-        }
-    },
-    "m_Slots": [
-        {
-            "m_Id": "6adf138eea104a4899ba5f971605dc0d"
-        }
-    ],
-    "synonyms": [],
-    "m_Precision": 0,
-    "m_PreviewExpanded": true,
-    "m_DismissedVersion": 0,
-    "m_PreviewMode": 0,
-    "m_CustomColors": {
-        "m_SerializableColors": []
-    },
-    "m_SerializedDescriptor": "SurfaceDescription.Alpha"
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.BlockNode",
     "m_ObjectId": "a5c56c13842845f987605275c06357c5",
     "m_Group": {
         "m_Id": ""
@@ -1684,7 +1629,7 @@
         "m_Id": "62717a39805647febdb98e02fe79c001"
     },
     "m_AllowMaterialOverride": false,
-    "m_SurfaceType": 1,
+    "m_SurfaceType": 0,
     "m_ZTestMode": 4,
     "m_ZWriteControl": 0,
     "m_AlphaMode": 0,

@@ -212,7 +212,9 @@ namespace Drawing
             sphere1.transform.position = _mousePos;
 
             drawer.Draw(lastCursorPos, _mousePos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
-            // tempBrushStrokes.Add(new BrushStroke(lastCursorPos, _mousePos, brushSize, time, cachedTime));
+            tempBrushStrokes.Add(new BrushStroke(lastCursorPos, _mousePos, brushSize, time, cachedTime));
+            
+            Debug.Log($"{time} {cachedTime}");
             //
             // tempAvgPos += (lastCursorPos + _mousePos) / 2;
             //
