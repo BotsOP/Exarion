@@ -27,6 +27,7 @@
             float3 _LastCursorPos;
             float _CursorPos;
             bool _FirstStroke;
+            bool _Erase;
             float _StrokeID;
 
             struct appdata{
@@ -48,10 +49,10 @@
                 return length(pa - ba * k);
             }
 
-            float2 ClosestPointOnLine(const float2 lineStart, const float2 lineEnd, const float2 position)
+            float3 ClosestPointOnLine(const float3 lineStart, const float3 lineEnd, const float3 position)
             {
-                const float2 lineDirection = normalize(lineEnd - lineStart);
-                const float2 positionRelativeToStart = position - lineStart;
+                const float3 lineDirection = normalize(lineEnd - lineStart);
+                const float3 positionRelativeToStart = position - lineStart;
                 const float projectionDistance = dot(positionRelativeToStart, lineDirection);
                 return lineStart + projectionDistance * lineDirection;
             }
@@ -61,9 +62,9 @@
                 return t * t * t;
             }
 
-            float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
+            float CalculatePaintColor(float3 paintPos, float3 startPos, float3 endPos)
             {
-                const float2 paintPosOnLine = ClosestPointOnLine(startPos, endPos, paintPos);
+                const float3 paintPosOnLine = ClosestPointOnLine(startPos, endPos, paintPos);
 
                 float distLine = distance(startPos, endPos);
                 float distanceToPointA = distance(startPos, paintPosOnLine) / distLine;
@@ -80,11 +81,6 @@
                 return paintColor;
             }
 
-            float mask(float3 position, float3 center, float radius, float hardness){
-                float m = distance(center, position);
-                return 1 - smoothstep(radius * hardness, radius, m);    
-            }
-
             v2f vert (appdata v){
                 v2f o;
 				o.worldPos = mul(unity_ObjectToWorld, v.vertex);
@@ -95,16 +91,20 @@
                 return o;
             }
 
-            float4 frag (v2f i) : SV_Target{
-                if(tex2D(_IDTex, i.uv).x == _StrokeID)
+            float4 frag (v2f i) : SV_Target {
+                if(_Erase)
+                {
+                    return float4(0.5, 0, 0, 0);
+                }
+                if(tex2D(_IDTex, i.uv).x >= 0 && !_Erase)
                 {
                      return float4(-1, 0, 0, 0);
                 }
-                
-                if(distance(i.worldPos, _LastCursorPos) < _BrushSize + 1)
+
+                if(distance(i.worldPos, _LastCursorPos) < _BrushSize)
                 {
-                    float2 AtoB = _CursorPos - _LastCursorPos;
-                    float2 paintPosToA = _LastCursorPos - i.worldPos;
+                    float3 AtoB = _CursorPos - _LastCursorPos;
+                    float3 paintPosToA = _LastCursorPos - i.worldPos;
                     
                     if(dot(AtoB, paintPosToA) > 0.0 && !_FirstStroke)
                     {
@@ -117,7 +117,9 @@
 
                 if(paintColor <= 0) { return float4(-1, 0, 0, 0); }
 
-                return float4(_StrokeID, 0, 0, 0);
+                paintColor = CalculatePaintColor(i.worldPos, _LastCursorPos, _CursorPos);
+
+                return float4(paintColor, paintColor, paintColor, 1);
             }
             ENDCG
         }

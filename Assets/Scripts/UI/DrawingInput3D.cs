@@ -21,27 +21,28 @@ namespace UI
         private Vector3[] drawAreaCorners = new Vector3[4];
         private Vector3[] displayAreaCorners = new Vector3[4];
         private bool isInteracting;
-        private int imageWidth;
-        private int imageHeight;
+        private Vector3 focusPointView;
+        private Vector3 focusPointDisplay;
         private int shapeAmountSides = 6;
         private bool isMouseInsideDrawArea => IsMouseInsideDrawArea(drawAreaCorners);
         private bool isMouseInsideDisplayArea => IsMouseInsideDrawArea(displayAreaCorners);
 
-        public DrawingInput3D(Camera _viewCam, Camera _displayCam, float _scrollZoomSensitivity, int _imageWidth, int _imageHeight)
+        public DrawingInput3D(Camera _viewCam, Camera _displayCam, float _scrollZoomSensitivity)
         {
             viewCam = _viewCam;
             displayCam = _displayCam;
             scrollZoomSensitivity = _scrollZoomSensitivity;
             startPosViewCam = _viewCam.transform.position;
             startPosDisplayCam = _displayCam.transform.position;
-            imageWidth = _imageWidth;
-            imageHeight = _imageHeight;
             
             EventSystem<float>.Subscribe(EventType.TIME, SetTime);
             EventSystem<RectTransform, RectTransform>.Subscribe(EventType.VIEW_CHANGED, SetDrawArea);
             EventSystem.Subscribe(EventType.RESET_TIME, StopDrawing);
             EventSystem<ToolType>.Subscribe(EventType.CHANGE_TOOLTYPE, SetToolType);
             EventSystem<int>.Subscribe(EventType.CHANGE_TOOLTYPE, SetAmountShapeSides);
+
+            focusPointView = new Vector3(1, 0, 0);
+            focusPointDisplay = new Vector3(1, 0, 0);
         }
 
         ~DrawingInput3D()
@@ -85,21 +86,12 @@ namespace UI
             Vector4 drawCorners = new Vector4(drawAreaCorners[0].x, drawAreaCorners[0].y, drawAreaCorners[2].x, drawAreaCorners[2].y);
             float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, cam.pixelWidth);
             float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, cam.pixelHeight);
-            Vector2 mousePos = new Vector2(mousePosX, mousePosY);
-            //Vector2 mousePos = Input.mousePosition;
-            Ray ray = cam.ScreenPointToRay(mousePos);
+            Vector3 mousePos = new Vector2(mousePosX, mousePosY);
+            mousePos = mousePosToWorld(cam, mousePos);
 
             if (!UIManager.isInteracting || isInteracting)
             {
                 StopDrawing();
-                
-                RaycastHit hit;
-                if (Physics.Raycast(ray, out hit) && Input.GetMouseButton(0)) 
-                {
-                    EventSystem<Vector3>.RaiseEvent(EventType.DRAW, hit.point);
-                }
-
-                return;
                 
                 if (Resize(mousePos))
                 {
@@ -145,12 +137,12 @@ namespace UI
                     if (SetBrushSize(mousePos))
                         return;
                 
-                    if(MoveCamera(viewCam, drawAreaCorners, startPosViewCam))
+                    if(MoveCamera(viewCam, drawAreaCorners, startPosViewCam, focusPointView, out focusPointView))
                         return;
                 }
                 else if (isMouseInsideDisplayArea)
                 {
-                    MoveCamera(displayCam, drawAreaCorners, startPosDisplayCam);
+                    MoveCamera(displayCam, drawAreaCorners, startPosDisplayCam, focusPointDisplay, out focusPointDisplay);
                 }
             }
             else
@@ -232,7 +224,6 @@ namespace UI
                 if (!Input.GetKey(KeyCode.LeftShift) && currentToolType != ToolType.select)
                 {
                     EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
-                    Debug.Log($"clear3");
                 }
 
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
@@ -303,13 +294,13 @@ namespace UI
             return false;
         }
         
-        private bool DrawInput(Vector2 _mousePos)
+        private bool DrawInput(Vector3 _mousePos)
         {
             if (Input.GetMouseButton(0) && currentToolType == ToolType.brush)
             {
                 isInteracting = true;
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
-                EventSystem<Vector2>.RaiseEvent(EventType.DRAW, _mousePos);
+                EventSystem<Vector3>.RaiseEvent(EventType.DRAW, _mousePos);
                 EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
 
                 mouseIsDrawing = true;
@@ -317,37 +308,69 @@ namespace UI
             }
             return false;
         }
-        private bool MoveCamera(Camera _cam, Vector3[] _corners, Vector2 _draggingBounds)
+
+        private Vector3 startDraggingPos;
+        private Vector3 startDraggingFocusPos;
+        private bool MoveCamera(Camera _cam, Vector3[] _corners, Vector2 _draggingBounds, Vector3 _focusPointValue, out Vector3 _focusPoint)
         {
+            _focusPoint = _focusPointValue;
             if (Input.mouseScrollDelta.y != 0)
             {
-                _cam.orthographicSize -= Mathf.Pow(_cam.orthographicSize * scrollZoomSensitivity, 1.3f) * Input.mouseScrollDelta.y;
-                _cam.orthographicSize = Mathf.Clamp(_cam.orthographicSize, 0.01f, 0.5f);
+                float distToFocus = Vector3.Distance(_cam.transform.position, _focusPoint) / 5;
+                distToFocus = Mathf.Clamp01(distToFocus);
+                distToFocus *= distToFocus * distToFocus * distToFocus;
+                Debug.Log(distToFocus);
+                _cam.transform.position += _cam.transform.forward * (Input.mouseScrollDelta.y * distToFocus);
                 
                 return true;
             }
-            if (Input.GetMouseButtonDown(1))
+            
+            if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButtonDown(2))
             {
-                Vector4 drawCorners = GetScaledDrawingCorners(_cam.transform.position, _cam.orthographicSize, _corners);
-                float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, -0.5f, 0.5f);
-                float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, -0.5f, 0.5f);
+                float mousePosX = Input.mousePosition.x.Remap(_corners[0].x, _corners[2].x, 1f, -1f);
+                float mousePosY = Input.mousePosition.y.Remap(_corners[0].y, _corners[2].y, 1f, -1f);
                 startPosWhenDragging = new Vector2(mousePosX, mousePosY);
+                startPosWhenDragging *= Vector3.Distance(_focusPoint, _cam.transform.position);
+                startDraggingPos = _cam.transform.position;
+                startDraggingFocusPos = _focusPoint;
             }
-            if (Input.GetMouseButton(1))
+            if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButton(2))
             {
-                var position = _cam.transform.position;
-                Vector4 drawCorners = GetScaledDrawingCorners(position, _cam.orthographicSize, _corners);
-                float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, -0.5f, 0.5f);
-                float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, -0.5f, 0.5f);
-                Vector2 mousePos = new Vector2(mousePosX, mousePosY);
-                mousePos -= startPosWhenDragging;
+                float mousePosX = Input.mousePosition.x.Remap(_corners[0].x, _corners[2].x, 1f, -1f);
+                float mousePosY = Input.mousePosition.y.Remap(_corners[0].y, _corners[2].y, 1f, -1f);
+                Vector2 currentPos = new Vector2(mousePosX, mousePosY);
+                currentPos *= Vector3.Distance(_focusPoint, _cam.transform.position);
+                Vector2 diff =  currentPos - startPosWhenDragging;
+                diff *= _cam.transform.right;
+                _cam.transform.position = startDraggingPos + new Vector3(diff.x, diff.y, 0);
+                _focusPoint = startDraggingFocusPos + new Vector3(diff.x, diff.y, 0);
+                Debug.Log($"{new Vector3(diff.x, diff.y, 0)}  {startDraggingPos}");
+                return true;
+            }
 
-                mousePos = (Vector2)position - mousePos;
-                mousePos.x = Mathf.Clamp(mousePos.x, _draggingBounds.x - 0.5f, _draggingBounds.x + 0.5f);
-                mousePos.y = Mathf.Clamp(mousePos.y, _draggingBounds.y -0.5f, _draggingBounds.y + 0.5f);
-                position = new Vector3(mousePos.x, mousePos.y, position.z);
-                _cam.transform.position = position;
+            if (Input.GetMouseButtonDown(2))
+            {
+                float mousePosX = Input.mousePosition.x.Remap(_corners[0].x, _corners[2].x, 0, 1f);
+                float mousePosY = Input.mousePosition.y.Remap(_corners[0].y, _corners[2].y, 0, 1f);
+                Vector2 mousePosition = new Vector2(mousePosX, mousePosY);
+                startDraggingPos = mousePosition;
+            }
+            if (Input.GetMouseButton(2))
+            {
+                float mousePosX = Input.mousePosition.x.Remap(_corners[0].x, _corners[2].x, 0, 1f);
+                float mousePosY = Input.mousePosition.y.Remap(_corners[0].y, _corners[2].y, 0, 1f);
+                Vector2 mousePosition = new Vector2(mousePosX, mousePosY);
+                Vector3 worldMousePos = _cam.ScreenToWorldPoint(mousePosition);
 
+                // Get the direction from the pivot to the world mouse position
+                Vector3 direction = worldMousePos - _focusPoint;
+
+                // Calculate the angle between the forward direction of the pivot and the direction to the mouse position
+                float angle = Vector3.SignedAngle(_cam.transform.forward, direction, _cam.transform.up);
+                angle *= 0.001f;
+
+                // Rotate the target transform around the pivot by the calculated angle
+                _cam.transform.RotateAround(_focusPoint, _cam.transform.up, angle);
                 return true;
             }
             return false;
@@ -396,5 +419,18 @@ namespace UI
             return Input.mousePosition.x > _drawAreaCorners[0].x && Input.mousePosition.y > _drawAreaCorners[0].y &&
                    Input.mousePosition.x < _drawAreaCorners[2].x && Input.mousePosition.y < _drawAreaCorners[2].y;
         }
+
+        private Vector3 mousePosToWorld(Camera cam, Vector2 _mousePos)
+        {
+            Ray ray = cam.ScreenPointToRay(_mousePos);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit) && Input.GetMouseButton(0))
+            {
+                return hit.point;
+            }
+
+            return new Vector3(-999, -999, -999);
+        }
+        
     }
 }

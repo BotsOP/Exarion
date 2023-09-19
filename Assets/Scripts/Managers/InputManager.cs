@@ -24,7 +24,7 @@ public class InputManager : MonoBehaviour, IDataPersistence
     {
         if (edit3D)
         {
-            drawingInput3D = new DrawingInput3D(viewCam, displayCam, scrollZoomSensitivity, imageWidth, imageHeight);
+            drawingInput3D = new DrawingInput3D(viewCam, displayCam, scrollZoomSensitivity);
             return;
         }
         drawingInput = new DrawingInput(viewCam, displayCam, scrollZoomSensitivity, imageWidth, imageHeight);
