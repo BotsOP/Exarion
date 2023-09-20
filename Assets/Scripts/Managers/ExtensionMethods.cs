@@ -127,6 +127,17 @@ namespace Managers
             return bytes;
         }
         
+        public static Vector2 Rotate(this Vector2 v, float degrees) {
+            float sin = Mathf.Sin(degrees * Mathf.Deg2Rad);
+            float cos = Mathf.Cos(degrees * Mathf.Deg2Rad);
+		
+            float tx = v.x;
+            float ty = v.y;
+            v.x = (cos * tx) - (sin * ty);
+            v.y = (sin * tx) + (cos * ty);
+            return v;
+        }
+        
         public static void SetAnchor(this RectTransform source, AnchorPresets allign, int offsetX=0, int offsetY=0)
         {
             source.anchoredPosition = new Vector3(offsetX, offsetY, 0);
