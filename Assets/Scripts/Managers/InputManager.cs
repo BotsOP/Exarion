@@ -9,22 +9,24 @@ using EventType = Managers.EventType;
 
 public class InputManager : MonoBehaviour, IDataPersistence
 {
+    [SerializeField] private bool edit3D;
+    [SerializeField] private Camera viewCam;
+    [SerializeField] private Camera displayCam;
+    [SerializeField, Range(0.01f, 1f)] private float scrollZoomSensitivity;
+    [SerializeField] private Transform viewFocus;
+    [SerializeField] private Transform displayFocus;
     private RectTransform currentDrawArea;
     private RectTransform currentDisplayArea;
     private DrawingInput drawingInput;
     private DrawingInput3D drawingInput3D;
     private int imageWidth;
     private int imageHeight;
-    [SerializeField] private bool edit3D;
-    [SerializeField] private Camera viewCam;
-    [SerializeField] private Camera displayCam;
-    [SerializeField, Range(0.01f, 1f)] private float scrollZoomSensitivity;
 
     private void Start()
     {
         if (edit3D)
         {
-            drawingInput3D = new DrawingInput3D(viewCam, displayCam, scrollZoomSensitivity);
+            drawingInput3D = new DrawingInput3D(viewCam, displayCam, scrollZoomSensitivity, viewFocus, displayFocus);
             return;
         }
         drawingInput = new DrawingInput(viewCam, displayCam, scrollZoomSensitivity, imageWidth, imageHeight);
