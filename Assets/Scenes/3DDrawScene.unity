@@ -5327,7 +5327,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 90
   orthographic: 0
   orthographic size: 0.5
   m_Depth: -1
@@ -8401,7 +8401,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 577936025}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.307, y: 0.815, z: 0}
+  m_LocalPosition: {x: -0.153, y: -0.087, z: -0.8}
   m_LocalScale: {x: 0.009080572, y: 0.009080572, z: 0.009080572}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10814,7 +10814,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "50\u200B"
+  m_text: "0.1\n\u200B"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -18183,8 +18183,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 12.3, y: 4.1}
-  m_SizeDelta: {x: 160, y: 20}
+  m_AnchoredPosition: {x: -0.3916, y: -28}
+  m_SizeDelta: {x: 347.9019, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1323818942
 MonoBehaviour:
@@ -18230,10 +18230,10 @@ MonoBehaviour:
   m_FillRect: {fileID: 1300007402}
   m_HandleRect: {fileID: 614212706}
   m_Direction: 0
-  m_MinValue: 1
-  m_MaxValue: 128
-  m_WholeNumbers: 1
-  m_Value: 50
+  m_MinValue: 0
+  m_MaxValue: 0.3
+  m_WholeNumbers: 0
+  m_Value: 0.1
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
@@ -18856,7 +18856,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 90
   orthographic: 0
   orthographic size: 0.5
   m_Depth: -1
@@ -21218,7 +21218,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 135.8, y: 3.6}
+  m_AnchoredPosition: {x: -29, y: 3.6}
   m_SizeDelta: {x: 75.5228, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1590046405
@@ -21269,14 +21269,14 @@ MonoBehaviour:
   m_VerticalScrollbarEventHandler: {fileID: 0}
   m_LayoutGroup: {fileID: 0}
   m_ScrollSensitivity: 1
-  m_ContentType: 2
+  m_ContentType: 0
   m_InputType: 0
   m_AsteriskChar: 42
-  m_KeyboardType: 4
+  m_KeyboardType: 0
   m_LineType: 0
   m_HideMobileInput: 0
   m_HideSoftKeyboard: 0
-  m_CharacterValidation: 2
+  m_CharacterValidation: 0
   m_RegexValue: 
   m_GlobalPointSize: 14
   m_CharacterLimit: 3
@@ -21319,7 +21319,9 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: 50
+  m_Text: '0.1
+
+'
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0

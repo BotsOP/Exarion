@@ -55,7 +55,7 @@ namespace Drawing
 
         private void Start()
         {
-            drawer = new Drawing3D(rend, imageWidth, imageHeight);
+            drawer = new Drawing3D(rend, imageWidth, imageHeight, sphere1.transform);
             highlighter = new DrawHighlight(imageWidth, imageHeight);
             previewer = new DrawPreview(imageWidth, imageHeight);
             drawStamp = new DrawStamp();
@@ -209,17 +209,16 @@ namespace Drawing
                 firstUse = false;
             }
 
-            sphere1.transform.position = _mousePos;
+            //sphere1.transform.position = _mousePos;
 
             drawer.Draw(lastCursorPos, _mousePos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
             tempBrushStrokes.Add(new BrushStroke(lastCursorPos, _mousePos, brushSize, time, cachedTime));
             
-            Debug.Log($"{time} {cachedTime}");
             //
             // tempAvgPos += (lastCursorPos + _mousePos) / 2;
             //
             lastCursorPos = _mousePos;
-            //     
+            //
             // if (collisionBox.x > _mousePos.x - brushSize) { collisionBox.x = _mousePos.x - brushSize; }
             // if (collisionBox.y > _mousePos.y - brushSize) { collisionBox.y = _mousePos.y - brushSize; }
             // if (collisionBox.z < _mousePos.x + brushSize) { collisionBox.z = _mousePos.x + brushSize; }
@@ -300,11 +299,12 @@ namespace Drawing
 
         private void RemoveStroke(BrushStrokeID _brushStrokeID)
         {
+            Debug.Log($"Remove stroke");
             foreach (BrushStroke brushStroke in _brushStrokeID.brushStrokes)
             {
                 drawer.Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, PaintType.Erase);
             }
-
+            
             selectedBrushStrokes.Remove(_brushStrokeID);
             highlighter.HighlightStroke(selectedBrushStrokes);
             

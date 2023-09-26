@@ -16,14 +16,12 @@ namespace Drawing
         public readonly CustomRenderTexture rt;
         public readonly CustomRenderTexture rtID;
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
+        public Transform sphere1;
 
-        public readonly CustomRenderTexture rtTemp;
-        public readonly CustomRenderTexture rtIDTemp;
+        private readonly CustomRenderTexture rtTemp;
         private Renderer rend;
         private ComputeShader textureHelperShader;
         private Material paintMaterial;
-        private Material idMaterial;
-        private Material eraseMaterial;
         private int paintUnderOwnLineKernelID;
         private int paintUnderEverythingKernelID;
         private int paintOverEverythingKernelID;
@@ -45,12 +43,10 @@ namespace Drawing
             }
             return id;
         }
-        public Drawing3D(Renderer _rend, int _imageWidth, int _imageHeight)
+        public Drawing3D(Renderer _rend, int _imageWidth, int _imageHeight, Transform _sphere1)
         {
             textureHelperShader = Resources.Load<ComputeShader>("TextureHelper");
             paintMaterial = new Material(Resources.Load<Shader>("DrawPainter"));
-            idMaterial = new Material(Resources.Load<Shader>("IDPainter"));
-            eraseMaterial = new Material(Resources.Load<Shader>("ErasePainter"));
 
             commandBuffer = new CommandBuffer();
             commandBuffer.name = "3DUVTimePainter";
@@ -59,6 +55,7 @@ namespace Drawing
 
             imageWidth = _imageWidth;
             imageHeight = _imageHeight;
+            sphere1 = _sphere1;
 
             // paintUnderOwnLineKernelID = textureHelperShader.FindKernel("PaintUnderOwnLine");
             // paintUnderEverythingKernelID = textureHelperShader.FindKernel("PaintUnderEverything");
@@ -77,12 +74,14 @@ namespace Drawing
             {
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
+                useMipMap = false,
                 name = "rt",
             };
             rtID = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
             {
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
+                useMipMap = false,
                 name = "rtID",
             };
             
@@ -90,86 +89,27 @@ namespace Drawing
             {
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
+                useMipMap = false,
                 name = "rtTemp",
             };
-            rtIDTemp = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                name = "rtIDTemp",
-            };
 
-            rt.Clear(false, true, new Color(250, 250, 250));
+            rt.Clear(false, true, new Color(250, 0, 0));
             
             Color idColor = new Color(-1, -1, -1);
             rtID.Clear(false, true, idColor);
         }
-    
-        // public void Draw(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, PaintType _paintType, float _lastTime = 0, float _brushTime = 0, bool _firstStroke = false, int _strokeID = 0)
-        // {
-        //     threadGroupSize.x = Mathf.CeilToInt((math.abs(_lastPos.x - _currentPos.x) + _strokeBrushSize * 2) / threadGroupSizeOut.x);
-        //     threadGroupSize.y = Mathf.CeilToInt((math.abs(_lastPos.y - _currentPos.y) + _strokeBrushSize * 2) / threadGroupSizeOut.y);
-        //
-        //     Vector2 startPos = GetStartPos(_lastPos, _currentPos, _strokeBrushSize);
-        //
-        //     int kernelID = 0;
-        //     switch (_paintType)
-        //     {
-        //         case PaintType.PaintUnderEverything:
-        //             kernelID = paintUnderEverythingKernelID;
-        //             Vector2 AtoB = _currentPos - _lastPos;
-        //             AtoB = AtoB.normalized;
-        //             AtoB.x *= 50;
-        //             AtoB.y *= 50;
-        //
-        //             Vector2 lastPos = _lastPos - AtoB;
-        //             Vector2 currentPos = _currentPos + AtoB;
-        //             paintShader.SetVector("_CursorPosPlusBrushSize", currentPos);
-        //             paintShader.SetVector("_LastCursorPosPlusBrushSize", lastPos);
-        //             break;
-        //         case PaintType.PaintOverEverything:
-        //             kernelID = paintOverEverythingKernelID;
-        //             break;
-        //         case PaintType.PaintOverOwnLine:
-        //             kernelID = paintOverOwnLineKernelID;
-        //             break;
-        //         case PaintType.PaintUnderOwnLine:
-        //             kernelID = paintUnderOwnLineKernelID;
-        //             break;
-        //         case PaintType.Erase:
-        //             if (_firstStroke)
-        //                 _strokeBrushSize++;
-        //             kernelID = eraseKernelID;
-        //             break;
-        //     }
-        //
-        //     paintShader.SetBool("_FirstStroke", _firstStroke);
-        //     paintShader.SetVector("_CursorPos", _currentPos);
-        //     paintShader.SetVector("_LastCursorPos", _lastPos);
-        //     paintShader.SetVector("_StartPos", startPos);
-        //     paintShader.SetFloat("_BrushSize", _strokeBrushSize);
-        //     paintShader.SetFloat("_TimeColor", _brushTime);
-        //     paintShader.SetFloat("_PreviousTimeColor", _lastTime);
-        //     paintShader.SetInt("_StrokeID", _strokeID);
-        //     paintShader.SetTexture(kernelID, "_IdTex", rtID);
-        //     paintShader.SetTexture(kernelID, "_ResultTex", rt);
-        //
-        //     int threadGroupX = (int)threadGroupSize.x;
-        //     int threadGroupY = (int)threadGroupSize.y;
-        //     paintShader.Dispatch(kernelID, threadGroupX, threadGroupY, 1);
-        // }
         
         public void Draw(Vector3 _lastPos, Vector3 _currentPos, float _strokeBrushSize, PaintType _paintType, float _lastTime = 0, float _brushTime = 0, bool _firstStroke = false, float _strokeID = 0)
         {
+            //_strokeBrushSize = 0.01f;
             switch (_paintType)
             {
                 case PaintType.PaintUnderEverything:
-                    Debug.Log($"paint");
                     paintMaterial.SetInt("_FirstStroke", _firstStroke ? 1 : 0);
                     paintMaterial.SetInt("_Erase", 0);
                     paintMaterial.SetVector("_CursorPos", _currentPos);
                     paintMaterial.SetVector("_LastCursorPos", _lastPos);
-                    paintMaterial.SetFloat("_BrushSize", 0.1f);
+                    paintMaterial.SetFloat("_BrushSize", _strokeBrushSize);
                     paintMaterial.SetFloat("_TimeColor", _brushTime);
                     paintMaterial.SetFloat("_PreviousTimeColor", _lastTime);
                     paintMaterial.SetFloat("_StrokeID", _strokeID);
@@ -185,12 +125,11 @@ namespace Drawing
                     commandBuffer.DispatchCompute(textureHelperShader, 0, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
                     break;
                 case PaintType.Erase:
-                    Debug.Log($"erase");
                     paintMaterial.SetInt("_FirstStroke", _firstStroke ? 1 : 0);
                     paintMaterial.SetInt("_Erase", 1);
                     paintMaterial.SetVector("_CursorPos", _currentPos);
                     paintMaterial.SetVector("_LastCursorPos", _lastPos);
-                    paintMaterial.SetFloat("_BrushSize", 0.1f);
+                    paintMaterial.SetFloat("_BrushSize", _strokeBrushSize);
                     paintMaterial.SetFloat("_TimeColor", _brushTime);
                     paintMaterial.SetFloat("_PreviousTimeColor", _lastTime);
 
@@ -271,7 +210,6 @@ namespace Drawing
                 Debug.LogError("Brush stroke holds no draw data");
                 return;
             }
-            Debug.Log($"startTime: {_brushstrokeID.startTime} endTime: {_brushstrokeID.endTime}");
             float newStrokeID = GetNewID();
             PaintType paintType = _brushstrokeID.paintType;
 

@@ -537,10 +537,10 @@ namespace UI
                     brushStrokeIDs.AddRange(clip.GetBrushStrokeIDs());
                 }
             }
-            if (brushStrokeIDs.Count > 0)
-            {
-                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs);
-            }
+            // if (brushStrokeIDs.Count > 0)
+            // {
+            //     EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs);
+            // }
 
             return true;
         }
@@ -661,6 +661,7 @@ namespace UI
                 {
                     ICommand redrawCommand = new RedrawMultipleCommand(redraws);
                     EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, redrawCommand);
+                    EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, redraws.SelectMany(timelineClip => timelineClip.GetBrushStrokeIDs()).ToList());
                 }
             }
         }
