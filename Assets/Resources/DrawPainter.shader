@@ -25,7 +25,7 @@
             float _TimeColor;
             float _PreviousTimeColor;
             float3 _LastCursorPos;
-            float _CursorPos;
+            float3 _CursorPos;
             bool _FirstStroke;
             bool _Erase;
             float _StrokeID;
@@ -48,6 +48,14 @@
                 const float k = saturate(dot(pa, ba) / dot(ba, ba));
                 return length(pa - ba * k);
             }
+            
+            float sdCapsule( float3 p, float3 a, float3 b, float r )
+            {
+              float3 pa = p - a;
+              float3 ba = b - a;
+              float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );
+              return length( pa - ba*h ) - r;
+            }
 
             float3 ClosestPointOnLine(const float3 lineStart, const float3 lineEnd, const float3 position)
             {
@@ -69,12 +77,12 @@
                 float distLine = distance(startPos, endPos);
                 float distanceToPointA = distance(startPos, paintPosOnLine) / distLine;
                 float paintColor = lerp(_PreviousTimeColor, _TimeColor, distanceToPointA);
-                //paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
+                paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
                 
                 float distToLine = distance(paintPosOnLine, paintPos);
                 distToLine = 1 - saturate((cubicBezierCircle(distToLine / _BrushSize) * _BrushSize) / distLine);
                 float paintColorOutside = (_TimeColor - _PreviousTimeColor) * distToLine;
-                //paintColorOutside = clamp(paintColorOutside, 0, _TimeColor - _PreviousTimeColor);
+                paintColorOutside = clamp(paintColorOutside, 0, _TimeColor - _PreviousTimeColor);
                 
                 paintColor -= paintColorOutside;
                 
@@ -92,30 +100,30 @@
             }
 
             float4 frag (v2f i) : SV_Target {
-                if(_Erase)
-                {
-                    return float4(0.5, 0, 0, 0);
-                }
+                // if(_Erase)
+                // {
+                //     return float4(0.5, 0, 0, 0);
+                // }
                 if(tex2D(_IDTex, i.uv).x >= 0 && !_Erase)
                 {
                      return float4(-1, 0, 0, 0);
                 }
 
-                if(distance(i.worldPos, _LastCursorPos) < _BrushSize)
-                {
-                    float3 AtoB = _CursorPos - _LastCursorPos;
-                    float3 paintPosToA = _LastCursorPos - i.worldPos;
-                    
-                    if(dot(AtoB, paintPosToA) > 0.0 && !_FirstStroke)
-                    {
-                        return float4(-1, 0, 0, 0);
-                    }
-                }
+                // if(distance(i.worldPos, _LastCursorPos) < _BrushSize)
+                // {
+                //     float3 AtoB = _CursorPos - _LastCursorPos;
+                //     float3 paintPosToA = _LastCursorPos - i.worldPos;
+                //     
+                //     if(dot(AtoB, paintPosToA) > 0.0 && _FirstStroke)
+                //     {
+                //         return float4(-1, 0, 0, 0);
+                //     }
+                // }
 
-                float paintColor = LineSegment3DSDF(i.worldPos, _LastCursorPos, _CursorPos);
-                paintColor = 1 - smoothstep(_BrushSize, _BrushSize, paintColor);
+                //float paintColor = LineSegment3DSDF(i.worldPos, _LastCursorPos, _CursorPos);
+                float paintColor = sdCapsule(i.worldPos, _LastCursorPos, _CursorPos, _BrushSize);
 
-                if(paintColor <= 0) { return float4(-1, 0, 0, 0); }
+                if(paintColor > _BrushSize) { return float4(-1, 0, 0, 0); }
 
                 paintColor = CalculatePaintColor(i.worldPos, _LastCursorPos, _CursorPos);
 

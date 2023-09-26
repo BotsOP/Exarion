@@ -7,6 +7,7 @@ using Drawing;
 using Managers;
 using SFB;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -297,22 +298,38 @@ namespace UI
             focusView.SetActive(true);
         }
 
+        private bool changedBrushSize;
         public void OnBrushSizeChanged(bool _sliderChanged)
         {
+            if(changedBrushSize) { return; }
+            changedBrushSize = true;
             if (_sliderChanged)
             {
                 brushSizeInput.text = brushSizeSlider.value.ToString(CultureInfo.CurrentCulture);
             }
             else
             {
-                brushSizeSlider.value = int.Parse(brushSizeInput.text);
+                try
+                {
+                    brushSizeSlider.value = float.Parse(brushSizeInput.text);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                    throw;
+                }
             }
             EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSizeSlider.value);
         }
 
+        public void LateUpdate()
+        {
+            changedBrushSize = false;
+        }
+
         private void SetBrushSize(float _brushSize)
         {
-            int brushSize = (int)_brushSize;
+            float brushSize = _brushSize;
             brushSizeInput.text = brushSize.ToString(CultureInfo.CurrentCulture);
             brushSizeSlider.value = brushSize;
         }

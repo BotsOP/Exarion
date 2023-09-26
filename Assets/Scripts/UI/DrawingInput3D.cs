@@ -319,7 +319,7 @@ namespace UI
             {
                 float distToFocus = Vector3.Distance(_cam.transform.position, _focusPoint.position) / 5;
                 distToFocus = Mathf.Clamp01(distToFocus);
-                distToFocus *= distToFocus * distToFocus * distToFocus;
+                distToFocus *= distToFocus;
                 _cam.transform.position += _cam.transform.forward * (Input.mouseScrollDelta.y * distToFocus);
                 
                 return true;
