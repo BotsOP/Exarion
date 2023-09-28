@@ -100,13 +100,9 @@
             }
 
             float4 frag (v2f i) : SV_Target {
-                // if(_Erase)
-                // {
-                //     return float4(0.5, 0, 0, 0);
-                // }
                 if(tex2D(_IDTex, i.uv).x >= 0 && !_Erase)
                 {
-                     return float4(-1, 0, 0, 0);
+                     return float4(0, 0, 0, 0);
                 }
 
                 // if(distance(i.worldPos, _LastCursorPos) < _BrushSize)
@@ -120,10 +116,9 @@
                 //     }
                 // }
 
-                //float paintColor = LineSegment3DSDF(i.worldPos, _LastCursorPos, _CursorPos);
                 float paintColor = sdCapsule(i.worldPos, _LastCursorPos, _CursorPos, _BrushSize);
 
-                if(paintColor > _BrushSize) { return float4(-1, 0, 0, 0); }
+                if(paintColor > _BrushSize) { return float4(0, 0, 0, 0); }
 
                 paintColor = CalculatePaintColor(i.worldPos, _LastCursorPos, _CursorPos);
 

@@ -5,13 +5,7 @@ using UnityEngine;
 
 namespace Drawing
 {
-    public enum HighlightType
-    {
-        Paint,
-        Erase
-    }
-    
-    public class DrawHighlight
+    public class DrawHighlight3D
     {
         public readonly CustomRenderTexture rtHighlight;
         private ComputeShader highlightShader;
@@ -20,7 +14,7 @@ namespace Drawing
         private Vector3 threadGroupSizeOut;
         private Vector3 threadGroupSize;
 
-        public DrawHighlight(int _imageWidth, int _imageHeight)
+        public DrawHighlight3D(int _imageWidth, int _imageHeight)
         {
             highlightShader = Resources.Load<ComputeShader>("HighlightShader");
             
@@ -41,7 +35,7 @@ namespace Drawing
                 name = "rtSelect",
             };
             
-            rtHighlight.Clear(false, true, Color.white);
+            rtHighlight.Clear(false, true, Color.black);
         }
 
         private void Highlight(Vector2 _lastPos, Vector2 _currentPos, float _strokeBrushSize, HighlightType _highlightType, float _borderThickness = 0)
