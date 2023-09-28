@@ -22,6 +22,7 @@ namespace Drawing
         private Renderer rend;
         private ComputeShader textureHelperShader;
         private Material paintMaterial;
+        private Material extendMaterial;
         private int paintUnderOwnLineKernelID;
         private int paintUnderEverythingKernelID;
         private int paintOverEverythingKernelID;
@@ -32,6 +33,7 @@ namespace Drawing
         private int imageWidth;
         private int imageHeight;
         private CommandBuffer commandBuffer;
+        private static readonly int FirstStroke = Shader.PropertyToID("_FirstStroke");
 
         public float GetNewID()
         {
@@ -47,6 +49,7 @@ namespace Drawing
         {
             textureHelperShader = Resources.Load<ComputeShader>("TextureHelper");
             paintMaterial = new Material(Resources.Load<Shader>("DrawPainter"));
+            extendMaterial = new Material(Resources.Load<Shader>("ExtendIslands"));
 
             commandBuffer = new CommandBuffer();
             commandBuffer.name = "3DUVTimePainter";
@@ -93,7 +96,7 @@ namespace Drawing
                 name = "rtTemp",
             };
 
-            rt.Clear(false, true, new Color(250, 0, 0));
+            rt.Clear(false, true, Color.black);
             
             Color idColor = new Color(-1, -1, -1);
             rtID.Clear(false, true, idColor);
@@ -105,7 +108,7 @@ namespace Drawing
             switch (_paintType)
             {
                 case PaintType.PaintUnderEverything:
-                    paintMaterial.SetInt("_FirstStroke", _firstStroke ? 1 : 0);
+                    paintMaterial.SetInt(FirstStroke, _firstStroke ? 1 : 0);
                     paintMaterial.SetInt("_Erase", 0);
                     paintMaterial.SetVector("_CursorPos", _currentPos);
                     paintMaterial.SetVector("_LastCursorPos", _lastPos);
@@ -114,10 +117,13 @@ namespace Drawing
                     paintMaterial.SetFloat("_PreviousTimeColor", _lastTime);
                     paintMaterial.SetFloat("_StrokeID", _strokeID);
                     paintMaterial.SetTexture("_IDTex", rtID);
+                    
+                    extendMaterial.SetTexture("_MainTex", rtTemp);
+                    extendMaterial.SetFloat("_OffsetUV", 1);
 
                     commandBuffer.SetRenderTarget(rtTemp);
                     commandBuffer.DrawRenderer(rend, paintMaterial, 0);
-            
+                    
                     commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_OrgTex4", rtTemp);
                     commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_FinalTex4", rt);
                     commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_FinalTexInt", rtID);
@@ -135,7 +141,7 @@ namespace Drawing
 
                     commandBuffer.SetRenderTarget(rtTemp);
                     commandBuffer.DrawRenderer(rend, paintMaterial, 0);
-            
+                    
                     commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_OrgTex4", rtTemp);
                     commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTex4", rt);
                     commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTexInt", rtID);
