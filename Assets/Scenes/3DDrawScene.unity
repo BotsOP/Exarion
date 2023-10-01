@@ -13620,9 +13620,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 940481427}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.159, y: 0.773, z: 0}
-  m_LocalScale: {x: 0.009080572, y: 0.009080572, z: 0.009080572}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: -0.05, y: 0.773, z: 0.379}
+  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 9
@@ -16394,7 +16394,7 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 36991b010f8868543a30a8eec57b68b6,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -16622,7 +16622,7 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 36991b010f8868543a30a8eec57b68b6,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -18550,10 +18550,11 @@ MonoBehaviour:
   imageWidth: 2048
   imageHeight: 2048
   paintType: 1
-  sphere1: {fileID: 577936025}
+  sphere1: {fileID: 940481427}
   rend: {fileID: 1160798712}
   rt: {fileID: 0}
   rtID: {fileID: 0}
+  rtHighlight: {fileID: 0}
 --- !u!1 &1361772510
 GameObject:
   m_ObjectHideFlags: 0

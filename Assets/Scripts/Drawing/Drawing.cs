@@ -322,8 +322,6 @@ namespace Drawing
         }
         public void RedrawAllSafe(List<BrushStrokeID> _brushStrokeIDs)
         {
-            
-            
             Vector4 collisionBox = CombineCollisionBox(
                 _brushStrokeIDs.Select(_id => _id.GetCollisionBox()).ToArray());
 

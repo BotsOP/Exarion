@@ -41,6 +41,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SelectTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _canvas:
         m_Texture: {fileID: 8400000, guid: e4bb5f9d4f3558647819bd4ef21140a7, type: 2}
         m_Scale: {x: 1, y: 1}
@@ -66,4 +70,5 @@ Material:
     - _BackgroundColor: {r: 0.16470589, g: 0.16470589, b: 0.16470589, a: 1}
     - _BrushColorDark: {r: 0.07019099, g: 0.37094966, b: 0.8584906, a: 0}
     - _BrushColorLight: {r: 0.25715116, g: 0.7735849, b: 0.08514287, a: 0}
+    - _HighlightColor: {r: 0.12609467, g: 0.807396, b: 0.8679245, a: 1}
   m_BuildTextureStacks: []

@@ -30,6 +30,7 @@ namespace Drawing
         [SerializeField] private Renderer rend;
         [SerializeField] private RenderTexture rt;
         [SerializeField] private RenderTexture rtID;
+        [SerializeField] private RenderTexture rtHighlight;
     
         private RenderTexture drawingRenderTexture;
         private int kernelID;
@@ -41,7 +42,7 @@ namespace Drawing
         private List<BrushStrokeID> selectedBrushStrokes;
 
         private Drawing3D drawer;
-        private DrawHighlight highlighter;
+        private DrawHighlight3D highlighter;
         private DrawPreview previewer;
         private DrawStamp drawStamp;
         private float brushSize;
@@ -55,19 +56,22 @@ namespace Drawing
 
         private void Start()
         {
-            drawer = new Drawing3D(rend, imageWidth, imageHeight, sphere1.transform);
-            highlighter = new DrawHighlight(imageWidth, imageHeight);
+            drawer = new Drawing3D(imageWidth, imageHeight, sphere1.transform);
+            highlighter = new DrawHighlight3D(imageWidth, imageHeight);
             previewer = new DrawPreview(imageWidth, imageHeight);
             drawStamp = new DrawStamp();
 
             rt = drawer.rt;
             rtID = drawer.rtID;
+            rtHighlight = highlighter.rtHighlight;
             
             drawingMat.SetTexture("_MainTex", drawer.rt);
+            drawingMat.SetTexture("_SelectTex", highlighter.rtHighlight);
             displayMat.SetTexture("_MainTex", drawer.rt);
             selectMat.SetTexture("_MainTex", highlighter.rtHighlight);
             previewMat.SetTexture("_MainTex", previewer.rtPreview);
 
+            SetRenderer(rend);
             resetBox = new Vector4(imageWidth, imageHeight, 0, 0);
             tempBrushStrokes = new List<BrushStroke>();
             selectedBrushStrokes = new List<BrushStrokeID>();
@@ -166,6 +170,12 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>, List<float>>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
         }
 
+        private void SetRenderer(Renderer _rend)
+        {
+            drawer.rend = _rend;
+            highlighter.rend = _rend;
+        }
+
         private void SetPaintType(int index)
         {
             paintType = (PaintType)index;
@@ -209,20 +219,10 @@ namespace Drawing
                 firstUse = false;
             }
 
-            //sphere1.transform.position = _mousePos;
-
             drawer.Draw(lastCursorPos, _mousePos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
             tempBrushStrokes.Add(new BrushStroke(lastCursorPos, _mousePos, brushSize, time, cachedTime));
             
-            //
-            // tempAvgPos += (lastCursorPos + _mousePos) / 2;
-            //
             lastCursorPos = _mousePos;
-            //
-            // if (collisionBox.x > _mousePos.x - brushSize) { collisionBox.x = _mousePos.x - brushSize; }
-            // if (collisionBox.y > _mousePos.y - brushSize) { collisionBox.y = _mousePos.y - brushSize; }
-            // if (collisionBox.z < _mousePos.x + brushSize) { collisionBox.z = _mousePos.x + brushSize; }
-            // if (collisionBox.w < _mousePos.y + brushSize) { collisionBox.w = _mousePos.y + brushSize; }
         }
         
         void Update()
@@ -254,7 +254,6 @@ namespace Drawing
             collisionBox = resetBox;
             tempBrushStrokes.Clear();
             firstUse = true;
-            Debug.Log($"test");
         }
 
         private void RedrawStroke(BrushStrokeID _brushStrokeID)
