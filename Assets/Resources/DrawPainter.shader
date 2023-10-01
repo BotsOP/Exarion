@@ -1,8 +1,6 @@
 ﻿Shader "BotsOP/TexturePainter"{   
 
-    Properties{
-        _PainterColor ("Painter Color", Color) = (0, 0, 0, 0)
-    }
+
 
     SubShader{
         Cull Off ZWrite Off ZTest Off
@@ -15,19 +13,12 @@
 			sampler2D _IDTex;
             float4 _IDTex_ST;
             
-            float3 _PainterPosition;
-            float _Radius;
-            float _Hardness;
-            float _Strength;
-            float4 _PainterColor;
-            float _PrepareUV;
             float _BrushSize;
             float _TimeColor;
             float _PreviousTimeColor;
             float3 _LastCursorPos;
             float3 _CursorPos;
             bool _FirstStroke;
-            bool _Erase;
             float _StrokeID;
 
             struct appdata{
@@ -72,19 +63,27 @@
 
             float CalculatePaintColor(float3 paintPos, float3 startPos, float3 endPos)
             {
+                _BrushSize /= 2.7;
                 const float3 paintPosOnLine = ClosestPointOnLine(startPos, endPos, paintPos);
 
                 float distLine = distance(startPos, endPos);
                 float distanceToPointA = distance(startPos, paintPosOnLine) / distLine;
                 float paintColor = lerp(_PreviousTimeColor, _TimeColor, distanceToPointA);
                 paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
-                
+
                 float distToLine = distance(paintPosOnLine, paintPos);
-                distToLine = 1 - saturate((cubicBezierCircle(distToLine / _BrushSize) * _BrushSize) / distLine);
-                float paintColorOutside = (_TimeColor - _PreviousTimeColor) * distToLine;
+                distToLine = 1 - distToLine / _BrushSize;
+                float paintColorOutside = lerp(0, _TimeColor - _PreviousTimeColor, distToLine);
                 paintColorOutside = clamp(paintColorOutside, 0, _TimeColor - _PreviousTimeColor);
                 
                 paintColor -= paintColorOutside;
+                
+                // float distToLine = distance(paintPosOnLine, paintPos);
+                // distToLine = 1 - saturate((cubicBezierCircle(distToLine / _BrushSize) * _BrushSize) / distLine);
+                // float paintColorOutside = (_TimeColor - _PreviousTimeColor) * distToLine;
+                // paintColorOutside = clamp(paintColorOutside, 0, _TimeColor - _PreviousTimeColor);
+                //
+                // paintColor -= paintColorOutside;
                 
                 return paintColor;
             }
@@ -100,21 +99,21 @@
             }
 
             float4 frag (v2f i) : SV_Target {
-                if(tex2D(_IDTex, i.uv).x >= 0 && !_Erase)
+                if(tex2D(_IDTex, i.uv).x >= 0)
                 {
                      return float4(0, 0, 0, 0);
                 }
 
-                // if(distance(i.worldPos, _LastCursorPos) < _BrushSize)
-                // {
-                //     float3 AtoB = _CursorPos - _LastCursorPos;
-                //     float3 paintPosToA = _LastCursorPos - i.worldPos;
-                //     
-                //     if(dot(AtoB, paintPosToA) > 0.0 && _FirstStroke)
-                //     {
-                //         return float4(-1, 0, 0, 0);
-                //     }
-                // }
+                if(distance(i.worldPos, _LastCursorPos) < _BrushSize)
+                {
+                    float3 AtoB = _CursorPos - _LastCursorPos;
+                    float3 paintPosToA = _LastCursorPos - i.worldPos;
+                    
+                    if(dot(AtoB, paintPosToA) > 0.0 && _FirstStroke)
+                    {
+                        return float4(-1, 0, 0, 0);
+                    }
+                }
 
                 float paintColor = sdCapsule(i.worldPos, _LastCursorPos, _CursorPos, _BrushSize);
 

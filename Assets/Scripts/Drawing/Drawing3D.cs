@@ -17,12 +17,12 @@ namespace Drawing
         public readonly CustomRenderTexture rtID;
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
         public Transform sphere1;
+        public Renderer rend;
 
         private readonly CustomRenderTexture rtTemp;
-        private Renderer rend;
         private ComputeShader textureHelperShader;
         private Material paintMaterial;
-        private Material extendMaterial;
+        private Material simplePaintMaterial;
         private int paintUnderOwnLineKernelID;
         private int paintUnderEverythingKernelID;
         private int paintOverEverythingKernelID;
@@ -45,16 +45,14 @@ namespace Drawing
             }
             return id;
         }
-        public Drawing3D(Renderer _rend, int _imageWidth, int _imageHeight, Transform _sphere1)
+        public Drawing3D(int _imageWidth, int _imageHeight, Transform _sphere1)
         {
             textureHelperShader = Resources.Load<ComputeShader>("TextureHelper");
             paintMaterial = new Material(Resources.Load<Shader>("DrawPainter"));
-            extendMaterial = new Material(Resources.Load<Shader>("ExtendIslands"));
+            simplePaintMaterial = new Material(Resources.Load<Shader>("SimplePainter"));
 
             commandBuffer = new CommandBuffer();
             commandBuffer.name = "3DUVTimePainter";
-
-            rend = _rend;
 
             imageWidth = _imageWidth;
             imageHeight = _imageHeight;
@@ -109,7 +107,6 @@ namespace Drawing
             {
                 case PaintType.PaintUnderEverything:
                     paintMaterial.SetInt(FirstStroke, _firstStroke ? 1 : 0);
-                    paintMaterial.SetInt("_Erase", 0);
                     paintMaterial.SetVector("_CursorPos", _currentPos);
                     paintMaterial.SetVector("_LastCursorPos", _lastPos);
                     paintMaterial.SetFloat("_BrushSize", _strokeBrushSize);
@@ -118,9 +115,6 @@ namespace Drawing
                     paintMaterial.SetFloat("_StrokeID", _strokeID);
                     paintMaterial.SetTexture("_IDTex", rtID);
                     
-                    extendMaterial.SetTexture("_MainTex", rtTemp);
-                    extendMaterial.SetFloat("_OffsetUV", 1);
-
                     commandBuffer.SetRenderTarget(rtTemp);
                     commandBuffer.DrawRenderer(rend, paintMaterial, 0);
                     
@@ -131,16 +125,13 @@ namespace Drawing
                     commandBuffer.DispatchCompute(textureHelperShader, 0, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
                     break;
                 case PaintType.Erase:
-                    paintMaterial.SetInt("_FirstStroke", _firstStroke ? 1 : 0);
-                    paintMaterial.SetInt("_Erase", 1);
-                    paintMaterial.SetVector("_CursorPos", _currentPos);
-                    paintMaterial.SetVector("_LastCursorPos", _lastPos);
-                    paintMaterial.SetFloat("_BrushSize", _strokeBrushSize);
-                    paintMaterial.SetFloat("_TimeColor", _brushTime);
-                    paintMaterial.SetFloat("_PreviousTimeColor", _lastTime);
+                    simplePaintMaterial.SetInt("_FirstStroke", _firstStroke ? 1 : 0);
+                    simplePaintMaterial.SetVector("_CursorPos", _currentPos);
+                    simplePaintMaterial.SetVector("_LastCursorPos", _lastPos);
+                    simplePaintMaterial.SetFloat("_BrushSize", _strokeBrushSize);
 
                     commandBuffer.SetRenderTarget(rtTemp);
-                    commandBuffer.DrawRenderer(rend, paintMaterial, 0);
+                    commandBuffer.DrawRenderer(rend, simplePaintMaterial, 0);
                     
                     commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_OrgTex4", rtTemp);
                     commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTex4", rt);
