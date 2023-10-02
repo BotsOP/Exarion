@@ -103,7 +103,6 @@ namespace Drawing
         
         public void Draw(Vector3 _lastPos, Vector3 _currentPos, float _strokeBrushSize, PaintType _paintType, float _lastTime = 0, float _brushTime = 0, bool _firstStroke = false, float _strokeID = 0)
         {
-            //_strokeBrushSize = 0.01f;
             switch (_paintType)
             {
                 case PaintType.PaintUnderEverything:
@@ -279,22 +278,17 @@ namespace Drawing
         {
             Vector3 minCorner = _brushStrokeID.GetMinCorner();
             Vector3 maxCorner = _brushStrokeID.GetMaxCorner();
-            float lowestDistance = float.MaxValue;
             if (CheckCollision(minCorner, maxCorner, _worldPos))
             {
                 foreach (var brushStroke in _brushStrokeID.brushStrokes)
                 {
                     float distLine = HandleUtility.DistancePointLine(_worldPos, brushStroke.GetStartPos(), brushStroke.GetEndPos());
-                    Debug.Log($"distLine {distLine}");
-                    lowestDistance = lowestDistance > distLine ? distLine : lowestDistance;
                     if (distLine < brushStroke.brushSize)
                     {
-                        Debug.Log($"Hit {lowestDistance}    {brushStroke.brushSize * 2}");
                         return true;
                     }
                 }
             }
-            Debug.Log($"Miss {lowestDistance} ");
             return false;
         }
         
