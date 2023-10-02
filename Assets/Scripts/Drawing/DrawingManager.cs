@@ -437,10 +437,10 @@ namespace Drawing
                 }
                 brushStrokeID.avgPosX += _dir.x;
                 brushStrokeID.avgPosY += _dir.y;
-                brushStrokeID.collisionBoxX += _dir.x;
-                brushStrokeID.collisionBoxY += _dir.y;
-                brushStrokeID.collisionBoxZ += _dir.x;
-                brushStrokeID.collisionBoxW += _dir.y;
+                brushStrokeID.collisionBoxMinX += _dir.x;
+                brushStrokeID.collisionBoxMinY += _dir.y;
+                brushStrokeID.collisionBoxMaxX += _dir.x;
+                brushStrokeID.collisionBoxMaxY += _dir.y;
                 brushStrokeID.RecalculateAvgPos();
             }
             highlighter.HighlightStroke(selectedBrushStrokes);
@@ -466,10 +466,10 @@ namespace Drawing
                 }
                 brushStrokeID.avgPosX += _dir.x;
                 brushStrokeID.avgPosY += _dir.y;
-                brushStrokeID.collisionBoxX += _dir.x;
-                brushStrokeID.collisionBoxY += _dir.y;
-                brushStrokeID.collisionBoxZ += _dir.x;
-                brushStrokeID.collisionBoxW += _dir.y;
+                brushStrokeID.collisionBoxMinX += _dir.x;
+                brushStrokeID.collisionBoxMinY += _dir.y;
+                brushStrokeID.collisionBoxMaxX += _dir.x;
+                brushStrokeID.collisionBoxMaxY += _dir.y;
                 brushStrokeID.RecalculateAvgPos();
             }
             highlighter.HighlightStroke(selectedBrushStrokes);
@@ -502,10 +502,10 @@ namespace Drawing
                 
                 brushStrokeID.avgPosX += dir.x;
                 brushStrokeID.avgPosY += dir.y;
-                brushStrokeID.collisionBoxX += dir.x;
-                brushStrokeID.collisionBoxY += dir.y;
-                brushStrokeID.collisionBoxZ += dir.x;
-                brushStrokeID.collisionBoxW += dir.y;
+                brushStrokeID.collisionBoxMinX += dir.x;
+                brushStrokeID.collisionBoxMinY += dir.y;
+                brushStrokeID.collisionBoxMaxX += dir.x;
+                brushStrokeID.collisionBoxMaxY += dir.y;
                 brushStrokeID.RecalculateAvgPos();
             }
             highlighter.HighlightStroke(selectedBrushStrokes);
@@ -540,10 +540,10 @@ namespace Drawing
 
                 brushStrokeID.avgPosX += dir.x;
                 brushStrokeID.avgPosY += dir.y;
-                brushStrokeID.collisionBoxX += dir.x;
-                brushStrokeID.collisionBoxY += dir.y;
-                brushStrokeID.collisionBoxZ += dir.x;
-                brushStrokeID.collisionBoxW += dir.y;
+                brushStrokeID.collisionBoxMinX += dir.x;
+                brushStrokeID.collisionBoxMinY += dir.y;
+                brushStrokeID.collisionBoxMaxX += dir.x;
+                brushStrokeID.collisionBoxMaxY += dir.y;
                 brushStrokeID.RecalculateAvgPos();
             }
             highlighter.HighlightStroke(selectedBrushStrokes);

@@ -83,23 +83,23 @@ namespace UI
             }
 
             bool hitModel;
-            Vector3 mousePos = new Vector3();
+            Vector3 worldPos = new Vector3();
             if (Input.GetMouseButton(0))
             {
-                hitModel = mousePosToWorld(cam, out mousePos);
+                hitModel = mousePosToWorld(cam, out worldPos);
             }
 
             if (!UIManager.isInteracting || isInteracting)
             {
                 StopDrawing();
                 
-                if (Resize(mousePos))
+                if (Resize(worldPos))
                 {
                     StopDrawing();
                     return;
                 }
                     
-                if (RotateBrushStrokes(mousePos))
+                if (RotateBrushStrokes(worldPos))
                 {
                     StopDrawing();
                     return;
@@ -110,31 +110,31 @@ namespace UI
                 
                 if (isMouseInsideDrawArea)
                 {
-                    if (SelectBrushStroke(mousePos))
+                    if (SelectBrushStroke(worldPos))
                     {
                         StopDrawing();
                         return;
                     }
                 
-                    if (MoveBrushStrokes(mousePos))
+                    if (MoveBrushStrokes(worldPos))
                     {
                         StopDrawing();
                         return;
                     }
 
-                    if (SpawnCircle(mousePos))
+                    if (SpawnCircle(worldPos))
                         return;
-                    if (SpawnLine(mousePos))
+                    if (SpawnLine(worldPos))
                         return;
-                    if (SpawnSquare(mousePos))
+                    if (SpawnSquare(worldPos))
                         return;
-                    if (SpawnPolygon(mousePos))
+                    if (SpawnPolygon(worldPos))
                         return;
 
-                    if(DrawInput(mousePos))
+                    if(DrawInput(worldPos))
                         return;
                 
-                    if (SetBrushSize(mousePos))
+                    if (SetBrushSize(worldPos))
                         return;
                 
                     if(MoveCamera(viewCam, drawAreaCorners, startPosViewCam, viewFocus))
@@ -150,7 +150,7 @@ namespace UI
                 StopDrawing();
             }
             
-            lastMousePos = mousePos;
+            lastMousePos = worldPos;
         }
 
         private bool SpawnCircle(Vector2 _mousePos)
@@ -217,7 +217,7 @@ namespace UI
 
             return false;
         }
-        private bool SelectBrushStroke(Vector2 _mousePos)
+        private bool SelectBrushStroke(Vector3 _worldPos)
         {
             if (Input.GetMouseButtonDown(0) && currentToolType == ToolType.select)
             {
@@ -227,7 +227,7 @@ namespace UI
                 }
 
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, true);
-                EventSystem<Vector2>.RaiseEvent(EventType.SELECT_BRUSHSTROKE, _mousePos);
+                EventSystem<Vector3>.RaiseEvent(EventType.SELECT_BRUSHSTROKE, _worldPos);
                 return true;
             }
             return false;

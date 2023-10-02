@@ -5,6 +5,7 @@ using System.Linq;
 using Managers;
 using UI;
 using Unity.Mathematics;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Random = UnityEngine.Random;
@@ -172,13 +173,13 @@ namespace Drawing
             }
         }
 
-        private void RedrawStrokeOptimized(BrushStrokeID _brushstrokeID, Vector4 _collisionBox)
+        private void RedrawStrokeOptimized(BrushStrokeID _brushstrokeID, Vector3 _minCorner, Vector3 _maxCorner)
         {
             float newStrokeID = GetNewID();
             bool firstLoop = true;
             PaintType paintType = _brushstrokeID.paintType;
 
-            if (!CheckCollision(_brushstrokeID.GetCollisionBox(), _collisionBox))
+            if (!CheckCollision(_brushstrokeID.GetMinCorner(), _brushstrokeID.GetMaxCorner(), _minCorner, _maxCorner))
                 return;
             
             RedrawStroke(_brushstrokeID, PaintType.Erase);
@@ -274,19 +275,26 @@ namespace Drawing
             }
         }
 
-        public bool IsMouseOverBrushStroke(BrushStrokeID _brushStrokeID, Vector2 _mousePos)
+        public bool IsMouseOverBrushStroke(BrushStrokeID _brushStrokeID, Vector3 _worldPos)
         {
-            Vector4 collisionBox = _brushStrokeID.GetCollisionBox();
-            if (CheckCollision(collisionBox, _mousePos))
+            Vector3 minCorner = _brushStrokeID.GetMinCorner();
+            Vector3 maxCorner = _brushStrokeID.GetMaxCorner();
+            float lowestDistance = float.MaxValue;
+            if (CheckCollision(minCorner, maxCorner, _worldPos))
             {
                 foreach (var brushStroke in _brushStrokeID.brushStrokes)
                 {
-                    if (DistancePointToLine(brushStroke.GetStartPos(), brushStroke.GetEndPos(), _mousePos) < brushStroke.brushSize)
+                    float distLine = HandleUtility.DistancePointLine(_worldPos, brushStroke.GetStartPos(), brushStroke.GetEndPos());
+                    Debug.Log($"distLine {distLine}");
+                    lowestDistance = lowestDistance > distLine ? distLine : lowestDistance;
+                    if (distLine < brushStroke.brushSize)
                     {
+                        Debug.Log($"Hit {lowestDistance}    {brushStroke.brushSize * 2}");
                         return true;
                     }
                 }
             }
+            Debug.Log($"Miss {lowestDistance} ");
             return false;
         }
         
@@ -304,8 +312,6 @@ namespace Drawing
         //Redraws everything and if a stroke needs to be interpolated it does so automatically
         public void RedrawAllSafe(BrushStrokeID _brushStrokeID)
         {
-            Vector4 collisionBox = _brushStrokeID.GetCollisionBox();
-
             foreach (BrushStrokeID brushStrokeID in brushStrokesID)
             {
                 float brushStart = brushStrokeID.brushStrokes[0].startTime;
@@ -318,13 +324,13 @@ namespace Drawing
                     continue;
                 }
 
-                RedrawStrokeOptimized(brushStrokeID, collisionBox);
+                RedrawStrokeOptimized(brushStrokeID, _brushStrokeID.GetMinCorner(), _brushStrokeID.GetMaxCorner());
             }
         }
         public void RedrawAllSafe(List<BrushStrokeID> _brushStrokeIDs)
         {
-            Vector4 collisionBox = CombineCollisionBox(
-                _brushStrokeIDs.Select(_id => _id.GetCollisionBox()).ToArray());
+            Vector3 minCorner = CombineMinCorner(_brushStrokeIDs.Select(_id => _id.GetMinCorner()).ToArray());
+            Vector3 maxCorner = CombineMinCorner(_brushStrokeIDs.Select(_id => _id.GetMaxCorner()).ToArray());
 
             for (var i = brushStrokesID.Count - 1; i >= 0; i--)
             {
@@ -344,19 +350,19 @@ namespace Drawing
                     continue;
                 }
 
-                RedrawStrokeOptimized(brushStrokeID, collisionBox);
+                RedrawStrokeOptimized(brushStrokeID, minCorner, maxCorner);
             }
         }
         
         public void RedrawAllDirect(List<BrushStrokeID> _brushStrokeIDs)
         {
-            Vector4 collisionBox = CombineCollisionBox(
-                _brushStrokeIDs.Select(_id => _id.GetCollisionBox()).ToArray());
+            Vector3 minCorner = CombineMinCorner(_brushStrokeIDs.Select(_id => _id.GetMinCorner()).ToArray());
+            Vector3 maxCorner = CombineMinCorner(_brushStrokeIDs.Select(_id => _id.GetMaxCorner()).ToArray());
 
             for (var i = brushStrokesID.Count - 1; i >= 0; i--)
             {
                 BrushStrokeID brushStrokeID = brushStrokesID[i];
-                RedrawStrokeOptimized(brushStrokeID, collisionBox);
+                RedrawStrokeOptimized(brushStrokeID, minCorner, maxCorner);
             }
         }
 
@@ -414,30 +420,47 @@ namespace Drawing
             return tempRT;
         }
 
-        private Vector4 CombineCollisionBox(Vector4[] collisionBoxes)
+        private Vector3 CombineMinCorner(Vector3[] _collisionBoxes)
         {
-            Vector4 collisionBox = new Vector4(imageWidth, imageHeight, 0, 0);
+            Vector3 collisionBox = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
 
-            foreach (Vector4 tempCollisionBox in collisionBoxes)
+            foreach (Vector3 tempCollisionBox in _collisionBoxes)
             {
                 if (collisionBox.x > tempCollisionBox.x) { collisionBox.x = tempCollisionBox.x; }
                 if (collisionBox.y > tempCollisionBox.y) { collisionBox.y = tempCollisionBox.y; }
+                if (collisionBox.z > tempCollisionBox.z) { collisionBox.z = tempCollisionBox.z; }
+            }
+
+            return collisionBox;
+        }
+        
+        private Vector3 CombineMaxCorner(Vector3[] _collisionBoxes)
+        {
+            Vector3 collisionBox = new Vector3(-float.MaxValue, -float.MaxValue, -float.MaxValue);
+
+            foreach (Vector3 tempCollisionBox in _collisionBoxes)
+            {
+                if (collisionBox.x < tempCollisionBox.x) { collisionBox.x = tempCollisionBox.x; }
+                if (collisionBox.y < tempCollisionBox.y) { collisionBox.y = tempCollisionBox.y; }
                 if (collisionBox.z < tempCollisionBox.z) { collisionBox.z = tempCollisionBox.z; }
-                if (collisionBox.w < tempCollisionBox.w) { collisionBox.w = tempCollisionBox.w; }
             }
 
             return collisionBox;
         }
 
-        private bool CheckCollision(Vector4 _box1, Vector4 _box2)
+        private bool CheckCollision(Vector3 _minCorner1, Vector3 _maxCorner1, Vector3 _minCorner2, Vector3 _maxCorner2)
         {
-            return _box1.x <= _box2.z && _box1.z >= _box2.x && _box1.y <= _box2.w && _box1.w >= _box2.y;
+            return (_minCorner1.x <= _maxCorner2.x && _maxCorner1.x >= _minCorner2.x) &&
+                   (_minCorner1.y <= _maxCorner2.y && _maxCorner1.y >= _minCorner2.y) &&
+                   (_minCorner1.z <= _maxCorner2.z && _maxCorner1.z >= _minCorner2.z);
         }
-        private bool CheckCollision(Vector4 _box1, Vector2 _point)
+        private bool CheckCollision(Vector3 _minCorner, Vector3 _maxCorner, Vector3 _point)
         {
-            return _point.x >= _box1.x && _point.x <= _box1.z && _point.y >= _box1.y && _point.y <= _box1.w;
+            return (_point.x > _minCorner.x && _point.x < _maxCorner.x) &&
+                   (_point.y > _minCorner.y && _point.y < _maxCorner.y) &&
+                   (_point.z > _minCorner.z && _point.z < _maxCorner.z);
         }
-        
+
         private float DistancePointToLine(Vector3 lineStart, Vector3 lineEnd, Vector3 point)
         {
             //Get heading
