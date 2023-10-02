@@ -7,10 +7,12 @@ namespace Drawing
     public class BrushStrokeID
     {
         public List<BrushStroke> brushStrokes;
-        public float collisionBoxX;
-        public float collisionBoxY;
-        public float collisionBoxZ;
-        public float collisionBoxW;
+        public float collisionBoxMinX;
+        public float collisionBoxMinY;
+        public float collisionBoxMinZ;
+        public float collisionBoxMaxX;
+        public float collisionBoxMaxY;
+        public float collisionBoxMaxZ;
         public PaintType paintType;
         public float startTime;
         public float endTime;
@@ -27,10 +29,29 @@ namespace Drawing
             paintType = _paintType;
             startTime = _startTime;
             endTime = _endTime;
-            collisionBoxX = _collisionBox.x;
-            collisionBoxY = _collisionBox.y;
-            collisionBoxZ = _collisionBox.z;
-            collisionBoxW = _collisionBox.w;
+            collisionBoxMinX = _collisionBox.x;
+            collisionBoxMinY = _collisionBox.y;
+            collisionBoxMaxX = _collisionBox.z;
+            collisionBoxMaxY = _collisionBox.w;
+            indexWhenDrawn = _indexWhenDrawn;
+            avgPosX = _avgPos.x;
+            avgPosY = _avgPos.y;
+            angle = _angle;
+            scale = _scale;
+        }
+        
+        public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _startTime, float _endTime, Vector3 _collisionBoxMin, Vector3 _collisionBoxMax, int _indexWhenDrawn, Vector2 _avgPos, float _angle = 0, float _scale = 1)
+        {
+            brushStrokes = _brushStrokes;
+            paintType = _paintType;
+            startTime = _startTime;
+            endTime = _endTime;
+            collisionBoxMinX = _collisionBoxMin.x;
+            collisionBoxMinY = _collisionBoxMin.y;
+            collisionBoxMinZ = _collisionBoxMin.z;
+            collisionBoxMaxX = _collisionBoxMax.x;
+            collisionBoxMaxY = _collisionBoxMax.y;
+            collisionBoxMaxZ = _collisionBoxMax.z;
             indexWhenDrawn = _indexWhenDrawn;
             avgPosX = _avgPos.x;
             avgPosY = _avgPos.y;
@@ -44,10 +65,10 @@ namespace Drawing
             paintType = _brushStrokeID.paintType;
             startTime = _brushStrokeID.startTime;
             endTime = _brushStrokeID.endTime;
-            collisionBoxX = _brushStrokeID.collisionBoxX;
-            collisionBoxY = _brushStrokeID.collisionBoxY;
-            collisionBoxZ = _brushStrokeID.collisionBoxZ;
-            collisionBoxW = _brushStrokeID.collisionBoxW;
+            collisionBoxMinX = _brushStrokeID.collisionBoxMinX;
+            collisionBoxMinY = _brushStrokeID.collisionBoxMinY;
+            collisionBoxMaxX = _brushStrokeID.collisionBoxMaxX;
+            collisionBoxMaxY = _brushStrokeID.collisionBoxMaxY;
             avgPosX = _brushStrokeID.avgPosX;
             avgPosY = _brushStrokeID.avgPosY;
             angle = _brushStrokeID.angle;
@@ -57,7 +78,16 @@ namespace Drawing
 
         public Vector4 GetCollisionBox()
         {
-            return new Vector4(collisionBoxX, collisionBoxY, collisionBoxZ, collisionBoxW);
+            return new Vector4(collisionBoxMinX, collisionBoxMinY, collisionBoxMaxX, collisionBoxMaxY);
+        }
+
+        public Vector3 GetMinCorner()
+        {
+            return new Vector3(collisionBoxMinX, collisionBoxMinY, collisionBoxMinZ);
+        }
+        public Vector3 GetMaxCorner()
+        {
+            return new Vector3(collisionBoxMaxX, collisionBoxMaxY, collisionBoxMaxZ);
         }
 
         public Vector2 GetAvgPos()
@@ -96,10 +126,10 @@ namespace Drawing
                 if (collisionBox.w < brushStroke.startPosY + brushStroke.brushSize) { collisionBox.w = brushStroke.startPosY + brushStroke.brushSize; }
             }
             
-            collisionBoxX = collisionBox.x;
-            collisionBoxY = collisionBox.y;
-            collisionBoxZ = collisionBox.z;
-            collisionBoxW = collisionBox.w;
+            collisionBoxMinX = collisionBox.x;
+            collisionBoxMinY = collisionBox.y;
+            collisionBoxMaxX = collisionBox.z;
+            collisionBoxMaxY = collisionBox.w;
         }
 
         public void RecalculateCollisionBoxAndAvgPos()
@@ -125,10 +155,10 @@ namespace Drawing
                 avgPos += brushStroke.GetEndPos();
             }
             
-            collisionBoxX = collisionBox.x;
-            collisionBoxY = collisionBox.y;
-            collisionBoxZ = collisionBox.z;
-            collisionBoxW = collisionBox.w;
+            collisionBoxMinX = collisionBox.x;
+            collisionBoxMinY = collisionBox.y;
+            collisionBoxMaxX = collisionBox.z;
+            collisionBoxMaxY = collisionBox.w;
             
             avgPos /= brushStrokes.Count - 1;
             avgPosX = avgPos.x;

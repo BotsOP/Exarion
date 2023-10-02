@@ -25,12 +25,12 @@
                 float4 worldPos : TEXCOORD1;
             };
             
-            float sdCapsule( float3 p, float3 a, float3 b, float r )
+            float LineSegment3DSDF(const float3 p, const float3 a, const float3 b)
             {
-              float3 pa = p - a;
-              float3 ba = b - a;
-              float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );
-              return length( pa - ba*h ) - r;
+                const float3 ba = b - a;
+                const float3 pa = p - a;
+                const float k = saturate(dot(pa, ba) / dot(ba, ba));
+                return length(pa - ba * k);
             }
 
             v2f vert (appdata v){
@@ -44,7 +44,7 @@
             }
 
             float4 frag (v2f i) : SV_Target {
-                float paintColor = sdCapsule(i.worldPos, _LastCursorPos, _CursorPos, _BrushSize);
+                const float paintColor = LineSegment3DSDF(i.worldPos, _LastCursorPos, _CursorPos);
 
                 if(paintColor > _BrushSize) { return float4(0, 0, 0, 0); }
                 

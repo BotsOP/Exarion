@@ -18551,6 +18551,7 @@ MonoBehaviour:
   imageHeight: 2048
   paintType: 1
   sphere1: {fileID: 940481427}
+  sphere2: {fileID: 577936025}
   rend: {fileID: 1160798712}
   rt: {fileID: 0}
   rtID: {fileID: 0}

@@ -58,32 +58,34 @@
 
             float cubicBezierCircle(float t)
             {
-                return t * t * t;
+                return sqrt(1 - pow(t - 0.9, 2));
             }
 
             float CalculatePaintColor(float3 paintPos, float3 startPos, float3 endPos)
             {
-                _BrushSize /= 2.7;
                 const float3 paintPosOnLine = ClosestPointOnLine(startPos, endPos, paintPos);
 
-                float distLine = distance(startPos, endPos);
-                float distanceToPointA = distance(startPos, paintPosOnLine) / distLine;
+                float3 directionPos = paintPos - startPos;
+                float3 directionLine = endPos - startPos;
+                float dotDirection = dot(directionPos, directionLine);
+                if(dotDirection < 0)
+                {
+                    dotDirection = 0;
+                }
+                else
+                {
+                    dotDirection = 1;
+                }
+
+                float distLine = distance(startPos, endPos) + _BrushSize * dotDirection;
+                float distanceToPointA = (distance(startPos, paintPosOnLine) + _BrushSize) / distLine;
                 float paintColor = lerp(_PreviousTimeColor, _TimeColor, distanceToPointA);
-                paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
 
                 float distToLine = distance(paintPosOnLine, paintPos);
                 distToLine = 1 - distToLine / _BrushSize;
-                float paintColorOutside = lerp(0, _TimeColor - _PreviousTimeColor, distToLine);
-                paintColorOutside = clamp(paintColorOutside, 0, _TimeColor - _PreviousTimeColor);
+                float paintColorOutside = lerp(0, _TimeColor - _PreviousTimeColor, cubicBezierCircle(distToLine));
                 
                 paintColor -= paintColorOutside;
-                
-                // float distToLine = distance(paintPosOnLine, paintPos);
-                // distToLine = 1 - saturate((cubicBezierCircle(distToLine / _BrushSize) * _BrushSize) / distLine);
-                // float paintColorOutside = (_TimeColor - _PreviousTimeColor) * distToLine;
-                // paintColorOutside = clamp(paintColorOutside, 0, _TimeColor - _PreviousTimeColor);
-                //
-                // paintColor -= paintColorOutside;
                 
                 return paintColor;
             }
@@ -98,10 +100,10 @@
                 return o;
             }
 
-            float4 frag (v2f i) : SV_Target {
+            float frag (v2f i) : SV_Target {
                 if(tex2D(_IDTex, i.uv).x >= 0)
                 {
-                     return float4(0, 0, 0, 0);
+                     return 0;
                 }
 
                 if(distance(i.worldPos, _LastCursorPos) < _BrushSize)
@@ -109,19 +111,19 @@
                     float3 AtoB = _CursorPos - _LastCursorPos;
                     float3 paintPosToA = _LastCursorPos - i.worldPos;
                     
-                    if(dot(AtoB, paintPosToA) > 0.0 && _FirstStroke)
+                    if(dot(AtoB, paintPosToA) > 0.0 && !_FirstStroke)
                     {
-                        return float4(-1, 0, 0, 0);
+                        return 0;
                     }
                 }
 
-                float paintColor = sdCapsule(i.worldPos, _LastCursorPos, _CursorPos, _BrushSize);
+                float paintColor = LineSegment3DSDF(i.worldPos, _LastCursorPos, _CursorPos);
 
-                if(paintColor > _BrushSize) { return float4(0, 0, 0, 0); }
+                if(paintColor > _BrushSize) { return 0; }
 
                 paintColor = CalculatePaintColor(i.worldPos, _LastCursorPos, _CursorPos);
 
-                return float4(paintColor, paintColor, paintColor, 1);
+                return paintColor;
             }
             ENDCG
         }
