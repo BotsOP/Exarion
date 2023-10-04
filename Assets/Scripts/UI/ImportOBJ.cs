@@ -1,21 +1,22 @@
+using System;
 using System.IO;
 using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Runtime.InteropServices;
-using UnityEngine.UI;
-using SFB;
-using TMPro;
+using Crosstales.FB;
 using UnityEngine.Networking;
 using Dummiesman;
-using UnityEngine.Serialization; //Load OBJ Model
+using Managers;
+using EventType = Managers.EventType;
 
 public class ImportOBJ : MonoBehaviour
 {
     [SerializeField] private GameObject modelHolder; //Load OBJ Model
     [SerializeField] private Material drawMat;
     [SerializeField] private Material displayMat;
+    
+    private string[] extensions = { "obj" };
 
 #if UNITY_WEBGL && !UNITY_EDITOR
     // WebGL
@@ -34,11 +35,8 @@ public class ImportOBJ : MonoBehaviour
     // Standalone platforms & editor
     public void OnClickOpen()
     {
-        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", "obj", false);
-        if (paths.Length > 0)
-        {
-            StartCoroutine(OutputRoutineOpen(new System.Uri(paths[0]).AbsoluteUri));
-        }
+        String path = FileBrowser.Instance.OpenSingleFile("Open file", "", "", extensions);
+        StartCoroutine(OutputRoutineOpen(path));
     }
 #endif
 
@@ -65,13 +63,15 @@ public class ImportOBJ : MonoBehaviour
             model.AddComponent<MeshCollider>();
             MeshRenderer meshRenderer = model.GetComponent<MeshRenderer>();
             meshRenderer.material = drawMat;
-
+            
+            EventSystem<Renderer>.RaiseEvent(EventType.CHANGED_MODEL, meshRenderer);
+            
             GameObject modelDisplay = Instantiate(model, modelHolder.transform);
             meshRenderer = modelDisplay.GetComponent<MeshRenderer>();
             meshRenderer.material = displayMat;
             modelDisplay.layer = LayerMask.NameToLayer("display");
-
-            //FitOnScreen();
+            
+            FitOnScreen(model, modelDisplay);
         }
     }
 
@@ -86,13 +86,16 @@ public class ImportOBJ : MonoBehaviour
         return bound;
     }
 
-    private void FitOnScreen()
+    private void FitOnScreen(GameObject model1, GameObject model2)
     {
         Bounds bound = GetBound(modelHolder);
         Vector3 boundSize = bound.size;
         float diagonal = Mathf.Sqrt((boundSize.x * boundSize.x) + (boundSize.y * boundSize.y) + (boundSize.z * boundSize.z)); //Get box diagonal
-        Camera.main.orthographicSize = diagonal / 2.0f;
-        Camera.main.transform.position = bound.center;
-    }
+        float scale = 1 / (diagonal / 5);
+        model1.transform.localScale = new Vector3(scale, scale, scale);
+        model2.transform.localScale = new Vector3(scale, scale, scale);
 
+        model1.transform.position -= bound.center * scale;
+        model2.transform.position -= bound.center * scale;
+    }
 }

@@ -1,17 +1,16 @@
 using System;
 using System.Globalization;
 using System.IO;
-using AnotherFileBrowser.Windows;
 using DataPersistence;
 using Drawing;
 using Managers;
-using SFB;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using EventType = Managers.EventType;
+using FileBrowser = Crosstales.FB.FileBrowser;
 
 namespace UI
 {
@@ -187,7 +186,7 @@ namespace UI
 
         public void ExportResult()
         {
-            string path = StandaloneFileBrowser.SaveFilePanel("Save File", "", projectName, pngToggle ? "png" : "exr");
+            string path = FileBrowser.Instance.SaveFile("Save texture", "", projectName, pngToggle ? "png" : "exr");
             DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
             //byte[] bytes = pngToggle ? drawingManager.drawer.rt.ToBytesPNG() : drawingManager.drawer.rt.ToBytesEXR();
             byte[] bytes = pngToggle ? drawingManager.drawer.ReverseRtoB().ToBytesPNG() : drawingManager.drawer.ReverseRtoB().ToBytesEXR();
@@ -315,7 +314,7 @@ namespace UI
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError(e);
+                    //Debug.LogError(e);
                     throw;
                 }
             }
