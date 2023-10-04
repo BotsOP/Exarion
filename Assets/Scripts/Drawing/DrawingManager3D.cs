@@ -123,6 +123,7 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>, int>.Subscribe(EventType.CHANGE_DRAW_ORDER, ChangeDrawOrder);
             EventSystem<List<BrushStrokeID>, float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
             EventSystem<List<BrushStrokeID>, List<float>>.Subscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
+            EventSystem<Renderer>.Subscribe(EventType.CHANGED_MODEL, SetRenderer);
         }
 
         private void OnDisable()
@@ -169,10 +170,12 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>, int>.Unsubscribe(EventType.CHANGE_DRAW_ORDER, ChangeDrawOrder);
             EventSystem<List<BrushStrokeID>, float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
             EventSystem<List<BrushStrokeID>, List<float>>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
+            EventSystem<Renderer>.Unsubscribe(EventType.CHANGED_MODEL, SetRenderer);
         }
 
         private void SetRenderer(Renderer _rend)
         {
+            rend = _rend;
             drawer.rend = _rend;
             highlighter.rend = _rend;
         }

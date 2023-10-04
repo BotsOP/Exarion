@@ -41,6 +41,7 @@ namespace Managers
         CHANGE_BRUSH_SIZE,
         TIMELINE_PAUSE,
         SAVED,
+        CHANGED_MODEL,
     }
 
 
