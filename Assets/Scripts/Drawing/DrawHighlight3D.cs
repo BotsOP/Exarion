@@ -16,7 +16,10 @@ namespace Drawing
         private Vector3 threadGroupSize;
         private Material simplePaintMaterial;
         private CommandBuffer commandBuffer;
-        
+        private static readonly int CursorPos = Shader.PropertyToID("_CursorPos");
+        private static readonly int LastCursorPos = Shader.PropertyToID("_LastCursorPos");
+        private static readonly int BrushSize = Shader.PropertyToID("_BrushSize");
+
 
         public DrawHighlight3D(int _imageWidth, int _imageHeight)
         {
@@ -50,9 +53,9 @@ namespace Drawing
         
         private void Highlight(Vector3 _lastPos, Vector3 _currentPos, float _strokeBrushSize, HighlightType _highlightType, float _borderThickness = 0)
         {
-            simplePaintMaterial.SetVector("_CursorPos", _currentPos);
-            simplePaintMaterial.SetVector("_LastCursorPos", _lastPos);
-            simplePaintMaterial.SetFloat("_BrushSize", _strokeBrushSize);
+            simplePaintMaterial.SetVector(CursorPos, _currentPos);
+            simplePaintMaterial.SetVector(LastCursorPos, _lastPos);
+            simplePaintMaterial.SetFloat(BrushSize, _strokeBrushSize);
 
             commandBuffer.SetRenderTarget(rtHighlightTemp);
             commandBuffer.DrawRenderer(rend, simplePaintMaterial, 0);

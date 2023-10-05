@@ -13,8 +13,10 @@ namespace Drawing
     public class DrawingManager3D : MonoBehaviour, IDataPersistence
     {
         [Header("Materials")]
-        [SerializeField] private Material drawingMat;
-        [SerializeField] private Material displayMat;
+        // [SerializeField] private Material drawingMat;
+        // [SerializeField] private Material displayMat;
+        [SerializeField] private List<Material> drawingMats;
+        [SerializeField] private List<Material> displayMats;
         [SerializeField] private Material selectMat;
         [SerializeField] private Material previewMat;
         
@@ -62,13 +64,11 @@ namespace Drawing
             previewer = new DrawPreview(imageWidth, imageHeight);
             drawStamp = new DrawStamp();
 
-            rt = drawer.rt;
-            rtID = drawer.rtID;
+            rt = drawer.rts[1];
+            rtID = drawer.rtIDs[1];
             rtHighlight = highlighter.rtHighlight;
             
-            drawingMat.SetTexture("_MainTex", drawer.rt);
-            drawingMat.SetTexture("_SelectTex", highlighter.rtHighlight);
-            displayMat.SetTexture("_MainTex", drawer.rt);
+            
             selectMat.SetTexture("_MainTex", highlighter.rtHighlight);
             previewMat.SetTexture("_MainTex", previewer.rtPreview);
 
@@ -178,6 +178,18 @@ namespace Drawing
             rend = _rend;
             drawer.rend = _rend;
             highlighter.rend = _rend;
+
+            Mesh mesh = _rend.gameObject.GetComponent<MeshFilter>().sharedMesh;
+
+            drawingMats.Clear();
+            displayMats.Clear();
+            for (int i = 0; i < mesh.subMeshCount; i++)
+            {
+                
+            }
+            drawingMat.SetTexture("_MainTex", drawer.rt);
+            drawingMat.SetTexture("_SelectTex", highlighter.rtHighlight);
+            displayMat.SetTexture("_MainTex", drawer.rt);
         }
 
         private void SetPaintType(int index)
@@ -217,7 +229,7 @@ namespace Drawing
             if (firstUse)
             {
                 startBrushStrokeTime = time;
-                cachedTime = cachedTime > 1 ? 0 : cachedTime;
+                cachedTime = cachedTime > 1 ? 0 : time;
                 newBrushStrokeID = drawer.GetNewID();
                 lastCursorPos = _worldPos;
                 firstUse = false;
@@ -240,6 +252,7 @@ namespace Drawing
         {
             cachedTime = time;
 
+            //Move this to drawing unput
             if (Input.GetKeyDown(KeyCode.J) && selectedBrushStrokes.Count > 0)
             {
                 foreach (var brushStrokeID in selectedBrushStrokes)

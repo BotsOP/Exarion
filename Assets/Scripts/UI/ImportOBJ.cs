@@ -12,9 +12,10 @@ using EventType = Managers.EventType;
 
 public class ImportOBJ : MonoBehaviour
 {
-    [SerializeField] private GameObject modelHolder; //Load OBJ Model
     [SerializeField] private Material drawMat;
     [SerializeField] private Material displayMat;
+    [SerializeField] private float modelScale = 5;
+    private GameObject modelHolder;
     
     private string[] extensions = { "obj" };
 
@@ -91,7 +92,7 @@ public class ImportOBJ : MonoBehaviour
         Bounds bound = GetBound(modelHolder);
         Vector3 boundSize = bound.size;
         float diagonal = Mathf.Sqrt((boundSize.x * boundSize.x) + (boundSize.y * boundSize.y) + (boundSize.z * boundSize.z)); //Get box diagonal
-        float scale = 1 / (diagonal / 5);
+        float scale = 1 / (diagonal / modelScale);
         model1.transform.localScale = new Vector3(scale, scale, scale);
         model2.transform.localScale = new Vector3(scale, scale, scale);
 

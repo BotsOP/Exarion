@@ -14,8 +14,10 @@ namespace Drawing
 {
     public class Drawing3D
     {
-        public readonly CustomRenderTexture rt;
-        public readonly CustomRenderTexture rtID;
+        public List<CustomRenderTexture> rts = new List<CustomRenderTexture>();
+        public List<CustomRenderTexture> rtIDs = new List<CustomRenderTexture>();
+        // public readonly CustomRenderTexture rt;
+        // public readonly CustomRenderTexture rtID;
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
         public Transform sphere1;
         public Renderer rend;
@@ -35,6 +37,13 @@ namespace Drawing
         private int imageHeight;
         private CommandBuffer commandBuffer;
         private static readonly int FirstStroke = Shader.PropertyToID("_FirstStroke");
+        private static readonly int CursorPos = Shader.PropertyToID("_CursorPos");
+        private static readonly int LastCursorPos = Shader.PropertyToID("_LastCursorPos");
+        private static readonly int BrushSize = Shader.PropertyToID("_BrushSize");
+        private static readonly int TimeColor = Shader.PropertyToID("_TimeColor");
+        private static readonly int PreviousTimeColor = Shader.PropertyToID("_PreviousTimeColor");
+        private static readonly int StrokeID = Shader.PropertyToID("_StrokeID");
+        private static readonly int IDTex = Shader.PropertyToID("_IDTex");
 
         public float GetNewID()
         {
@@ -71,21 +80,6 @@ namespace Drawing
             
             threadGroupSize.x = Mathf.CeilToInt(_imageWidth / threadGroupSizeOut.x);
             threadGroupSize.y = Mathf.CeilToInt(_imageHeight / threadGroupSizeOut.y);
-
-            rt = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                useMipMap = false,
-                name = "rt",
-            };
-            rtID = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                useMipMap = false,
-                name = "rtID",
-            };
             
             rtTemp = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
             {
@@ -94,7 +88,25 @@ namespace Drawing
                 useMipMap = false,
                 name = "rtTemp",
             };
+        }
 
+        public void addRT()
+        {
+            CustomRenderTexture rt = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
+            {
+                filterMode = FilterMode.Point,
+                enableRandomWrite = true,
+                useMipMap = false,
+                name = "rt",
+            };
+            CustomRenderTexture rtID = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
+            {
+                filterMode = FilterMode.Point,
+                enableRandomWrite = true,
+                useMipMap = false,
+                name = "rtID",
+            };
+            
             rt.Clear(false, true, Color.black);
             
             Color idColor = new Color(-1, -1, -1);
@@ -106,37 +118,47 @@ namespace Drawing
             switch (_paintType)
             {
                 case PaintType.PaintUnderEverything:
-                    paintMaterial.SetInt(FirstStroke, _firstStroke ? 1 : 0);
-                    paintMaterial.SetVector("_CursorPos", _currentPos);
-                    paintMaterial.SetVector("_LastCursorPos", _lastPos);
-                    paintMaterial.SetFloat("_BrushSize", _strokeBrushSize);
-                    paintMaterial.SetFloat("_TimeColor", _brushTime);
-                    paintMaterial.SetFloat("_PreviousTimeColor", _lastTime);
-                    paintMaterial.SetFloat("_StrokeID", _strokeID);
-                    paintMaterial.SetTexture("_IDTex", rtID);
+                    int test = _firstStroke ? 1 : 0;
+                    Debug.Log(test);
+                    paintMaterial.SetInt(FirstStroke, test);
+                    paintMaterial.SetVector(CursorPos, _currentPos);
+                    paintMaterial.SetVector(LastCursorPos, _lastPos);
+                    paintMaterial.SetFloat(BrushSize, _strokeBrushSize);
+                    paintMaterial.SetFloat(TimeColor, _brushTime);
+                    paintMaterial.SetFloat(PreviousTimeColor, _lastTime);
+                    paintMaterial.SetFloat(StrokeID, _strokeID);
+                    for (int i = 0; i < rts.Count; i++)
+                    {
+                        paintMaterial.SetTexture(IDTex, rtIDs[i]);
                     
-                    commandBuffer.SetRenderTarget(rtTemp);
-                    commandBuffer.DrawRenderer(rend, paintMaterial, 0);
+                        commandBuffer.SetRenderTarget(rtTemp);
+                        commandBuffer.DrawRenderer(rend, paintMaterial, i);
                     
-                    commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_OrgTex4", rtTemp);
-                    commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_FinalTex4", rt);
-                    commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_FinalTexInt", rtID);
-                    commandBuffer.SetComputeFloatParam(textureHelperShader, "_StrokeID", _strokeID);
-                    commandBuffer.DispatchCompute(textureHelperShader, 0, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+                        commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_OrgTex4", rtTemp);
+                        commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_FinalTex4", rts[i]);
+                        commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_FinalTexInt", rtIDs[i]);
+                        commandBuffer.SetComputeFloatParam(textureHelperShader, "_StrokeID", _strokeID);
+                        commandBuffer.DispatchCompute(textureHelperShader, 0, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+                    }
                     break;
                 case PaintType.Erase:
-                    simplePaintMaterial.SetInt("_FirstStroke", _firstStroke ? 1 : 0);
-                    simplePaintMaterial.SetVector("_CursorPos", _currentPos);
-                    simplePaintMaterial.SetVector("_LastCursorPos", _lastPos);
-                    simplePaintMaterial.SetFloat("_BrushSize", _strokeBrushSize);
+                    simplePaintMaterial.SetInt(FirstStroke, _firstStroke ? 1 : 0);
+                    simplePaintMaterial.SetVector(CursorPos, _currentPos);
+                    simplePaintMaterial.SetVector(LastCursorPos, _lastPos);
+                    simplePaintMaterial.SetFloat(BrushSize, _strokeBrushSize);
 
-                    commandBuffer.SetRenderTarget(rtTemp);
-                    commandBuffer.DrawRenderer(rend, simplePaintMaterial, 0);
+                    for (int i = 0; i < rts.Count; i++)
+                    {
+                        paintMaterial.SetTexture(IDTex, rtIDs[i]);
                     
-                    commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_OrgTex4", rtTemp);
-                    commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTex4", rt);
-                    commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTexInt", rtID);
-                    commandBuffer.DispatchCompute(textureHelperShader, 1, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+                        commandBuffer.SetRenderTarget(rtTemp);
+                        commandBuffer.DrawRenderer(rend, paintMaterial, i);
+                    
+                        commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_OrgTex4", rtTemp);
+                        commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTex4", rts[i]);
+                        commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTexInt", rtIDs[i]);
+                        commandBuffer.DispatchCompute(textureHelperShader, 1, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+                    }
                     break;
             }
             ExecuteBuffer();
@@ -294,7 +316,10 @@ namespace Drawing
         
         public void RedrawAll()
         {
-            rtID.Clear(false, true, new Color(-1, -1, -1));
+            foreach (var rtID in rtIDs)
+            {
+                rtID.Clear(false, true, new Color(-1, -1, -1));
+            }
 
             for (int i = brushStrokesID.Count - 1; i >= 0; i--)
             {
@@ -366,53 +391,53 @@ namespace Drawing
             commandBuffer.Clear();
         }
 
-        public CustomRenderTexture ReverseRtoB()
-        {
-            CustomRenderTexture tempRT = new CustomRenderTexture(UIManager.imageWidth, UIManager.imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                name = "rtReverse",
-            };
-
-            int kernelReverse = textureHelperShader.FindKernel("WriteToReverse");
-            
-            textureHelperShader.SetTexture(kernelReverse, "_ResultTexReverse", tempRT);
-            textureHelperShader.SetTexture(kernelReverse, "_ResultTex", rt);
-            textureHelperShader.SetBool("_WriteToG", false);
-            textureHelperShader.Dispatch(kernelReverse, Mathf.CeilToInt(UIManager.imageWidth / 32f), Mathf.CeilToInt(UIManager.imageHeight / 32f), 1);
-
-            for (var i = brushStrokesID.Count - 1; i >= 0; i--)
-            {
-                var brushStrokeID = brushStrokesID[i];
-                RedrawStroke(brushStrokeID, PaintType.Erase);
-                brushStrokeID.Reverse();
-                float newStartTime = brushStrokeID.endTime;
-                float newEndTime = brushStrokeID.startTime;
-                brushStrokeID.startTime = newStartTime;
-                brushStrokeID.endTime = newEndTime;
-                RedrawStrokeInterpolation(brushStrokeID);
-            }
-
-            textureHelperShader.SetBool("_WriteToG", true);
-            textureHelperShader.Dispatch(kernelReverse, Mathf.CeilToInt(UIManager.imageWidth / 32f), Mathf.CeilToInt(UIManager.imageHeight / 32f), 1);
-            
-            for (var i = brushStrokesID.Count - 1; i >= 0; i--)
-            {
-                var brushStrokeID = brushStrokesID[i];
-                RedrawStroke(brushStrokeID, PaintType.Erase);
-                brushStrokeID.Reverse();
-                float newStartTime = brushStrokeID.endTime;
-                float newEndTime = brushStrokeID.startTime;
-                brushStrokeID.startTime = newStartTime;
-                brushStrokeID.endTime = newEndTime;
-                RedrawStrokeInterpolation(brushStrokeID);
-            }
-            
-            ExecuteBuffer();
-            
-            return tempRT;
-        }
+        // public CustomRenderTexture ReverseRtoB()
+        // {
+        //     CustomRenderTexture tempRT = new CustomRenderTexture(UIManager.imageWidth, UIManager.imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
+        //     {
+        //         filterMode = FilterMode.Point,
+        //         enableRandomWrite = true,
+        //         name = "rtReverse",
+        //     };
+        //
+        //     int kernelReverse = textureHelperShader.FindKernel("WriteToReverse");
+        //     
+        //     textureHelperShader.SetTexture(kernelReverse, "_ResultTexReverse", tempRT);
+        //     textureHelperShader.SetTexture(kernelReverse, "_ResultTex", rt);
+        //     textureHelperShader.SetBool("_WriteToG", false);
+        //     textureHelperShader.Dispatch(kernelReverse, Mathf.CeilToInt(UIManager.imageWidth / 32f), Mathf.CeilToInt(UIManager.imageHeight / 32f), 1);
+        //
+        //     for (var i = brushStrokesID.Count - 1; i >= 0; i--)
+        //     {
+        //         var brushStrokeID = brushStrokesID[i];
+        //         RedrawStroke(brushStrokeID, PaintType.Erase);
+        //         brushStrokeID.Reverse();
+        //         float newStartTime = brushStrokeID.endTime;
+        //         float newEndTime = brushStrokeID.startTime;
+        //         brushStrokeID.startTime = newStartTime;
+        //         brushStrokeID.endTime = newEndTime;
+        //         RedrawStrokeInterpolation(brushStrokeID);
+        //     }
+        //
+        //     textureHelperShader.SetBool("_WriteToG", true);
+        //     textureHelperShader.Dispatch(kernelReverse, Mathf.CeilToInt(UIManager.imageWidth / 32f), Mathf.CeilToInt(UIManager.imageHeight / 32f), 1);
+        //     
+        //     for (var i = brushStrokesID.Count - 1; i >= 0; i--)
+        //     {
+        //         var brushStrokeID = brushStrokesID[i];
+        //         RedrawStroke(brushStrokeID, PaintType.Erase);
+        //         brushStrokeID.Reverse();
+        //         float newStartTime = brushStrokeID.endTime;
+        //         float newEndTime = brushStrokeID.startTime;
+        //         brushStrokeID.startTime = newStartTime;
+        //         brushStrokeID.endTime = newEndTime;
+        //         RedrawStrokeInterpolation(brushStrokeID);
+        //     }
+        //     
+        //     ExecuteBuffer();
+        //     
+        //     return tempRT;
+        // }
 
         private Vector3 CombineMinCorner(Vector3[] _collisionBoxes)
         {
