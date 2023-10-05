@@ -75,10 +75,10 @@ namespace Drawing
                 commandBuffer.SetComputeTextureParam(textureHelperShader, 2, "_OrgTex4", rtHighlightTemp);
                 commandBuffer.SetComputeTextureParam(textureHelperShader, 2, "_FinalTex4", rtHighlights[i]);
                 commandBuffer.DispatchCompute(textureHelperShader, 2, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+                
+                Graphics.ExecuteCommandBuffer(commandBuffer);
+                commandBuffer.Clear();
             }
-            
-            Graphics.ExecuteCommandBuffer(commandBuffer);
-            commandBuffer.Clear();
         }
 
         public void HighlightStroke(BrushStrokeID _brushStrokeID)
