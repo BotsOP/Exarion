@@ -68,12 +68,6 @@ namespace Drawing
             imageHeight = _imageHeight;
             sphere1 = _sphere1;
 
-            // paintUnderOwnLineKernelID = textureHelperShader.FindKernel("PaintUnderOwnLine");
-            // paintUnderEverythingKernelID = textureHelperShader.FindKernel("PaintUnderEverything");
-            // paintOverEverythingKernelID = textureHelperShader.FindKernel("PaintOverEverything");
-            // paintOverOwnLineKernelID = textureHelperShader.FindKernel("PaintOverOwnLine");
-            // eraseKernelID = textureHelperShader.FindKernel("Erase");
-        
             textureHelperShader.GetKernelThreadGroupSizes(0, out uint threadGroupSizeX, out uint threadGroupSizeY, out _);
             threadGroupSizeOut.x = threadGroupSizeX;
             threadGroupSizeOut.y = threadGroupSizeY;
@@ -89,16 +83,9 @@ namespace Drawing
                 name = "rtTemp",
             };
         }
-
-        public void addRT()
+        
+        public CustomRenderTexture addRT()
         {
-            CustomRenderTexture rt = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                useMipMap = false,
-                name = "rt",
-            };
             CustomRenderTexture rtID = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
             {
                 filterMode = FilterMode.Point,
@@ -107,20 +94,29 @@ namespace Drawing
                 name = "rtID",
             };
             
-            rt.Clear(false, true, Color.black);
-            
             Color idColor = new Color(-1, -1, -1);
             rtID.Clear(false, true, idColor);
+            rtIDs.Add(rtID);
+            
+            CustomRenderTexture rt = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
+            {
+                filterMode = FilterMode.Point,
+                enableRandomWrite = true,
+                useMipMap = false,
+                name = "rt",
+            };
+            
+            rt.Clear(false, true, Color.black);
+            rts.Add(rt);
+            return rt;
         }
-        
+
         public void Draw(Vector3 _lastPos, Vector3 _currentPos, float _strokeBrushSize, PaintType _paintType, float _lastTime = 0, float _brushTime = 0, bool _firstStroke = false, float _strokeID = 0)
         {
             switch (_paintType)
             {
                 case PaintType.PaintUnderEverything:
-                    int test = _firstStroke ? 1 : 0;
-                    Debug.Log(test);
-                    paintMaterial.SetInt(FirstStroke, test);
+                    paintMaterial.SetInt(FirstStroke, _firstStroke ? 1 : 0);
                     paintMaterial.SetVector(CursorPos, _currentPos);
                     paintMaterial.SetVector(LastCursorPos, _lastPos);
                     paintMaterial.SetFloat(BrushSize, _strokeBrushSize);
