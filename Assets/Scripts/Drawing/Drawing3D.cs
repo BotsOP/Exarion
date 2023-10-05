@@ -135,6 +135,7 @@ namespace Drawing
                         commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_FinalTexInt", rtIDs[i]);
                         commandBuffer.SetComputeFloatParam(textureHelperShader, "_StrokeID", _strokeID);
                         commandBuffer.DispatchCompute(textureHelperShader, 0, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+                        ExecuteBuffer();
                     }
                     break;
                 case PaintType.Erase:
@@ -145,19 +146,18 @@ namespace Drawing
 
                     for (int i = 0; i < rts.Count; i++)
                     {
-                        paintMaterial.SetTexture(IDTex, rtIDs[i]);
-                    
                         commandBuffer.SetRenderTarget(rtTemp);
-                        commandBuffer.DrawRenderer(rend, paintMaterial, i);
+                        commandBuffer.DrawRenderer(rend, simplePaintMaterial, i);
                     
                         commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_OrgTex4", rtTemp);
                         commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTex4", rts[i]);
                         commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTexInt", rtIDs[i]);
                         commandBuffer.DispatchCompute(textureHelperShader, 1, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+                        ExecuteBuffer();
                     }
                     break;
             }
-            ExecuteBuffer();
+            
         }
 
         private void RedrawStroke(BrushStrokeID _brushstrokeID)

@@ -2886,9 +2886,9 @@
     "hlslDeclarationOverride": 0,
     "m_Hidden": false,
     "m_Value": {
-        "r": 0.25127559900283816,
-        "g": 0.693274974822998,
-        "b": 0.7264150977134705,
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
         "a": 1.0
     },
     "isMainColor": false,

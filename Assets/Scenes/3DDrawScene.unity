@@ -18543,10 +18543,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc187036715343d885a8f3be3b93f9ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  drawingMat: {fileID: 2100000, guid: 7c823323d34cde642a1885678b0b3a4e, type: 2}
-  displayMat: {fileID: 2100000, guid: b42390756a8021a46903a26abae5ec9e, type: 2}
-  selectMat: {fileID: 2100000, guid: 9f3dba748cca8be45901faf918f11c96, type: 2}
-  previewMat: {fileID: 2100000, guid: 6608ac3d3fc9c8c429a99099000b40da, type: 2}
+  drawShader: {fileID: -6465566751694194690, guid: 0dca14d72ed6c8846ab6b61905e64f67,
+    type: 3}
+  displayShader: {fileID: -6465566751694194690, guid: 8f64883a8547852438a75b4d9490b9ff,
+    type: 3}
+  drawingMats: []
+  displayMats: []
   imageWidth: 2048
   imageHeight: 2048
   paintType: 1
@@ -23695,7 +23697,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   drawMat: {fileID: 2100000, guid: 7c823323d34cde642a1885678b0b3a4e, type: 2}
   displayMat: {fileID: 2100000, guid: b42390756a8021a46903a26abae5ec9e, type: 2}
-  modelScale: 4
+  modelScale: 5
 --- !u!1 &1757215564
 GameObject:
   m_ObjectHideFlags: 0
