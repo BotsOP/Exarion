@@ -5327,7 +5327,7 @@ Camera:
     height: 1
   near clip plane: 0.01
   far clip plane: 1000
-  field of view: 90
+  field of view: 60
   orthographic: 0
   orthographic size: 0.5
   m_Depth: -1
@@ -18868,7 +18868,7 @@ Camera:
     height: 1
   near clip plane: 0.01
   far clip plane: 1000
-  field of view: 90
+  field of view: 60
   orthographic: 0
   orthographic size: 0.5
   m_Depth: -1
@@ -23693,9 +23693,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f10941219849a948bb423edf031d369, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  modelHolder: {fileID: 0}
   drawMat: {fileID: 2100000, guid: 7c823323d34cde642a1885678b0b3a4e, type: 2}
   displayMat: {fileID: 2100000, guid: b42390756a8021a46903a26abae5ec9e, type: 2}
+  modelScale: 4
 --- !u!1 &1757215564
 GameObject:
   m_ObjectHideFlags: 0

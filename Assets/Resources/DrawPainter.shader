@@ -18,7 +18,7 @@
             float _PreviousTimeColor;
             float3 _LastCursorPos;
             float3 _CursorPos;
-            bool _FirstStroke;
+            int _FirstStroke;
             float _StrokeID;
 
             struct appdata{
@@ -68,14 +68,7 @@
                 float3 directionPos = paintPos - startPos;
                 float3 directionLine = endPos - startPos;
                 float dotDirection = dot(directionPos, directionLine);
-                if(dotDirection < 0)
-                {
-                    dotDirection = 0;
-                }
-                else
-                {
-                    dotDirection = 1;
-                }
+                dotDirection = ceil(dotDirection);
 
                 float distLine = distance(startPos, endPos) + _BrushSize * dotDirection;
                 float distanceToPointA = (distance(startPos, paintPosOnLine) + _BrushSize) / distLine;
@@ -106,20 +99,17 @@
                      return 0;
                 }
 
-                if(distance(i.worldPos, _LastCursorPos) < _BrushSize)
-                {
-                    float3 AtoB = _CursorPos - _LastCursorPos;
-                    float3 paintPosToA = _LastCursorPos - i.worldPos;
-                    
-                    if(dot(AtoB, paintPosToA) > 0.0 && !_FirstStroke)
-                    {
-                        return 0;
-                    }
-                }
-
                 float paintColor = LineSegment3DSDF(i.worldPos, _LastCursorPos, _CursorPos);
 
-                if(paintColor > _BrushSize) { return 0; }
+                if(paintColor > _BrushSize)
+                {
+                    return 0;
+                }
+
+                if(_FirstStroke == 1)
+                {
+                    return _PreviousTimeColor;
+                }
 
                 paintColor = CalculatePaintColor(i.worldPos, _LastCursorPos, _CursorPos);
 

@@ -82,7 +82,7 @@ namespace UI
                 EventSystem<bool>.RaiseEvent(EventType.IS_INTERACTING, false);
             }
 
-            bool hitModel;
+            bool hitModel = false;
             Vector3 worldPos = new Vector3();
             if (Input.GetMouseButton(0))
             {
@@ -110,10 +110,13 @@ namespace UI
                 
                 if (isMouseInsideDrawArea)
                 {
-                    if (SelectBrushStroke(worldPos))
+                    if (hitModel)
                     {
-                        StopDrawing();
-                        return;
+                        if (SelectBrushStroke(worldPos))
+                        {
+                            StopDrawing();
+                            return;
+                        }
                     }
                 
                     if (MoveBrushStrokes(worldPos))
@@ -131,8 +134,11 @@ namespace UI
                     if (SpawnPolygon(worldPos))
                         return;
 
-                    if(DrawInput(worldPos))
-                        return;
+                    if (hitModel)
+                    {
+                        if(DrawInput(worldPos))
+                            return;
+                    }
                 
                     if (SetBrushSize(worldPos))
                         return;
@@ -317,7 +323,7 @@ namespace UI
         {
             if (Input.mouseScrollDelta.y != 0)
             {
-                float distToFocus = Vector3.Distance(_cam.transform.position, _focusPoint.position) / 5;
+                float distToFocus = Vector3.Distance(_cam.transform.position, _focusPoint.position) / 3;
                 distToFocus = Mathf.Clamp01(distToFocus);
                 distToFocus *= distToFocus;
                 _cam.transform.position += _cam.transform.forward * (Input.mouseScrollDelta.y * distToFocus);
