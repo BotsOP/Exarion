@@ -15,10 +15,10 @@ namespace Drawing
         [Header("Materials")]
         // [SerializeField] private Material drawingMat;
         // [SerializeField] private Material displayMat;
+        [SerializeField] private Shader drawShader;
+        [SerializeField] private Shader displayShader;
         [SerializeField] private List<Material> drawingMats;
         [SerializeField] private List<Material> displayMats;
-        [SerializeField] private Material selectMat;
-        [SerializeField] private Material previewMat;
         
         [Header("Canvas Settings")]
         [SerializeField] private int imageWidth = 2048;
@@ -63,16 +63,7 @@ namespace Drawing
             highlighter = new DrawHighlight3D(imageWidth, imageHeight);
             previewer = new DrawPreview(imageWidth, imageHeight);
             drawStamp = new DrawStamp();
-
-            rt = drawer.rts[1];
-            rtID = drawer.rtIDs[1];
-            rtHighlight = highlighter.rtHighlight;
             
-            
-            selectMat.SetTexture("_MainTex", highlighter.rtHighlight);
-            previewMat.SetTexture("_MainTex", previewer.rtPreview);
-
-            SetRenderer(rend);
             tempBrushStrokes = new List<BrushStroke>();
             selectedBrushStrokes = new List<BrushStrokeID>();
             collisionBoxMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
@@ -123,7 +114,7 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>, int>.Subscribe(EventType.CHANGE_DRAW_ORDER, ChangeDrawOrder);
             EventSystem<List<BrushStrokeID>, float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
             EventSystem<List<BrushStrokeID>, List<float>>.Subscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
-            EventSystem<Renderer>.Subscribe(EventType.CHANGED_MODEL, SetRenderer);
+            EventSystem<Renderer, Renderer>.Subscribe(EventType.CHANGED_MODEL, SetRenderer);
         }
 
         private void OnDisable()
@@ -170,26 +161,41 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>, int>.Unsubscribe(EventType.CHANGE_DRAW_ORDER, ChangeDrawOrder);
             EventSystem<List<BrushStrokeID>, float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
             EventSystem<List<BrushStrokeID>, List<float>>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
-            EventSystem<Renderer>.Unsubscribe(EventType.CHANGED_MODEL, SetRenderer);
+            EventSystem<Renderer, Renderer>.Unsubscribe(EventType.CHANGED_MODEL, SetRenderer);
         }
 
-        private void SetRenderer(Renderer _rend)
+        private void SetRenderer(Renderer _drawingRend, Renderer _displayRend)
         {
-            rend = _rend;
-            drawer.rend = _rend;
-            highlighter.rend = _rend;
+            rend = _drawingRend;
+            drawer.rend = _drawingRend;
+            highlighter.rend = _drawingRend;
 
-            Mesh mesh = _rend.gameObject.GetComponent<MeshFilter>().sharedMesh;
+            Mesh mesh = _drawingRend.gameObject.GetComponent<MeshFilter>().sharedMesh;
 
             drawingMats.Clear();
             displayMats.Clear();
             for (int i = 0; i < mesh.subMeshCount; i++)
             {
+                Material drawingMat = new Material(drawShader);
+                Material displayMat = new Material(displayShader);
+                CustomRenderTexture drawingRT = drawer.addRT();
+                drawingMat.SetTexture("_MainTex", drawingRT);
+                displayMat.SetTexture("_MainTex", drawingRT);
+                drawingMat.SetTexture("_SelectTex", highlighter.AddRT());
                 
+                drawingMats.Add(drawingMat);
+                displayMats.Add(displayMat);
+
+                _drawingRend.materials[i] = drawingMat;
+                _displayRend.materials[i] = displayMat;
             }
-            drawingMat.SetTexture("_MainTex", drawer.rt);
-            drawingMat.SetTexture("_SelectTex", highlighter.rtHighlight);
-            displayMat.SetTexture("_MainTex", drawer.rt);
+            
+            _drawingRend.materials = drawingMats.ToArray();
+            _displayRend.materials = displayMats.ToArray();
+            
+            rt = drawer.rts[0];
+            rtID = drawer.rtIDs[0];
+            rtHighlight = highlighter.rtHighlights[0];
         }
 
         private void SetPaintType(int index)
@@ -200,7 +206,10 @@ namespace Drawing
         private void SetTime(float _time)
         {
             time = _time;
-            displayMat.SetFloat("_CustomTime", Mathf.Clamp(_time, 0, 0.99f));
+            foreach (var drawingMat in displayMats)
+            {
+                drawingMat.SetFloat("_CustomTime", Mathf.Clamp(_time, 0, 1f));
+            }
         }
 
         private void SetBrushSize(float _brushSize)
@@ -1065,7 +1074,7 @@ namespace Drawing
         }
         public void SaveData(ToolData _data)
         {
-            _data.displayImg = drawer.rt.ToBytesPNG(imageWidth, imageHeight);
+            _data.displayImg = drawer.rts[0].ToBytesPNG(imageWidth, imageHeight);
             _data.imageWidth = imageWidth;
             _data.imageHeight = imageHeight;
         }

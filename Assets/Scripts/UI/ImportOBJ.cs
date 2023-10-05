@@ -62,15 +62,12 @@ public class ImportOBJ : MonoBehaviour
             modelHolder = new OBJLoader().Load(textStream);
             GameObject model = modelHolder.transform.GetChild(0).gameObject;
             model.AddComponent<MeshCollider>();
-            MeshRenderer meshRenderer = model.GetComponent<MeshRenderer>();
-            meshRenderer.material = drawMat;
-            
-            EventSystem<Renderer>.RaiseEvent(EventType.CHANGED_MODEL, meshRenderer);
+            MeshRenderer drawingRenderer = model.GetComponent<MeshRenderer>();
             
             GameObject modelDisplay = Instantiate(model, modelHolder.transform);
-            meshRenderer = modelDisplay.GetComponent<MeshRenderer>();
-            meshRenderer.material = displayMat;
+            MeshRenderer displayRenderer = modelDisplay.GetComponent<MeshRenderer>();
             modelDisplay.layer = LayerMask.NameToLayer("display");
+            EventSystem<Renderer, Renderer>.RaiseEvent(EventType.CHANGED_MODEL, drawingRenderer, displayRenderer);
             
             FitOnScreen(model, modelDisplay);
         }
