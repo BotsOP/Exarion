@@ -232,7 +232,6 @@ namespace UI
             time += _addTime;
             if (time > 1)
             {
-                Debug.Log($"reset time after placing stamp");
                 EventSystem.RaiseEvent(EventType.RESET_TIME);
                 time = 0;
             }
@@ -544,20 +543,32 @@ namespace UI
 
             return true;
         }
-        private bool ClickedTimelineClip()
+        private void ClickedTimelineClip()
         {
+            TimelineClip cachedLastHoverClip = lastHoverClip;
             for (int i = 0; i < clipsOrdered.Count; i++)
             {
                 for (int j = 0; j < clipsOrdered[i].Count; j++)
                 {
                     var clip = clipsOrdered[i][j];
-                    if (!clip.IsMouseOver())
+                    bool isMouseOver = clip.IsMouseOver();
+                    if (!isMouseOver && cachedLastHoverClip == clip)
                     {
+                        Debug.Log($"hover exit {clip.ClipTime.x}");
                         OnHoverExit(clip);
                         continue;
                     }
+                    else if(isMouseOver && cachedLastHoverClip != clip)
+                    {
+                        Debug.Log($"hover enter {clip.ClipTime.x}");
 
-                    OnHoverEnter(clip);
+                        OnHoverEnter(clip);
+                    }
+
+                    if (!isMouseOver)
+                    {
+                        continue;
+                    }
 
                     if (!selectedClips.Contains(clip) && Input.GetMouseButton(0))
                     {
@@ -570,7 +581,7 @@ namespace UI
                             clip.selectedBrushStrokes.AddRange(clip.GetBrushStrokeIDs());
                             clip.rawImage.color = selectedColor;
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, clip.GetBrushStrokeIDs());
-                            return true;
+                            return;
                         }
                         if (Input.GetMouseButtonDown(0) && clip != lastSelectedClip)
                         {
@@ -587,7 +598,7 @@ namespace UI
                             UpdateClipInfo();
                             clip.selectedBrushStrokes.AddRange(clip.GetBrushStrokeIDs());
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, clip.GetBrushStrokeIDs());
-                            return true;
+                            return;
                         }
                     }
                     if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButton(0) && (clip != lastSelectedClip && clip.previousBar == clip.currentBar 
@@ -601,38 +612,30 @@ namespace UI
                         clip.rawImage.color = clip.GetNotSelectedColor();
                         firstTimeSelected = true;
                         EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, clip.GetBrushStrokeIDs());
-                        return true;
+                        return;
                     }
                 }
             }
-            
-            return false;
         }
-        private void OnHoverEnter(TimelineClip clip)
+        private void OnHoverEnter(TimelineClip _clip)
         {
-            if (lastHoverClip != null)
-            {
-                OnHoverExit(lastHoverClip);
-            }
-            if (lastHoverClip != clip)
-            {
-                lastHoverClip = clip;
-                if (selectedClips.Contains(clip))
-                    return;
+            lastHoverClip = _clip;
+            if (selectedClips.Contains(_clip))
+                return;
 
-                List<BrushStrokeID> brushStrokeIDs = clip.GetBrushStrokeIDs();
-                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, brushStrokeIDs);
-            }
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, _clip.GetBrushStrokeIDs());
         }
-        private void OnHoverExit(TimelineClip clip)
+        private void OnHoverExit(TimelineClip _clip)
         {
-            if (lastHoverClip == clip)
+            lastHoverClip = null;
+            if (selectedClips.Contains(_clip))
             {
-                lastHoverClip = null;
-                if (selectedClips.Contains(clip))
-                    return;
-                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, clip.GetBrushStrokeIDs());
+                Debug.Log($"hover exit contains selected clip");
+                return;
             }
+
+            List<BrushStrokeID> test = _clip.GetBrushStrokeIDs();
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, _clip.GetBrushStrokeIDs());
         }
         private void StoppedMakingChanges()
         {

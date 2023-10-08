@@ -397,10 +397,13 @@ namespace Drawing
         }
         private void RemoveHighlight(List<BrushStrokeID> _brushStrokeIDs)
         {
-            foreach (var brushStrokeID in _brushStrokeIDs)
+            Debug.Log($"{selectedBrushStrokes.Count}");
+            for (var i = 0; i < _brushStrokeIDs.Count; i++)
             {
-                selectedBrushStrokes.Remove(brushStrokeID);
+                Debug.Log($"{selectedBrushStrokes[i].startTime}    {_brushStrokeIDs[i].startTime}");
+                selectedBrushStrokes.Remove(_brushStrokeIDs[i]);
             }
+
             highlighter.HighlightStroke(selectedBrushStrokes);
         }
         private void ClearHighlightStroke()
