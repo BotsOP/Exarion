@@ -70,7 +70,7 @@ namespace Drawing
             for (int i = 0; i < rtHighlights.Count; i++)
             {
                 commandBuffer.SetRenderTarget(rtHighlightTemp);
-                commandBuffer.DrawRenderer(rend, simplePaintMaterial, 0);
+                commandBuffer.DrawRenderer(rend, simplePaintMaterial, i);
             
                 commandBuffer.SetComputeTextureParam(textureHelperShader, 2, "_OrgTex4", rtHighlightTemp);
                 commandBuffer.SetComputeTextureParam(textureHelperShader, 2, "_FinalTex4", rtHighlights[i]);
