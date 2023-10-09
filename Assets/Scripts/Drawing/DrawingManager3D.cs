@@ -115,6 +115,7 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>, float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
             EventSystem<List<BrushStrokeID>, List<float>>.Subscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
             EventSystem<Renderer, Renderer>.Subscribe(EventType.CHANGED_MODEL, SetRenderer);
+            EventSystem<int, Texture2D>.Subscribe(EventType.IMPORT_MODEL_TEXTURE, UpdateTexture);
         }
 
         private void OnDisable()
@@ -162,6 +163,7 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>, float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
             EventSystem<List<BrushStrokeID>, List<float>>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
             EventSystem<Renderer, Renderer>.Unsubscribe(EventType.CHANGED_MODEL, SetRenderer);
+            EventSystem<int, Texture2D>.Unsubscribe(EventType.IMPORT_MODEL_TEXTURE, UpdateTexture);
         }
 
         private void SetRenderer(Renderer _drawingRend, Renderer _displayRend)
@@ -171,6 +173,7 @@ namespace Drawing
             highlighter.rend = _drawingRend;
 
             Mesh mesh = _drawingRend.gameObject.GetComponent<MeshFilter>().sharedMesh;
+            EventSystem<int>.RaiseEvent(EventType.UPDATE_SUBMESH_COUNT, mesh.subMeshCount);
 
             drawingMats.Clear();
             displayMats.Clear();
@@ -196,6 +199,18 @@ namespace Drawing
             rt = drawer.rts[0];
             rtID = drawer.rtIDs[0];
             rtHighlight = highlighter.rtHighlights[0];
+        }
+
+        private void UpdateTexture(int _subMesh, Texture2D _texture)
+        {
+            if (_subMesh >= drawingMats.Count)
+            {
+                Debug.LogError($"given submesh {_subMesh} is bigger than amount mats {drawingMats.Count - 1}");
+                return;
+            }
+            
+            drawingMats[_subMesh].SetTexture("_Mask", _texture);
+            displayMats[_subMesh].SetTexture("_Mask", _texture);
         }
 
         private void SetPaintType(int index)
@@ -397,10 +412,8 @@ namespace Drawing
         }
         private void RemoveHighlight(List<BrushStrokeID> _brushStrokeIDs)
         {
-            Debug.Log($"{selectedBrushStrokes.Count}");
             for (var i = 0; i < _brushStrokeIDs.Count; i++)
             {
-                Debug.Log($"{selectedBrushStrokes[i].startTime}    {_brushStrokeIDs[i].startTime}");
                 selectedBrushStrokes.Remove(_brushStrokeIDs[i]);
             }
 

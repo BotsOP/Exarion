@@ -520,7 +520,7 @@ namespace UI
                 firstTimeSelected = false;
             }
 
-            List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
+            //List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
             for (int i = 0; i < selectedClips.Count; i++)
             {
                 var clip = selectedClips[i];
@@ -533,7 +533,7 @@ namespace UI
                     Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) > 0.001)
                 {
                     clip.SetTime(clip.ClipTime);
-                    brushStrokeIDs.AddRange(clip.GetBrushStrokeIDs());
+                    //brushStrokeIDs.AddRange(clip.GetBrushStrokeIDs());
                 }
             }
             // if (brushStrokeIDs.Count > 0)
@@ -545,29 +545,24 @@ namespace UI
         }
         private void ClickedTimelineClip()
         {
-            TimelineClip cachedLastHoverClip = lastHoverClip;
             for (int i = 0; i < clipsOrdered.Count; i++)
             {
                 for (int j = 0; j < clipsOrdered[i].Count; j++)
                 {
                     var clip = clipsOrdered[i][j];
                     bool isMouseOver = clip.IsMouseOver();
-                    if (!isMouseOver && cachedLastHoverClip == clip)
-                    {
-                        Debug.Log($"hover exit {clip.ClipTime.x}");
-                        OnHoverExit(clip);
-                        continue;
-                    }
-                    else if(isMouseOver && cachedLastHoverClip != clip)
-                    {
-                        Debug.Log($"hover enter {clip.ClipTime.x}");
-
-                        OnHoverEnter(clip);
-                    }
-
                     if (!isMouseOver)
                     {
+                        if (clip.hover)
+                        {
+                            OnHoverExit(clip);
+                        }
                         continue;
+                    }
+
+                    if (!clip.hover)
+                    {
+                        OnHoverEnter(clip);
                     }
 
                     if (!selectedClips.Contains(clip) && Input.GetMouseButton(0))
@@ -623,18 +618,16 @@ namespace UI
             if (selectedClips.Contains(_clip))
                 return;
 
+            _clip.hover = true;
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, _clip.GetBrushStrokeIDs());
         }
         private void OnHoverExit(TimelineClip _clip)
         {
             lastHoverClip = null;
             if (selectedClips.Contains(_clip))
-            {
-                Debug.Log($"hover exit contains selected clip");
                 return;
-            }
 
-            List<BrushStrokeID> test = _clip.GetBrushStrokeIDs();
+            _clip.hover = false;
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, _clip.GetBrushStrokeIDs());
         }
         private void StoppedMakingChanges()
