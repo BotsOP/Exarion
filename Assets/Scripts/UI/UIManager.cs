@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Globalization;
 using System.IO;
 using DataPersistence;
@@ -7,6 +8,7 @@ using Managers;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using EventType = Managers.EventType;
@@ -59,6 +61,8 @@ namespace UI
         [SerializeField] private Button exrButton;
         [SerializeField] private Image pivotButton;
         [SerializeField] private Image centerButton;
+
+        
         
         private CustomRenderTexture viewFullRT;
         private CustomRenderTexture viewFocusRT;
@@ -73,6 +77,8 @@ namespace UI
         private bool exportPNG;
         private bool toggleSave;
         private float startTime;
+        
+        
 
         private void OnEnable()
         {
@@ -332,6 +338,8 @@ namespace UI
             brushSizeInput.text = brushSize.ToString(CultureInfo.CurrentCulture);
             brushSizeSlider.value = brushSize;
         }
+
+        
         public void LoadData(ToolData _data)
         {
             imageWidth = _data.imageWidth;

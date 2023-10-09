@@ -57,6 +57,7 @@ namespace UI
 
         public Vector2 clipTimeOld;
         public int previousBar;
+        public bool hover;
         public List<BrushStrokeID> selectedBrushStrokes = new List<BrushStrokeID>();
 
         public RectTransform rect;

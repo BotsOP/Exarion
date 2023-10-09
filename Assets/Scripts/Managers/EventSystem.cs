@@ -42,6 +42,8 @@ namespace Managers
         TIMELINE_PAUSE,
         SAVED,
         CHANGED_MODEL,
+        IMPORT_MODEL_TEXTURE,
+        UPDATE_SUBMESH_COUNT,
     }
 
 
