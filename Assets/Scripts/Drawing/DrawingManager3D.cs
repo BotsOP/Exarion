@@ -13,8 +13,6 @@ namespace Drawing
     public class DrawingManager3D : MonoBehaviour, IDataPersistence
     {
         [Header("Materials")]
-        // [SerializeField] private Material drawingMat;
-        // [SerializeField] private Material displayMat;
         [SerializeField] private Shader drawShader;
         [SerializeField] private Shader displayShader;
         [SerializeField] private List<Material> drawingMats;
@@ -201,6 +199,11 @@ namespace Drawing
             rtHighlight = highlighter.rtHighlights[0];
         }
 
+        public List<CustomRenderTexture> GetTextures()
+        {
+            return drawer.rts;
+        }
+
         private void UpdateTexture(int _subMesh, Texture2D _texture)
         {
             if (_subMesh >= drawingMats.Count)
@@ -210,7 +213,9 @@ namespace Drawing
             }
             
             drawingMats[_subMesh].SetTexture("_Mask", _texture);
+            drawingMats[_subMesh].SetInt("_UseMaskTex", 1);
             displayMats[_subMesh].SetTexture("_Mask", _texture);
+            displayMats[_subMesh].SetInt("_UseMaskTex", 1);
         }
 
         private void SetPaintType(int index)

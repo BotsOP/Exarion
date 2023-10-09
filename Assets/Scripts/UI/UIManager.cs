@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using DataPersistence;
@@ -78,8 +79,6 @@ namespace UI
         private bool toggleSave;
         private float startTime;
         
-        
-
         private void OnEnable()
         {
             rectTransformViewFull = viewImageFull.rectTransform;
@@ -193,10 +192,16 @@ namespace UI
         public void ExportResult()
         {
             string path = FileBrowser.Instance.SaveFile("Save texture", "", projectName, pngToggle ? "png" : "exr");
-            DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
-            //byte[] bytes = pngToggle ? drawingManager.drawer.rt.ToBytesPNG() : drawingManager.drawer.rt.ToBytesEXR();
-            byte[] bytes = pngToggle ? drawingManager.drawer.ReverseRtoB().ToBytesPNG() : drawingManager.drawer.ReverseRtoB().ToBytesEXR();
-            File.WriteAllBytes(path, bytes);
+            DrawingManager3D drawingManager = FindObjectOfType<DrawingManager3D>();
+            List<CustomRenderTexture> rts = drawingManager.GetTextures();
+
+            for (int i = 0; i < rts.Count; i++)
+            {
+                CustomRenderTexture result = rts[i];
+                byte[] bytes = pngToggle ? result.ToBytesPNG() : result.ToBytesEXR();
+                string tempPath = path.Insert(path.Length - 4, "_" + i);
+                File.WriteAllBytes(tempPath, bytes);
+            }
         }
 
         public void BackToMainMenu()
