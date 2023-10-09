@@ -14,11 +14,10 @@ public class ImportModelTexture : MonoBehaviour
     [SerializeField] private TMP_Dropdown dropdown;
     private Texture2D importedTexture;
     private byte[] imgData;
-    private string[] extensions = { "jpg, jpeg, jpe, jfif, png" };
+    private string[] extensions = { "png,jpeg,jpe,jfif,jpg" };
 
     public void OnEnable()
     {
-        Debug.Log($"test");
         EventSystem<int>.Subscribe(EventType.UPDATE_SUBMESH_COUNT, UpdateDropdown);
     }
     
