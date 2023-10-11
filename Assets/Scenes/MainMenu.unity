@@ -1795,7 +1795,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   creationMenu: {fileID: 1477543089}
-  saveSlotPopUp: {fileID: 0}
+  saveSlotPopUp: {fileID: 900795432}
   saveSlotContent: {fileID: 211544797}
   saveSlotButton: {fileID: 6932620555438958092, guid: 81b9ea1e9348a174bbed1c6a54719d3d,
     type: 3}
@@ -4472,6 +4472,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8470891677442858002, guid: 6a4a89c61caf91f4ba201c918a63e990,
+        type: 3}
+      propertyPath: autoSaveTimeSeconds
+      value: 600
       objectReference: {fileID: 0}
     - target: {fileID: 8470891677442858002, guid: 6a4a89c61caf91f4ba201c918a63e990,
         type: 3}
