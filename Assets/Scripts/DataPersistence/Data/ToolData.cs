@@ -4,22 +4,26 @@ using Drawing;
 using UI;
 using UnityEngine;
 
+public enum ProjectType
+{
+    PROJECT2D,
+    PROJECT3D,
+    FAILED,
+}
+
 [System.Serializable]
-public class ToolData
+public abstract class ToolData
 {
     //Data not for us
     public long lastUpdated;
     public float timeSpentMinutes;
 
-    //Data for us
     //Variables per project
+    public ProjectType projectType;
     public string projectName;
     public List<CondensedClip> timelineClips;
     public int extraTimelineBars;
-
-    public byte[] overlayImg;
-    public byte[] displayImg;
-
+    
     public int imageWidth;
     public int imageHeight;
 
@@ -30,8 +34,6 @@ public class ToolData
         imageWidth = 1024;
         imageHeight = 1024;
         projectName = "";
-        overlayImg = null;
-        displayImg = null;
         timelineClips = new List<CondensedClip>();
     }
 

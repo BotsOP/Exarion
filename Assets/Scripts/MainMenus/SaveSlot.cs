@@ -26,7 +26,7 @@ namespace MainMenus
 
         private void OnClicked()
         {
-            mainMenu.OnSaveSlotClicked(this);
+            //mainMenu.OnSaveSlotClicked(this);
         }
         
         public void SetData(ToolData _data)
@@ -35,10 +35,10 @@ namespace MainMenus
             
             projectName.text = toolData.GetProjectName();
             
-            if (_data.displayImg is null) return;
-            if (_data.displayImg.Length <= 0) return;
+            //if (_data.displayImg is null) return;
+            //if (_data.displayImg.Length <= 0) return;
             displayTexture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
-            displayTexture.LoadImage(_data.displayImg);
+            //displayTexture.LoadImage(_data.displayImg);
             displayTexture.filterMode = FilterMode.Point;
             displayImg.texture = displayTexture;
         }

@@ -54,7 +54,7 @@ public class FileDataHandler
                 }
 
                 // deserialize the data from Json back into the C# object
-                loadedData = JsonConvert.DeserializeObject<ToolData>(dataToLoad);
+                loadedData = JsonConvert.DeserializeObject<ToolData3D>(dataToLoad);
                 //loadedData = JsonUtility.FromJson<ToolData>(dataToLoad);
             }
             catch (Exception e) 
@@ -74,7 +74,49 @@ public class FileDataHandler
                 }
                 else  // if we hit this else block, one possibility is that the backup file is also corrupt
                 {
-                    Debug.LogError("Error occured when trying to load file at path: " + fullPath  + " and backup did not work.\n" + e);
+                    Debug.LogWarning("Error occured when trying to load 3D file at path: " + fullPath  + " and backup did not work.\n" + e);
+                }
+            }
+            try 
+            {
+                // load the serialized data from the file
+                string dataToLoad = "";
+                using (FileStream stream = new FileStream(fullPath, FileMode.Open))
+                {
+                    using (StreamReader reader = new StreamReader(stream))
+                    {
+                        dataToLoad = reader.ReadToEnd();
+                    }
+                }
+
+                // optionally decrypt the data
+                if (useEncryption) 
+                {
+                    dataToLoad = EncryptDecrypt(dataToLoad);
+                }
+
+                // deserialize the data from Json back into the C# object
+                loadedData = JsonConvert.DeserializeObject<ToolData2D>(dataToLoad);
+                //loadedData = JsonUtility.FromJson<ToolData>(dataToLoad);
+            }
+            catch (Exception e) 
+            {
+                // since we're calling Load(..) recursively, we need to account for the case where
+                // the rollback succeeds, but data is still failing to load for some other reason,
+                // which without this check may cause an infinite recursion loop.
+                if (_allowRestoreFromBackup) 
+                {
+                    Debug.LogWarning("Failed to load data file. Attempting to roll back.\n" + e);
+                    bool rollbackSuccess = AttemptRollback(fullPath);
+                    if (rollbackSuccess)
+                    {
+                        // try to load again recursively
+                        loadedData = Load(_profileID, false);
+                    }
+                }
+                else  // if we hit this else block, one possibility is that the backup file is also corrupt
+                {
+                    Debug.LogWarning("Error occured when trying to load 2D file at path: " + fullPath  + " and backup did not work.\n" + e);
                 }
             }
         }
@@ -99,7 +141,7 @@ public class FileDataHandler
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
 
             // serialize the C# game data object into Json
-            string dataToStore = JsonConvert.SerializeObject(data);
+            string dataToStore = JsonConvert.SerializeObject(data, Formatting.Indented);
             //string dataToStore = JsonUtility.ToJson(data, true);
 
             // optionally encrypt the data
@@ -191,6 +233,31 @@ public class FileDataHandler
         }
 
         return profileDictionary;
+    }
+    
+    public List<string> GetAllProfileID()
+    {
+        List<string> profileIDs = new List<string>();
+        // loop over all directory names in the data directory path
+        IEnumerable<DirectoryInfo> dirInfos = new DirectoryInfo(dataDirPath).EnumerateDirectories();
+        foreach (DirectoryInfo dirInfo in dirInfos) 
+        {
+            string profileId = dirInfo.Name;
+
+            // defensive programming - check if the data file exists
+            // if it doesn't, then this folder isn't a profile and should be skipped
+            string fullPath = Path.Combine(dataDirPath, profileId, dataFileName);
+            if (!File.Exists(fullPath))
+            {
+                Debug.LogWarning("Skipping directory when loading all profiles because it does not contain data: "
+                                 + profileId);
+                continue;
+            }
+
+            profileIDs.Add(profileId);
+        }
+
+        return profileIDs;
     }
 
     public string GetMostRecentlyUpdatedProfileID() 

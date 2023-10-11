@@ -115,15 +115,15 @@ namespace DataPersistence
 
         public void NewTool() 
         {
-            this.toolData = new ToolData();
+            this.toolData = new ToolData2D();
         }
 
-        public void LoadProject()
+        public ProjectType LoadProject()
         {
             // return right away if data persistence is disabled
             if (disableDataPersistence) 
             {
-                return;
+                return ProjectType.FAILED;
             }
 
             // load any saved data from a file using the data handler
@@ -139,7 +139,7 @@ namespace DataPersistence
             if (this.toolData == null) 
             {
                 Debug.Log("No data was found. A New Tool needs to be started before data can be loaded.");
-                return;
+                return ProjectType.FAILED;
             }
 
             // push the loaded data to all other scripts that need it
@@ -147,6 +147,8 @@ namespace DataPersistence
             {
                 dataPersistenceObj.LoadData(toolData);
             }
+
+            return toolData.projectType;
         }
 
         public void SaveTool()
@@ -190,6 +192,11 @@ namespace DataPersistence
         public bool HasGameData() 
         {
             return toolData != null;
+        }
+
+        public List<string> GetAllProfileIDs()
+        {
+            return dataHandler.GetAllProfileID();
         }
 
         public bool IsProfileIDTaken(string _newProfileID)

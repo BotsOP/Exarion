@@ -19,6 +19,8 @@ namespace MainMenus
         [SerializeField]
         private TMP_InputField imageHeightInput;
 
+        private bool project3D;
+
         private ToolData toolData;
 
         public void ResetprojectExistsText()
@@ -45,18 +47,47 @@ namespace MainMenus
             success = int.TryParse(imageHeightInput.text, out num);
             if (success) { imageHeight = num; }
 
-            toolData = new ToolData
+            if (project3D)
             {
-                lastUpdated = System.DateTime.Now.ToBinary(),
-                projectName = projectName.text,
-                imageWidth = imageWidth,
-                imageHeight = imageHeight,
-            };
-
+                toolData = new ToolData3D
+                {
+                    lastUpdated = System.DateTime.Now.ToBinary(),
+                    projectName = projectName.text,
+                    imageWidth = imageWidth,
+                    imageHeight = imageHeight,
+                };
+                toolData.projectType = ProjectType.PROJECT3D;
+            }
+            else
+            {
+                toolData = new ToolData2D
+                {
+                    lastUpdated = System.DateTime.Now.ToBinary(),
+                    projectName = projectName.text,
+                    imageWidth = imageWidth,
+                    imageHeight = imageHeight,
+                };
+                toolData.projectType = ProjectType.PROJECT2D;
+            }
+            
             DataPersistenceManager.instance.ChangeSelectedProfileId(projectName.text);
             DataPersistenceManager.instance.toolData = toolData;
             DataPersistenceManager.instance.SaveTool();
-            SceneManager.LoadSceneAsync("3DDrawScene");
+            SceneManager.LoadSceneAsync(project3D ? "3DDrawScene" : "2DDrawScene");
+        }
+
+        public void SetProjectType(bool _project3D)
+        {
+            project3D = _project3D;
+        }
+
+        public void ActiveGameObject(GameObject _gameObject)
+        {
+            _gameObject.SetActive(true);
+        }
+        public void DeActiveGameObject(GameObject _gameObject)
+        {
+            _gameObject.SetActive(false);
         }
 
         public void ActivateMenu()

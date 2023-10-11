@@ -22,34 +22,30 @@ public class SaveSlotPopUp : MonoBehaviour
     [SerializeField] private float timeIncrease = 0.01f;
     [SerializeField] private ConfirmationPopupMenu confirmationPopupMenu;
 
-    private ToolData currentToolData;
-    private SaveSlot saveSlot;
+    private SaveSlotSlim saveSlot;
     private float time;
 
-    public void UpdateSaveSlot(SaveSlot _saveSlot)
+    public void UpdateSaveSlot(SaveSlotSlim _saveSlot)
     {
-        currentToolData = _saveSlot.toolData;
-        saveSlot = _saveSlot;
-        time = 0;
         gameObject.SetActive(true);
-        DataPersistenceManager.instance.ChangeSelectedProfileId(currentToolData.projectName);
-        projectNameText.text = currentToolData.projectName;
-        dateText.text = "Last save: " + DateTime.FromBinary(currentToolData.lastUpdated).ToString(CultureInfo.InvariantCulture);
-        displayImage.texture = _saveSlot.displayTexture;
-        showcaseImage.texture = _saveSlot.displayTexture;
-    }
-
-    private void Update()
-    {
-        time = (time + timeIncrease) % 1;
-        showcaseMat.SetFloat("_CustomTime", time);
+        saveSlot = _saveSlot;
+        DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.projectName);
+        projectNameText.text = saveSlot.projectName;
     }
 
     public void LoadProject()
     {
         DataPersistenceManager.instance.SaveTool();
-        //SceneManager.LoadSceneAsync("DrawScene");
-        SceneManager.LoadSceneAsync("3DDrawScene");
+        ProjectType projectType = DataPersistenceManager.instance.LoadProject();
+        switch (projectType)
+        {
+            case ProjectType.PROJECT2D:
+                SceneManager.LoadSceneAsync("2DDrawScene");
+                break;
+            case ProjectType.PROJECT3D:
+                SceneManager.LoadSceneAsync("3DDrawScene");
+                break;
+        }
     }
 
     public void Delete()
@@ -58,7 +54,7 @@ public class SaveSlotPopUp : MonoBehaviour
            // 'yes'
            () => {
                Destroy(saveSlot.gameObject);
-               DataPersistenceManager.instance.DeleteProfileData(currentToolData.projectName);
+               DataPersistenceManager.instance.DeleteProfileData(saveSlot.projectName);
                gameObject.SetActive(false);
            },
            // 'cancel'

@@ -174,7 +174,7 @@ namespace Drawing
 
             Mesh mesh = _drawingRend.gameObject.GetComponent<MeshFilter>().sharedMesh;
             EventSystem<int>.RaiseEvent(EventType.UPDATE_SUBMESH_COUNT, mesh.subMeshCount);
-
+            
             drawingMats.Clear();
             displayMats.Clear();
             for (int i = 0; i < mesh.subMeshCount; i++)
@@ -1090,7 +1090,6 @@ namespace Drawing
         }
         public void SaveData(ToolData _data)
         {
-            _data.displayImg = drawer.rts[0].ToBytesPNG(imageWidth, imageHeight);
             _data.imageWidth = imageWidth;
             _data.imageHeight = imageHeight;
         }
