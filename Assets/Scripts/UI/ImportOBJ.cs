@@ -10,12 +10,11 @@ using Dummiesman;
 using Managers;
 using EventType = Managers.EventType;
 
-public class ImportOBJ : MonoBehaviour
+public class ImportOBJ : MonoBehaviour, IDataPersistence
 {
-    [SerializeField] private Material drawMat;
-    [SerializeField] private Material displayMat;
     [SerializeField] private float modelScale = 5;
     private GameObject modelHolder;
+    private Mesh mesh;
     
     private string[] extensions = { "obj" };
 
@@ -63,6 +62,7 @@ public class ImportOBJ : MonoBehaviour
             GameObject model = modelHolder.transform.GetChild(0).gameObject;
             model.AddComponent<MeshCollider>();
             MeshRenderer drawingRenderer = model.GetComponent<MeshRenderer>();
+            mesh = model.GetComponent<MeshFilter>().sharedMesh;
             
             GameObject modelDisplay = Instantiate(model, modelHolder.transform);
             MeshRenderer displayRenderer = modelDisplay.GetComponent<MeshRenderer>();
@@ -95,5 +95,41 @@ public class ImportOBJ : MonoBehaviour
 
         model1.transform.position -= bound.center * scale;
         model2.transform.position -= bound.center * scale;
+    }
+
+    public void LoadData(ToolData _data)
+    {
+        ToolData3D toolData3D = (ToolData3D)_data;
+        mesh = new Mesh();
+        mesh.vertices = toolData3D.vertexPos.ToArray();
+        mesh.normals = toolData3D.vertexNormal.ToArray();
+        mesh.tangents = toolData3D.vertexTangents.ToArray();
+        for (int i = 0; i < toolData3D.indices.Count; i++)
+        {
+            mesh.SetIndices(toolData3D.indices[i], MeshTopology.Triangles, i);
+            mesh.SetUVs(i, toolData3D.uvs[i]);
+        }
+        mesh.RecalculateBounds();
+    }
+
+    public void SaveData(ToolData _data)
+    {
+        ToolData3D toolData3D = (ToolData3D)_data;
+        mesh.GetVertices(toolData3D.vertexPos);
+        mesh.GetNormals(toolData3D.vertexNormal);
+        mesh.GetTangents(toolData3D.vertexTangents);
+        
+        toolData3D.indices.Clear();
+        toolData3D.uvs.Clear();
+        for (int i = 0; i < mesh.subMeshCount; i++)
+        {
+            List<int> indices = new List<int>();
+            mesh.GetIndices(indices, i);
+            toolData3D.indices.Add(indices);
+            
+            List<Vector2> uvs = new List<Vector2>();
+            mesh.GetUVs(i, uvs);
+            toolData3D.uvs.Add(uvs);
+        }
     }
 }

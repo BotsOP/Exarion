@@ -83,11 +83,13 @@ public class ImportImage : MonoBehaviour, IDataPersistence
 
     public void LoadData(ToolData _data)
     {
-        imgData = _data.overlayImg;
+        ToolData2D data = (ToolData2D)_data;
+        imgData = data.overlayImg;
     }
 
     public void SaveData(ToolData _data)
     {
-        _data.overlayImg = imgData;
+        ToolData2D data = (ToolData2D)_data;
+        data.overlayImg = imgData;
     }
 }

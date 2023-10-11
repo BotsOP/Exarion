@@ -45,7 +45,7 @@ namespace MainMenus
             Application.Quit();
         }
 
-        public void OnSaveSlotClicked(SaveSlot _saveSlot)
+        public void OnSaveSlotClicked(SaveSlotSlim _saveSlot)
         {
             saveSlotPopUp.UpdateSaveSlot(_saveSlot);
         }
@@ -56,19 +56,21 @@ namespace MainMenus
             gameObject.SetActive(true);
 
             // load all of the profiles that exist
-            Dictionary<string, ToolData> profilesGameData = DataPersistenceManager.instance.GetAllProfilesToolData();
+            // Dictionary<string, ToolData> profilesGameData = DataPersistenceManager.instance.GetAllProfilesToolData();
+            //
+            // List<ToolData> saveSlotData = profilesGameData.Values.ToList();
+            // int low = 0;
+            // int high = saveSlotData.Count - 1;
+            // QuickSort(saveSlotData, low, high);
+            //
+            // saveSlotData.Reverse();
 
-            List<ToolData> saveSlotData = profilesGameData.Values.ToList();
-            int low = 0;
-            int high = saveSlotData.Count - 1;
-            QuickSort(saveSlotData, low, high);
+            List<string> profileID = DataPersistenceManager.instance.GetAllProfileIDs();
 
-            saveSlotData.Reverse();
-
-            foreach (var saveSlotInfo in saveSlotData)
+            foreach (var saveSlotInfo in profileID)
             {
                 GameObject saveSlotObject = Instantiate(saveSlotButton, saveSlotContent);
-                SaveSlot saveSlot = saveSlotObject.GetComponent<SaveSlot>();
+                SaveSlotSlim saveSlot = saveSlotObject.GetComponent<SaveSlotSlim>();
                 saveSlot.SetData(saveSlotInfo);
                 saveSlot.mainMenu = this;
             }

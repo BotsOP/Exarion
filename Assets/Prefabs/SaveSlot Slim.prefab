@@ -1,78 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &3506921974028570496
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4989308861710411419}
-  - component: {fileID: 4648165371819658840}
-  - component: {fileID: 5070631669010213099}
-  m_Layer: 5
-  m_Name: RawImage
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &4989308861710411419
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3506921974028570496}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6932620555438958091}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -165.3}
-  m_SizeDelta: {x: 318.4653, y: 329.43}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &4648165371819658840
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3506921974028570496}
-  m_CullTransparentMesh: 1
---- !u!114 &5070631669010213099
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3506921974028570496}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 9c97c523153a2084dbc329c0d1d587c4, type: 2}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 3c4660e638f58124fb98f902b436cad8, type: 3}
-  m_UVRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
 --- !u!1 &6488706274577233548
 GameObject:
   m_ObjectHideFlags: 0
@@ -156,10 +83,10 @@ GameObject:
   m_Component:
   - component: {fileID: 6932620555438958091}
   - component: {fileID: 6932620555438958088}
-  - component: {fileID: 6932620555438958087}
+  - component: {fileID: 3374317430121013989}
   - component: {fileID: 2051743457}
   m_Layer: 5
-  m_Name: SaveSlot 1
+  m_Name: SaveSlot Slim
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -178,7 +105,6 @@ RectTransform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4629445321918940308}
-  - {fileID: 4989308861710411419}
   - {fileID: 6932620556906608261}
   m_Father: {fileID: 0}
   m_RootOrder: -1
@@ -196,7 +122,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6932620555438958092}
   m_CullTransparentMesh: 1
---- !u!114 &6932620555438958087
+--- !u!114 &3374317430121013989
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -205,21 +131,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 6932620555438958092}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbfd9ffb0f7032c4ebe98a8d32c69a93, type: 3}
+  m_Script: {fileID: 11500000, guid: 8451c993dbe6d4746bf6b5f9a7df4604, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectName: {fileID: 6932620556906608260}
-  displayImg: {fileID: 5070631669010213099}
-  displayTexture: {fileID: 0}
-  toolData:
-    lastUpdated: 0
-    timeSpentMinutes: 0
-    projectName: 
-    extraTimelineBars: 0
-    overlayImg: 
-    displayImg: 
-    imageWidth: 1024
-    imageHeight: 1024
+  projectNameText: {fileID: 6932620556906608260}
 --- !u!114 &2051743457
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -260,10 +175,22 @@ MonoBehaviour:
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
   m_Interactable: 1
-  m_TargetGraphic: {fileID: 0}
+  m_TargetGraphic: {fileID: 2920436471006788048}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 3374317430121013989}
+        m_TargetAssemblyTypeName: MainMenus.SaveSlotSlim, Assembly-CSharp
+        m_MethodName: OnClicked
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &6932620556906608262
 GameObject:
   m_ObjectHideFlags: 0

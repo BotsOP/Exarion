@@ -1025,7 +1025,8 @@ namespace Drawing
         }
         public void SaveData(ToolData _data)
         {
-            _data.displayImg = drawer.rt.ToBytesPNG(imageWidth, imageHeight);
+            ToolData2D data = (ToolData2D)_data;
+            data.displayImg = drawer.rt.ToBytesPNG(imageWidth, imageHeight);
             _data.imageWidth = imageWidth;
             _data.imageHeight = imageHeight;
         }
