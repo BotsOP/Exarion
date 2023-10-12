@@ -4,6 +4,7 @@ using UnityEngine;
 using System;
 using System.IO;
 using Newtonsoft.Json;
+using Unity.VisualScripting;
 using UnityEditor;
 
 public class FileDataHandler
@@ -54,7 +55,13 @@ public class FileDataHandler
                 }
 
                 // deserialize the data from Json back into the C# object
-                loadedData = JsonConvert.DeserializeObject<ToolData3D>(dataToLoad);
+                ToolData loadedDataTemp = JsonConvert.DeserializeObject<ToolData3D>(dataToLoad);
+                Debug.Log($"Succesfully loaded 3D {loadedDataTemp.projectName}");
+                if (loadedDataTemp.projectType != ProjectType.PROJECT3D)
+                {
+                    throw new Exception("not correct project type");
+                }
+                loadedData = loadedDataTemp;
                 //loadedData = JsonUtility.FromJson<ToolData>(dataToLoad);
             }
             catch (Exception e) 
@@ -96,7 +103,14 @@ public class FileDataHandler
                 }
 
                 // deserialize the data from Json back into the C# object
-                loadedData = JsonConvert.DeserializeObject<ToolData2D>(dataToLoad);
+                ToolData loadedDataTemp = JsonConvert.DeserializeObject<ToolData2D>(dataToLoad);
+                Debug.Log($"Succesfully loaded 2D {loadedDataTemp.projectName}  {loadedDataTemp.projectType}");
+                if (loadedDataTemp.projectType != ProjectType.PROJECT2D)
+                {
+                    throw new Exception("not correct project type");
+                }
+
+                loadedData = loadedDataTemp;
                 //loadedData = JsonUtility.FromJson<ToolData>(dataToLoad);
             }
             catch (Exception e) 
