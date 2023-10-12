@@ -99,17 +99,25 @@ public class ImportOBJ : MonoBehaviour, IDataPersistence
 
     public void LoadData(ToolData _data)
     {
-        ToolData3D toolData3D = (ToolData3D)_data;
-        mesh = new Mesh();
-        mesh.vertices = toolData3D.vertexPos.ToArray();
-        mesh.normals = toolData3D.vertexNormal.ToArray();
-        mesh.tangents = toolData3D.vertexTangents.ToArray();
-        for (int i = 0; i < toolData3D.indices.Count; i++)
+        if (_data.projectType == ProjectType.PROJECT3D)
         {
-            mesh.SetIndices(toolData3D.indices[i], MeshTopology.Triangles, i);
-            mesh.SetUVs(i, toolData3D.uvs[i]);
+            Debug.Log($"is 3d type");
         }
-        mesh.RecalculateBounds();
+        if (_data is ToolData3D)
+        {
+            Debug.Log($"is 3d");
+            ToolData3D toolData3D = (ToolData3D)_data;
+            mesh = new Mesh();
+            mesh.vertices = toolData3D.vertexPos.ToArray();
+            mesh.normals = toolData3D.vertexNormal.ToArray();
+            mesh.tangents = toolData3D.vertexTangents.ToArray();
+            for (int i = 0; i < toolData3D.indices.Count; i++)
+            {
+                mesh.SetIndices(toolData3D.indices[i], MeshTopology.Triangles, i);
+                mesh.SetUVs(i, toolData3D.uvs[i]);
+            }
+            mesh.RecalculateBounds();
+        }
     }
 
     public void SaveData(ToolData _data)
