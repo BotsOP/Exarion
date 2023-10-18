@@ -11,16 +11,9 @@ public enum ProjectType
     FAILED,
 }
 
-[System.Serializable]
 public abstract class ToolData
 {
-    //Data not for us
-    public long lastUpdated;
-    public float timeSpentMinutes;
-
     //Variables per project
-    public ProjectType projectType;
-    public string projectName;
     public List<CondensedClip> timelineClips;
     public int extraTimelineBars;
     
@@ -33,13 +26,49 @@ public abstract class ToolData
     {
         imageWidth = 1024;
         imageHeight = 1024;
-        projectName = "";
         timelineClips = new List<CondensedClip>();
     }
+}
 
-    public string GetProjectName() 
+public struct JsonVector2
+{
+    public float x;
+    public float y;
+
+    public JsonVector2(float _x, float _y)
     {
-        return projectName;
+        x = _x;
+        y = _y;
+    }
+}
+
+public struct JsonVector3
+{
+    public float x;
+    public float y;
+    public float z;
+
+    public JsonVector3(float _x, float _y, float _z)
+    {
+        x = _x;
+        y = _y;
+        z = _z;
+    }
+}
+
+public struct JsonVector4
+{
+    public float x;
+    public float y;
+    public float z;
+    public float w;
+
+    public JsonVector4(float _x, float _y, float _z, float _w)
+    {
+        x = _x;
+        y = _y;
+        z = _z;
+        w = _w;
     }
 }
 

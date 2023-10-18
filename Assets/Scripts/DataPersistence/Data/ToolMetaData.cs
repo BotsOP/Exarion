@@ -24,5 +24,11 @@ namespace DataPersistence.Data
         public List<Vector3> vertexPos = new List<Vector3>();
         public List<Vector3> vertexNormal = new List<Vector3>();
         public List<Vector4> vertexTangents = new List<Vector4>();
+
+        public ToolMetaData(long _lastUpdated, string _projectName)
+        {
+            lastUpdated = _lastUpdated;
+            projectName = _projectName;
+        }
     }
 }

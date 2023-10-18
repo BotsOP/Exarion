@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DataPersistence.Data;
 using Drawing;
 using Managers;
 using TMPro;
@@ -1312,7 +1313,7 @@ namespace UI
             return Input.mousePosition.x > _corners[0].x && Input.mousePosition.x < _corners[2].x && 
                    Input.mousePosition.y > _corners[0].y && Input.mousePosition.y < _corners[2].y;
         }
-        public void LoadData(ToolData _data)
+        public void LoadData(ToolData _data, ToolMetaData _metaData)
         {
             for (int i = 0; i < _data.extraTimelineBars; i++)
             {
@@ -1370,10 +1371,9 @@ namespace UI
             yield return new WaitForEndOfFrameUnit();
             yield return new WaitForEndOfFrameUnit();
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_STROKE, _brushStrokeIDs);
-
         }
 
-        public void SaveData(ToolData _data)
+        public void SaveData(ToolData _data, ToolMetaData _metaData)
         {
             List<CondensedClip> condensedTimelineClips = new List<CondensedClip>();
             List<TimelineClip> timelineClips = clipsOrdered.SelectMany(clips => clips).ToList();

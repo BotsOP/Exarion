@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DataPersistence.Data;
 using Managers;
 using UI;
 using Undo;
@@ -186,9 +187,6 @@ namespace Drawing
                 
                 drawingMats.Add(drawingMat);
                 displayMats.Add(displayMat);
-
-                _drawingRend.materials[i] = drawingMat;
-                _displayRend.materials[i] = displayMat;
             }
             
             _drawingRend.materials = drawingMats.ToArray();
@@ -1088,12 +1086,12 @@ namespace Drawing
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
         }
 
-        public void LoadData(ToolData _data)
+        public void LoadData(ToolData _data, ToolMetaData _metaData)
         {
             imageWidth = _data.imageWidth;
             imageHeight = _data.imageHeight;
         }
-        public void SaveData(ToolData _data)
+        public void SaveData(ToolData _data, ToolMetaData _metaData)
         {
             _data.imageWidth = imageWidth;
             _data.imageHeight = imageHeight;

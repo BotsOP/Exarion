@@ -1,4 +1,5 @@
 using System;
+using DataPersistence.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,7 +16,7 @@ namespace MainMenus
         [NonSerialized] public MainMenu mainMenu;
 
         public Texture2D displayTexture;
-        public ToolData toolData;
+        public ToolMetaData projectData;
         private Button saveSlotButton;
 
         private void Awake() 
@@ -29,11 +30,11 @@ namespace MainMenus
             //mainMenu.OnSaveSlotClicked(this);
         }
         
-        public void SetData(ToolData _data)
+        public void SetData(ToolMetaData _data)
         {
-            toolData = _data;
+            projectData = _data;
             
-            projectName.text = toolData.GetProjectName();
+            projectName.text = projectData.projectName;
             
             //if (_data.displayImg is null) return;
             //if (_data.displayImg.Length <= 0) return;

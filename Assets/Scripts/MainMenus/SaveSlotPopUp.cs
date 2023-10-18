@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using DataPersistence;
+using DataPersistence.Data;
 using MainMenus;
 using TMPro;
 using UnityEngine;
@@ -35,9 +36,8 @@ public class SaveSlotPopUp : MonoBehaviour
 
     public void LoadProject()
     {
-        DataPersistenceManager.instance.SaveTool();
-        ProjectType projectType = DataPersistenceManager.instance.LoadProject();
-        switch (projectType)
+        ToolMetaData metaData = DataPersistenceManager.instance.toolMetaData;
+        switch (metaData.projectType)
         {
             case ProjectType.PROJECT2D:
                 SceneManager.LoadSceneAsync("2DDrawScene");
