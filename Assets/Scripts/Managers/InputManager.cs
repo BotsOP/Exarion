@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DataPersistence.Data;
 using Managers;
 using TMPro;
 using UI;
@@ -73,12 +74,12 @@ public class InputManager : MonoBehaviour, IDataPersistence
             EventSystem.RaiseEvent(EventType.TIMELINE_PAUSE);
         }
     }
-    public void LoadData(ToolData _data)
+    public void LoadData(ToolData _data, ToolMetaData _metaData)
     {
         imageWidth = _data.imageWidth;
         imageHeight = _data.imageHeight;
     }
-    public void SaveData(ToolData _data)
+    public void SaveData(ToolData _data, ToolMetaData _metaData)
     {
         
     }

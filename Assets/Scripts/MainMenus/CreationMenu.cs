@@ -1,4 +1,5 @@
 using DataPersistence;
+using DataPersistence.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -22,6 +23,7 @@ namespace MainMenus
         private bool project3D;
 
         private ToolData toolData;
+        private ToolMetaData metaData;
 
         public void ResetprojectExistsText()
         {
@@ -47,31 +49,28 @@ namespace MainMenus
             success = int.TryParse(imageHeightInput.text, out num);
             if (success) { imageHeight = num; }
 
+            metaData = new ToolMetaData(System.DateTime.Now.ToBinary(), projectName.text);
+
             if (project3D)
             {
                 toolData = new ToolData3D
                 {
-                    lastUpdated = System.DateTime.Now.ToBinary(),
-                    projectName = projectName.text,
                     imageWidth = imageWidth,
                     imageHeight = imageHeight,
                 };
-                toolData.projectType = ProjectType.PROJECT3D;
+                metaData.projectType = ProjectType.PROJECT3D;
             }
             else
             {
                 toolData = new ToolData2D
                 {
-                    lastUpdated = System.DateTime.Now.ToBinary(),
-                    projectName = projectName.text,
                     imageWidth = imageWidth,
                     imageHeight = imageHeight,
                 };
-                toolData.projectType = ProjectType.PROJECT2D;
+                metaData.projectType = ProjectType.PROJECT2D;
             }
             
-            DataPersistenceManager.instance.ChangeSelectedProfileId(projectName.text);
-            DataPersistenceManager.instance.toolData = toolData;
+            DataPersistenceManager.instance.InitializeNewTool(projectName.text, metaData, toolData);
             DataPersistenceManager.instance.SaveTool();
             SceneManager.LoadSceneAsync(project3D ? "3DDrawScene" : "2DDrawScene");
         }

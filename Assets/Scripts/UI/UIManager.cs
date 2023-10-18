@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using DataPersistence;
+using DataPersistence.Data;
 using Drawing;
 using Managers;
 using TMPro;
@@ -345,13 +346,13 @@ namespace UI
         }
 
         
-        public void LoadData(ToolData _data)
+        public void LoadData(ToolData _data, ToolMetaData _metaData)
         {
             imageWidth = _data.imageWidth;
             imageHeight = _data.imageHeight;
-            projectName = _data.projectName;
+            projectName = _metaData.projectName;
         }
-        public void SaveData(ToolData _data)
+        public void SaveData(ToolData _data, ToolMetaData _metaData)
         {
         }
     }

@@ -5,9 +5,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Crosstales.FB;
+using DataPersistence.Data;
+using Drawing;
 using UnityEngine.Networking;
 using Dummiesman;
 using Managers;
+using Unity.VisualScripting;
 using EventType = Managers.EventType;
 
 public class ImportOBJ : MonoBehaviour, IDataPersistence
@@ -97,9 +100,39 @@ public class ImportOBJ : MonoBehaviour, IDataPersistence
         model2.transform.position -= bound.center * scale;
     }
 
-    public void LoadData(ToolData _data)
+    private void SpawnMesh()
     {
-        if (_data.projectType == ProjectType.PROJECT3D)
+        modelHolder = new GameObject();
+        modelHolder.name = "ModelHolder";
+        
+        GameObject model = new GameObject();
+        model.name = "DrawModel";
+        model.transform.SetParent(modelHolder.transform);
+        MeshFilter meshFilterModel = model.AddComponent<MeshFilter>();
+        meshFilterModel.sharedMesh = mesh;
+        MeshRenderer drawingRenderer = model.AddComponent<MeshRenderer>();
+        model.AddComponent<MeshCollider>();
+        
+        GameObject modelDisplay = Instantiate(model, modelHolder.transform);
+        modelDisplay.name = "ModelDisplay";
+        MeshRenderer displayRenderer = modelDisplay.GetComponent<MeshRenderer>();
+        modelDisplay.layer = LayerMask.NameToLayer("display");
+        StartCoroutine(WaitAndPrint(drawingRenderer, displayRenderer));
+        
+        FitOnScreen(model, modelDisplay);
+    }
+    
+    private IEnumerator WaitAndPrint(Renderer _drawingRenderer, Renderer _displayRenderer)
+    {
+        yield return new WaitForEndOfFrameUnit();
+        yield return new WaitForEndOfFrameUnit();
+        yield return new WaitForEndOfFrameUnit();
+        EventSystem<Renderer, Renderer>.RaiseEvent(EventType.CHANGED_MODEL, _drawingRenderer, _displayRenderer);
+    }
+
+    public void LoadData(ToolData _data, ToolMetaData _metaData)
+    {
+        if (_metaData.projectType == ProjectType.PROJECT3D)
         {
             Debug.Log($"is 3d type");
         }
@@ -107,37 +140,28 @@ public class ImportOBJ : MonoBehaviour, IDataPersistence
         {
             Debug.Log($"is 3d");
             ToolData3D toolData3D = (ToolData3D)_data;
-            mesh = new Mesh();
-            mesh.vertices = toolData3D.vertexPos.ToArray();
-            mesh.normals = toolData3D.vertexNormal.ToArray();
-            mesh.tangents = toolData3D.vertexTangents.ToArray();
-            for (int i = 0; i < toolData3D.indices.Count; i++)
+            if (toolData3D.meshLoaded)
             {
-                mesh.SetIndices(toolData3D.indices[i], MeshTopology.Triangles, i);
-                mesh.SetUVs(i, toolData3D.uvs[i]);
+                Debug.Log($"mesh is loaded");
+                mesh = toolData3D.LoadMesh();
+                SpawnMesh();
             }
-            mesh.RecalculateBounds();
         }
     }
 
-    public void SaveData(ToolData _data)
+    public void SaveData(ToolData _data, ToolMetaData _metaData)
     {
-        ToolData3D toolData3D = (ToolData3D)_data;
-        mesh.GetVertices(toolData3D.vertexPos);
-        mesh.GetNormals(toolData3D.vertexNormal);
-        mesh.GetTangents(toolData3D.vertexTangents);
-        
-        toolData3D.indices.Clear();
-        toolData3D.uvs.Clear();
-        for (int i = 0; i < mesh.subMeshCount; i++)
+        if (_metaData.projectType == ProjectType.PROJECT3D)
         {
-            List<int> indices = new List<int>();
-            mesh.GetIndices(indices, i);
-            toolData3D.indices.Add(indices);
-            
-            List<Vector2> uvs = new List<Vector2>();
-            mesh.GetUVs(i, uvs);
-            toolData3D.uvs.Add(uvs);
+            Debug.Log($"is 3d type");
         }
+
+        if (_data is ToolData3D)
+        {
+            Debug.Log($"is 3d");
+            ToolData3D toolData3D = (ToolData3D)_data;
+            toolData3D.SaveMesh(mesh);
+        }
+
     }
 }

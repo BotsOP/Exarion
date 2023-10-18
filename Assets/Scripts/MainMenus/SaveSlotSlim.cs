@@ -1,4 +1,5 @@
 using System;
+using DataPersistence.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,10 +21,10 @@ namespace MainMenus
             mainMenu.OnSaveSlotClicked(this);
         }
 
-        public void SetData(string _projectName)
+        public void SetData(ToolMetaData _metaData)
         {
-            projectName = _projectName;
-            projectNameText.text = _projectName;
+            projectName = _metaData.projectName;
+            projectNameText.text = _metaData.projectName;
         }
 
         public void SetInteractable(bool interactable)

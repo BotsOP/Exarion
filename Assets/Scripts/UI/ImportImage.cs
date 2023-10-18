@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Crosstales.FB;
+using DataPersistence.Data;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
@@ -81,13 +82,13 @@ public class ImportImage : MonoBehaviour, IDataPersistence
         displayMat.SetInt("_UseTexture", 1);
     }
 
-    public void LoadData(ToolData _data)
+    public void LoadData(ToolData _data, ToolMetaData _metaData)
     {
         ToolData2D data = (ToolData2D)_data;
         imgData = data.overlayImg;
     }
 
-    public void SaveData(ToolData _data)
+    public void SaveData(ToolData _data, ToolMetaData _metaData)
     {
         ToolData2D data = (ToolData2D)_data;
         data.overlayImg = imgData;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.IO;
+using DataPersistence.Data;
 using Newtonsoft.Json;
 using Unity.VisualScripting;
 using UnityEditor;
@@ -10,20 +11,21 @@ using UnityEditor;
 public class FileDataHandler
 {
     private string dataDirPath  = "";
-    private string dataFileName = "";
+    private string dataExtension = ".exar";
+    private string metaDataExtension = ".meta";
     private bool   useEncryption = false;
+    private List<ToolMetaData> metaProfiles;
 
     private readonly string encryptionCodeWord = "ToolEncryptionWord";
     private readonly string backupExtension    = ".bak";
 
-    public FileDataHandler(string _dataDirPath, string _dataFileName, bool _useEncryption) 
+    public FileDataHandler(string _dataDirPath, bool _useEncryption) 
     {
         this.dataDirPath   = _dataDirPath;
-        this.dataFileName  = _dataFileName;
         this.useEncryption = _useEncryption;
     }
-
-    public ToolData Load(string _profileID, bool _allowRestoreFromBackup = true) 
+    
+    public ToolMetaData LoadMeta(string _profileID) 
     {
         // base case - if the profileId is null, return right away
         if (_profileID == null) 
@@ -32,8 +34,8 @@ public class FileDataHandler
         }
 
         // use Path.Combine to account for different OS's having different path separators
-        string fullPath = Path.Combine(dataDirPath, _profileID, dataFileName);
-        ToolData loadedData = null;
+        string fullPath = Path.Combine(dataDirPath, _profileID, _profileID + metaDataExtension);
+        ToolMetaData loadedData = null;
         if (File.Exists(fullPath)) 
         {
             try 
@@ -54,36 +56,48 @@ public class FileDataHandler
                     dataToLoad = EncryptDecrypt(dataToLoad);
                 }
 
-                // deserialize the data from Json back into the C# object
-                ToolData loadedDataTemp = JsonConvert.DeserializeObject<ToolData3D>(dataToLoad);
-                Debug.Log($"Succesfully loaded 3D {loadedDataTemp.projectName}");
-                if (loadedDataTemp.projectType != ProjectType.PROJECT3D)
-                {
-                    throw new Exception("not correct project type");
-                }
-                loadedData = loadedDataTemp;
-                //loadedData = JsonUtility.FromJson<ToolData>(dataToLoad);
+                loadedData = JsonConvert.DeserializeObject<ToolMetaData>(dataToLoad);
             }
             catch (Exception e) 
             {
                 // since we're calling Load(..) recursively, we need to account for the case where
                 // the rollback succeeds, but data is still failing to load for some other reason,
                 // which without this check may cause an infinite recursion loop.
-                if (_allowRestoreFromBackup) 
-                {
-                    Debug.LogWarning("Failed to load data file. Attempting to roll back.\n" + e);
-                    bool rollbackSuccess = AttemptRollback(fullPath);
-                    if (rollbackSuccess)
-                    {
-                        // try to load again recursively
-                        loadedData = Load(_profileID, false);
-                    }
-                }
-                else  // if we hit this else block, one possibility is that the backup file is also corrupt
-                {
-                    Debug.LogWarning("Error occured when trying to load 3D file at path: " + fullPath  + " and backup did not work.\n" + e);
-                }
+                // if (_allowRestoreFromBackup) 
+                // {
+                //     Debug.LogWarning("Failed to load data file. Attempting to roll back.\n" + e);
+                //     bool rollbackSuccess = AttemptRollback(fullPath);
+                //     if (rollbackSuccess)
+                //     {
+                //         // try to load again recursively
+                //         //loadedData = LoadMeta(_profileID, false);
+                //     }
+                // }
+                // else  // if we hit this else block, one possibility is that the backup file is also corrupt
+                // {
+                //     Debug.LogWarning("Error occured when trying to load 3D file at path: " + fullPath  + " and backup did not work.\n" + e);
+                // }
+                Debug.LogWarning("Error occured when trying to load 3D file at path: " + fullPath  + " and backup did not work.\n" + e);
             }
+        }
+
+        return loadedData;
+    }
+
+    public ToolData Load(string _profileID, ProjectType _projectType, bool _allowRestoreFromBackup = true) 
+    {
+        // base case - if the profileId is null, return right away
+        if (_profileID == null) 
+        {
+            return null;
+        }
+
+        // use Path.Combine to account for different OS's having different path separators
+        string fullPath = Path.Combine(dataDirPath, _profileID, _profileID + dataExtension);
+        ToolData loadedData = null;
+        if (File.Exists(fullPath)) 
+        {
+            
             try 
             {
                 // load the serialized data from the file
@@ -103,15 +117,18 @@ public class FileDataHandler
                 }
 
                 // deserialize the data from Json back into the C# object
-                ToolData loadedDataTemp = JsonConvert.DeserializeObject<ToolData2D>(dataToLoad);
-                Debug.Log($"Succesfully loaded 2D {loadedDataTemp.projectName}  {loadedDataTemp.projectType}");
-                if (loadedDataTemp.projectType != ProjectType.PROJECT2D)
+                switch (_projectType)
                 {
-                    throw new Exception("not correct project type");
+                    case ProjectType.PROJECT2D :
+                        loadedData = JsonConvert.DeserializeObject<ToolData2D>(dataToLoad);
+                        break;
+                    case ProjectType.PROJECT3D :
+                        loadedData = JsonConvert.DeserializeObject<ToolData3D>(dataToLoad);
+                        break;
+                    case ProjectType.FAILED :
+                        Debug.LogError("Project type is failed");
+                        break;
                 }
-
-                loadedData = loadedDataTemp;
-                //loadedData = JsonUtility.FromJson<ToolData>(dataToLoad);
             }
             catch (Exception e) 
             {
@@ -125,12 +142,12 @@ public class FileDataHandler
                     if (rollbackSuccess)
                     {
                         // try to load again recursively
-                        loadedData = Load(_profileID, false);
+                        loadedData = Load(_profileID, _projectType, false);
                     }
                 }
                 else  // if we hit this else block, one possibility is that the backup file is also corrupt
                 {
-                    Debug.LogWarning("Error occured when trying to load 2D file at path: " + fullPath  + " and backup did not work.\n" + e);
+                    Debug.LogWarning("Error occured when trying to load 3D file at path: " + fullPath  + " and backup did not work.\n" + e);
                 }
             }
         }
@@ -138,25 +155,25 @@ public class FileDataHandler
         return loadedData;
     }
 
-    public void Save(ToolData data, string profileId) 
+    public void SaveMetaData(ToolMetaData _metaData, string _profileID) 
     {
         // base case - if the profileId is null, return right away
-        if (profileId == null) 
+        if (_profileID == null) 
         {
             return;
         }
 
         // use Path.Combine to account for different OS's having different path separators
-        string fullPath = Path.Combine(dataDirPath, profileId, dataFileName);
-        string backupFilePath = fullPath + backupExtension;
+        string fullPath = Path.Combine(dataDirPath, _profileID, _profileID + metaDataExtension);
         try 
         {
+            Debug.Log($"Loading a project");
+
             // create the directory the file will be written to if it doesn't already exist
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
 
             // serialize the C# game data object into Json
-            string dataToStore = JsonConvert.SerializeObject(data, Formatting.Indented);
-            //string dataToStore = JsonUtility.ToJson(data, true);
+            string dataToStore = JsonConvert.SerializeObject(_metaData, Formatting.Indented);
 
             // optionally encrypt the data
             if (useEncryption) 
@@ -172,18 +189,72 @@ public class FileDataHandler
                     writer.Write(dataToStore);
                 }
             }
+            
+            // // verify the newly saved file can be loaded successfully
+            // ToolData verifiedGameData = Load(profileId, _metaData.projectType);
+            // // if the data can be verified, back it up
+            // if (verifiedGameData != null) 
+            // {
+            //     File.Copy(fullPath, backupFilePath, true);
+            // }
+            // else // otherwise, something went wrong and we should throw an exception
+            // {
+            //     throw new Exception("Save file could not be verified and backup could not be created.");
+            // }
 
+        }
+        catch (Exception e) 
+        {
+            Debug.LogError("Error occured when trying to save data to file: " + fullPath + "\n" + e);
+        }
+    }
+    
+    public void Save(ToolData _data, string _profileID) 
+    {
+        // base case - if the profileId is null, return right away
+        if (_profileID == null) 
+        {
+            return;
+        }
+
+        // use Path.Combine to account for different OS's having different path separators
+        string fullPath = Path.Combine(dataDirPath, _profileID, _profileID + dataExtension);
+        string backupFilePath = fullPath + backupExtension;
+        try 
+        {
+            Debug.Log($"Saving a project");
+            // create the directory the file will be written to if it doesn't already exist
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+
+            // serialize the C# game data object into Json
+            string dataToStore = JsonConvert.SerializeObject(_data, Formatting.Indented);
+
+            // optionally encrypt the data
+            if (useEncryption) 
+            {
+                dataToStore = EncryptDecrypt(dataToStore);
+            }
+
+            // write the serialized data to the file
+            using (FileStream stream = new FileStream(fullPath, FileMode.Create))
+            {
+                using (StreamWriter writer = new StreamWriter(stream)) 
+                {
+                    writer.Write(dataToStore);
+                }
+            }
+            
             // verify the newly saved file can be loaded successfully
-            ToolData verifiedGameData = Load(profileId);
-            // if the data can be verified, back it up
-            if (verifiedGameData != null) 
-            {
-                File.Copy(fullPath, backupFilePath, true);
-            }
-            else // otherwise, something went wrong and we should throw an exception
-            {
-                throw new Exception("Save file could not be verified and backup could not be created.");
-            }
+            // ToolData verifiedGameData = Load(profileId, _metaData.projectType);
+            // // if the data can be verified, back it up
+            // if (verifiedGameData != null) 
+            // {
+            //     File.Copy(fullPath, backupFilePath, true);
+            // }
+            // else // otherwise, something went wrong and we should throw an exception
+            // {
+            //     throw new Exception("Save file could not be verified and backup could not be created.");
+            // }
 
         }
         catch (Exception e) 
@@ -200,7 +271,7 @@ public class FileDataHandler
             return;
         }
 
-        string fullPath = Path.Combine(dataDirPath, _profileID, dataFileName);
+        string fullPath = Path.Combine(dataDirPath, _profileID, _profileID + dataExtension);
         try 
         {
             // ensure the data file exists at this path before deleting the directory
@@ -219,39 +290,16 @@ public class FileDataHandler
             Debug.LogError("Failed to delete profile data for profileId: " + _profileID + " at path: " + fullPath + "\n" + e);
         }
     }
-
-    public Dictionary<string, ToolData> LoadAllProfiles() 
-    {
-        Dictionary<string, ToolData> profileDictionary = new Dictionary<string, ToolData>();
-
-        // loop over all directory names in the data directory path
-        IEnumerable<DirectoryInfo> dirInfos = new DirectoryInfo(dataDirPath).EnumerateDirectories();
-        foreach (DirectoryInfo dirInfo in dirInfos) 
-        {
-            string profileId = dirInfo.Name;
-
-            // defensive programming - check if the data file exists
-            // if it doesn't, then this folder isn't a profile and should be skipped
-            string fullPath = Path.Combine(dataDirPath, profileId, dataFileName);
-            if (!File.Exists(fullPath))
-            {
-                Debug.LogWarning("Skipping directory when loading all profiles because it does not contain data: "
-                    + profileId);
-                continue;
-            }
-
-            // load the game data for this profile and put it in the dictionary
-            ToolData profileData = Load(profileId);
-            profileData.projectName = profileId;
-            profileDictionary.Add(profileId, profileData);
-        }
-
-        return profileDictionary;
-    }
     
-    public List<string> GetAllProfileID()
+    public List<ToolMetaData> LoadAllMetaProfiles()
     {
-        List<string> profileIDs = new List<string>();
+        if (metaProfiles != null)
+        {
+            return metaProfiles;
+        }
+        
+        List<ToolMetaData> tempMetaProfiles = new List<ToolMetaData>();
+
         // loop over all directory names in the data directory path
         IEnumerable<DirectoryInfo> dirInfos = new DirectoryInfo(dataDirPath).EnumerateDirectories();
         foreach (DirectoryInfo dirInfo in dirInfos) 
@@ -260,7 +308,7 @@ public class FileDataHandler
 
             // defensive programming - check if the data file exists
             // if it doesn't, then this folder isn't a profile and should be skipped
-            string fullPath = Path.Combine(dataDirPath, profileId, dataFileName);
+            string fullPath = Path.Combine(dataDirPath, profileId, profileId + dataExtension);
             if (!File.Exists(fullPath))
             {
                 Debug.LogWarning("Skipping directory when loading all profiles because it does not contain data: "
@@ -268,47 +316,47 @@ public class FileDataHandler
                 continue;
             }
 
-            profileIDs.Add(profileId);
+            // load the game data for this profile and put it in the dictionary
+            ToolMetaData metaData = LoadMeta(profileId);
+            tempMetaProfiles.Add(metaData);
         }
 
-        return profileIDs;
+        metaProfiles = tempMetaProfiles;
+        return tempMetaProfiles;
     }
 
-    public string GetMostRecentlyUpdatedProfileID() 
+    public ToolMetaData GetMostRecentlyUpdatedProject() 
     {
-        string mostRecentProfileId = null;
+        ToolMetaData mostRecentProject = null;
 
-        Dictionary<string, ToolData> profilesGameData = LoadAllProfiles();
-        foreach (KeyValuePair<string, ToolData> pair in profilesGameData) 
+        List<ToolMetaData> metaDatas = LoadAllMetaProfiles();
+        foreach (var metaData in metaDatas) 
         {
-            string profileId = pair.Key;
-            ToolData gameData = pair.Value;
-
             // skip this entry if the gamedata is null
-            if (gameData == null) 
+            if (metaData == null) 
             {
                 continue;
             }
 
             // if this is the first data we've come across that exists, it's the most recent so far
-            if (mostRecentProfileId == null) 
+            if (mostRecentProject == null) 
             {
-                mostRecentProfileId = profileId;
+                mostRecentProject = metaData;
             }
             // otherwise, compare to see which date is the most recent
             else 
             {
-                DateTime mostRecentDateTime = DateTime.FromBinary(profilesGameData[mostRecentProfileId].lastUpdated);
-                DateTime newDateTime = DateTime.FromBinary(gameData.lastUpdated);
+                DateTime mostRecentDateTime = DateTime.FromBinary(mostRecentProject.lastUpdated);
+                DateTime newDateTime = DateTime.FromBinary(metaData.lastUpdated);
                 // the greatest DateTime value is the most recent
-                if (newDateTime > mostRecentDateTime)
+                if (newDateTime < mostRecentDateTime)
                 {
-                    mostRecentProfileId = profileId;
+                    mostRecentProject = metaData;
                 }
             }
         }
 
-        return mostRecentProfileId;
+        return mostRecentProject;
     }
 
     // the below is a simple implementation of XOR encryption
