@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Draw
+  m_Name: Draw 3D
   m_Shader: {fileID: -6465566751694194690, guid: 0dca14d72ed6c8846ab6b61905e64f67,
     type: 3}
   m_Parent: {fileID: 0}
@@ -38,6 +38,10 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mask:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -65,6 +69,8 @@ Material:
     m_Floats:
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _UseMaskTex: 0
+    - _backgroundValue: 0
     - _backgroundValuue: 0
     m_Colors:
     - _BackgroundColor: {r: 0.16470589, g: 0.16470589, b: 0.16470589, a: 1}

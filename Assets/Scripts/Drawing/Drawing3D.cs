@@ -16,8 +16,6 @@ namespace Drawing
     {
         public List<CustomRenderTexture> rts = new List<CustomRenderTexture>();
         public List<CustomRenderTexture> rtIDs = new List<CustomRenderTexture>();
-        // public readonly CustomRenderTexture rt;
-        // public readonly CustomRenderTexture rtID;
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
         public Transform sphere1;
         public Renderer rend;
@@ -250,40 +248,42 @@ namespace Drawing
             float extraTime = (_brushstrokeID.endTime - _brushstrokeID.startTime) / amountStrokes;
             float timePadding;
 
+            //First brushStroke
             {
-                float newTime = _brushstrokeID.startTime + extraTime * (1 + extraTime + extraTime) * 1;
-                float lastTime = _brushstrokeID.startTime;
+                float endTime = _brushstrokeID.startTime + extraTime * (1 + extraTime + extraTime) * 1;
+                float startTime = _brushstrokeID.startTime;
                 
                 BrushStroke strokeStartReference = _brushstrokeID.brushStrokes[1];
                 Vector3 lineDir = (strokeStartReference.GetEndPos() - strokeStartReference.GetStartPos()).normalized * strokeStartReference.brushSize;
                 Vector3 currentPos = strokeStartReference.GetEndPos() + lineDir;
                 float distLine = Vector3.Distance(strokeStartReference.GetStartPos(), currentPos);
-                timePadding = strokeStartReference.brushSize.Remap(0, distLine, 0, newTime - lastTime);
+                timePadding = strokeStartReference.brushSize.Remap(0, distLine, 0, endTime - startTime);
 
                 BrushStroke strokeStart = _brushstrokeID.brushStrokes[0];
-                strokeStart.endTime = newTime;
-                strokeStart.startTime = lastTime;
+                strokeStart.endTime = endTime;
+                strokeStart.startTime = startTime;
                 _brushstrokeID.brushStrokes[0] = strokeStart;
                 
                 Draw(strokeStart.GetStartPos(), strokeStart.GetEndPos(), strokeStart.brushSize, paintType, 
                      strokeStart.startTime, strokeStart.endTime, true, newStrokeID);
             }
             
-            for (int i = 0; i < _brushstrokeID.brushStrokes.Count; i++)
+            //Rest of the brushStorkes
+            for (int i = 1; i < _brushstrokeID.brushStrokes.Count; i++)
             {
                 var brushStroke = _brushstrokeID.brushStrokes[i];
-                float newTime = _brushstrokeID.startTime + extraTime * (1 + extraTime + extraTime) * (i + 1);
-                float lastTime = _brushstrokeID.startTime + extraTime * (1 + extraTime + extraTime) * (i);
+                float endTime = _brushstrokeID.startTime + extraTime * (1 + extraTime + extraTime) * (i + 1);
+                float startTime = _brushstrokeID.startTime + extraTime * (1 + extraTime + extraTime) * (i);
 
                 Vector3 lineDir = (brushStroke.GetEndPos() - brushStroke.GetStartPos()).normalized * brushStroke.brushSize;
                 Vector3 currentPos = brushStroke.GetEndPos() + lineDir;
                 float distLine = Vector3.Distance(brushStroke.GetStartPos(), currentPos);
-                float brushSizeTime = brushStroke.brushSize.Remap(0, distLine, 0, newTime - lastTime);
+                float brushSizeTime = brushStroke.brushSize.Remap(0, distLine, 0, endTime - startTime);
 
-                lastTime -= brushSizeTime;
+                startTime -= brushSizeTime;
 
-                brushStroke.endTime = newTime + timePadding;
-                brushStroke.startTime = lastTime + timePadding;
+                brushStroke.endTime = endTime + timePadding;
+                brushStroke.startTime = startTime + timePadding;
                 _brushstrokeID.brushStrokes[i] = brushStroke;
 
                 Draw(

@@ -20336,7 +20336,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc187036715343d885a8f3be3b93f9ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  drawShader: {fileID: -6465566751694194690, guid: 0dca14d72ed6c8846ab6b61905e64f67,
+  drawShader: {fileID: -6465566751694194690, guid: 91213be094199604088baecc8ca3d94b,
     type: 3}
   displayShader: {fileID: -6465566751694194690, guid: 8f64883a8547852438a75b4d9490b9ff,
     type: 3}
@@ -20348,7 +20348,7 @@ MonoBehaviour:
   sphere1: {fileID: 940481427}
   sphere2: {fileID: 577936025}
   rend: {fileID: 1160798712}
-  rt: {fileID: 0}
+  rtShow: {fileID: 0}
   rtID: {fileID: 0}
   rtHighlight: {fileID: 0}
 --- !u!1 &1361772510
@@ -25926,8 +25926,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f10941219849a948bb423edf031d369, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  drawMat: {fileID: 2100000, guid: 7c823323d34cde642a1885678b0b3a4e, type: 2}
-  displayMat: {fileID: 2100000, guid: b42390756a8021a46903a26abae5ec9e, type: 2}
   modelScale: 5
 --- !u!114 &1756645835
 MonoBehaviour:

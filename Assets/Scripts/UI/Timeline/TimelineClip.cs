@@ -176,7 +176,6 @@ namespace UI
                 rect.position += new Vector3(clipLength, 0, 0);
                 rect.pivot = new Vector2(1, 1);
             }
-            Debug.Log($"{rect.pivot}");
             mouseOffset = Input.mousePosition.x - rect.position.x + rect.sizeDelta.x;
         }
         private void SetResizeRight()

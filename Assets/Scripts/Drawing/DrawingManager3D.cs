@@ -7,6 +7,7 @@ using Managers;
 using UI;
 using Undo;
 using UnityEngine;
+using UnityEngine.Serialization;
 using EventType = Managers.EventType;
 
 namespace Drawing
@@ -30,7 +31,7 @@ namespace Drawing
         [SerializeField] private GameObject sphere1;
         [SerializeField] private GameObject sphere2;
         [SerializeField] private Renderer rend;
-        [SerializeField] private RenderTexture rt;
+        [SerializeField] private RenderTexture rtShow;
         [SerializeField] private RenderTexture rtID;
         [SerializeField] private RenderTexture rtHighlight;
     
@@ -192,7 +193,7 @@ namespace Drawing
             _drawingRend.materials = drawingMats.ToArray();
             _displayRend.materials = displayMats.ToArray();
             
-            rt = drawer.rts[0];
+            rtShow = drawer.rts[0];
             rtID = drawer.rtIDs[0];
             rtHighlight = highlighter.rtHighlights[0];
         }
@@ -353,7 +354,6 @@ namespace Drawing
 
         private void RemoveStroke(BrushStrokeID _brushStrokeID)
         {
-            Debug.Log($"Remove stroke");
             foreach (BrushStroke brushStroke in _brushStrokeID.brushStrokes)
             {
                 drawer.Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, PaintType.Erase);
@@ -1093,6 +1093,11 @@ namespace Drawing
         }
         public void SaveData(ToolData _data, ToolMetaData _metaData)
         {
+            _metaData.results.Clear();
+            foreach (var rt in drawer.rts)
+            {
+                _metaData.results.Add(rt.ToBytesPNG());
+            }
             _data.imageWidth = imageWidth;
             _data.imageHeight = imageHeight;
         }

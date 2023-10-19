@@ -16,7 +16,7 @@ namespace DataPersistence.Data
         public int imageHeight;
         
         //Mesh textures
-        public List<byte[]> overlayImg = new List<byte[]>();
+        public List<byte[]> results = new List<byte[]>();
     
         //Mesh
         public List<List<int>> indices = new List<List<int>>();
