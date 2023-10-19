@@ -189,8 +189,17 @@ namespace UI
             return Input.mousePosition.x > viewCorners[0].x && Input.mousePosition.x < viewCorners[2].x && 
                    Input.mousePosition.y > viewCorners[0].y && Input.mousePosition.y < viewCorners[2].y;
         }
-
+        
         public void ExportResult()
+        {
+            string path = FileBrowser.Instance.SaveFile("Save texture", "", projectName, pngToggle ? "png" : "exr");
+            DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
+            //byte[] bytes = pngToggle ? drawingManager.drawer.rt.ToBytesPNG() : drawingManager.drawer.rt.ToBytesEXR();
+            byte[] bytes = pngToggle ? drawingManager.drawer.ReverseRtoB().ToBytesPNG() : drawingManager.drawer.ReverseRtoB().ToBytesEXR();
+            File.WriteAllBytes(path, bytes);
+        }
+
+        public void ExportResult3d()
         {
             string path = FileBrowser.Instance.SaveFile("Save texture", "", projectName, pngToggle ? "png" : "exr");
             DrawingManager3D drawingManager = FindObjectOfType<DrawingManager3D>();
