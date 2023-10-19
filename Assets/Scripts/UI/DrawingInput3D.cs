@@ -86,7 +86,14 @@ namespace UI
             Vector3 worldPos = new Vector3();
             if (Input.GetMouseButton(0))
             {
-                hitModel = mousePosToWorld(cam, out worldPos);
+                if (isMouseInsideDrawArea)
+                {
+                    hitModel = mousePosToWorld(cam, drawAreaCorners, out worldPos);
+                }
+                else if(isMouseInsideDisplayArea)
+                {
+                    hitModel = mousePosToWorld(cam, displayAreaCorners, out worldPos);
+                }
             }
 
             if (!UIManager.isInteracting || isInteracting)
@@ -148,7 +155,7 @@ namespace UI
                 }
                 else if (isMouseInsideDisplayArea)
                 {
-                    MoveCamera(displayCam, drawAreaCorners, startPosDisplayCam, displayFocus);
+                    MoveCamera(displayCam, displayAreaCorners, startPosDisplayCam, displayFocus);
                 }
             }
             else
@@ -356,7 +363,7 @@ namespace UI
             
             if (Input.GetKey(KeyCode.LeftAlt) && Input.GetMouseButtonDown(2))
             {
-                if (mousePosToWorld(_cam, out Vector3 focusPos))
+                if (mousePosToWorld(_cam, _corners, out Vector3 focusPos))
                 {
                     _focusPoint.position = focusPos;
                 }
@@ -437,11 +444,11 @@ namespace UI
                    Input.mousePosition.x < _drawAreaCorners[2].x && Input.mousePosition.y < _drawAreaCorners[2].y;
         }
 
-        private bool mousePosToWorld(Camera cam, out Vector3 _mousePos)
+        private bool mousePosToWorld(Camera cam, Vector3[] _areaCorners, out Vector3 _mousePos)
         {
             _mousePos = new Vector3();
             
-            Vector4 drawCorners = new Vector4(drawAreaCorners[0].x, drawAreaCorners[0].y, drawAreaCorners[2].x, drawAreaCorners[2].y);
+            Vector4 drawCorners = new Vector4(_areaCorners[0].x, _areaCorners[0].y, _areaCorners[2].x, _areaCorners[2].y);
             float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, cam.pixelWidth);
             float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, cam.pixelHeight);
             Vector2 mousePos = new Vector2(mousePosX, mousePosY);

@@ -8,6 +8,7 @@ using MainMenus;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class SaveSlotPopUp : MonoBehaviour
@@ -19,24 +20,46 @@ public class SaveSlotPopUp : MonoBehaviour
     [SerializeField] private TMP_Text timeSpentText;
     [SerializeField] private RawImage displayImage;
     [SerializeField] private RawImage showcaseImage;
-    [SerializeField] private Material showcaseMat;
+    [SerializeField] private Material drawMat;
+    [SerializeField] private Material drawMat3D;
+    [SerializeField] private Material displayMat;
     [SerializeField] private float timeIncrease = 0.01f;
     [SerializeField] private ConfirmationPopupMenu confirmationPopupMenu;
 
-    private SaveSlotSlim saveSlot;
+    private SaveSlot saveSlot;
+    private ToolMetaData metaData;
     private float time;
 
-    public void UpdateSaveSlot(SaveSlotSlim _saveSlot)
+    public void UpdateSaveSlot(SaveSlot _saveSlot)
     {
-        gameObject.SetActive(true);
+        metaData = _saveSlot.metaData;
         saveSlot = _saveSlot;
-        DataPersistenceManager.instance.ChangeSelectedProfileId(_saveSlot.projectName);
-        projectNameText.text = saveSlot.projectName;
+        time = 0;
+        gameObject.SetActive(true);
+        DataPersistenceManager.instance.ChangeSelectedProfileId(metaData.projectName);
+        projectNameText.text = metaData.projectName;
+        dateText.text = "Last save: " + DateTime.FromBinary(metaData.lastUpdated).ToString(CultureInfo.InvariantCulture);
+        displayImage.texture = _saveSlot.displayTexture;
+        showcaseImage.texture = _saveSlot.displayTexture;
+
+        if (metaData.projectType == ProjectType.PROJECT2D)
+        {
+            displayImage.material = drawMat;
+        }
+        else if(metaData.projectType == ProjectType.PROJECT3D)
+        {
+            displayImage.material = drawMat3D;
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        time = (time + timeIncrease) % 1;
+        displayMat.SetFloat("_CustomTime", time);
     }
 
     public void LoadProject()
     {
-        ToolMetaData metaData = DataPersistenceManager.instance.toolMetaData;
         switch (metaData.projectType)
         {
             case ProjectType.PROJECT2D:
@@ -51,16 +74,16 @@ public class SaveSlotPopUp : MonoBehaviour
     public void Delete()
     {
         confirmationPopupMenu.ActivateMenu("This will delete the project and is irreversible",
-           // 'yes'
-           () => {
-               Destroy(saveSlot.gameObject);
-               DataPersistenceManager.instance.DeleteProfileData(saveSlot.projectName);
-               gameObject.SetActive(false);
-           },
-           // 'cancel'
-           () => {
+            // 'yes'
+            () => {
+                Destroy(saveSlot.gameObject);
+                DataPersistenceManager.instance.DeleteProfileData(metaData.projectName);
+                gameObject.SetActive(false);
+            },
+            // 'cancel'
+            () => {
                
-           }
+            }
         );
     }
 

@@ -16,7 +16,6 @@ public class ToolData3D : ToolData
     public List<List<JsonVector2>> uvs = new List<List<JsonVector2>>();
     public List<JsonVector3> vertexPos = new List<JsonVector3>();
     public List<JsonVector3> vertexNormal = new List<JsonVector3>();
-    public List<JsonVector4> vertexTangents = new List<JsonVector4>();
 
     public Mesh LoadMesh()
     {
@@ -27,7 +26,6 @@ public class ToolData3D : ToolData
         
         mesh.vertices = vertexPos.Select(pos => new Vector3(pos.x, pos.y, pos.z)).ToArray();
         mesh.normals = vertexNormal.Select(normal => new Vector3(normal.x, normal.y, normal.z)).ToArray();
-        mesh.tangents = vertexTangents.Select(tangent => new Vector4(tangent.x, tangent.y, tangent.z, tangent.w)).ToArray();
         
         for (int i = 0; i < indices.Count; i++)
         {
@@ -49,11 +47,6 @@ public class ToolData3D : ToolData
         List<Vector3> vertexNormalUnity = new List<Vector3>();
         _mesh.GetNormals(vertexNormalUnity);
         vertexNormal = vertexNormalUnity.Select(normal => new JsonVector3(normal.x, normal.y, normal.z)).ToList();
-        
-        List<Vector4> vertexTangentsUnity = new List<Vector4>();
-        _mesh.GetTangents(vertexTangentsUnity);
-        vertexTangents = vertexTangentsUnity.Select(tangent => new JsonVector4(tangent.x, tangent.y, tangent.z, tangent.w)).ToList();
-
         
         indices.Clear();
         uvs.Clear();

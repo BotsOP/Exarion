@@ -47,7 +47,7 @@ namespace MainMenus
             Application.Quit();
         }
 
-        public void OnSaveSlotClicked(SaveSlotSlim _saveSlot)
+        public void OnSaveSlotClicked(SaveSlot _saveSlot)
         {
             saveSlotPopUp.UpdateSaveSlot(_saveSlot);
         }
@@ -69,7 +69,7 @@ namespace MainMenus
             foreach (var saveSlotInfo in profilesGameData)
             {
                 GameObject saveSlotObject = Instantiate(saveSlotButton, saveSlotContent);
-                SaveSlotSlim saveSlot = saveSlotObject.GetComponent<SaveSlotSlim>();
+                SaveSlot saveSlot = saveSlotObject.GetComponent<SaveSlot>();
                 saveSlot.SetData(saveSlotInfo);
                 saveSlot.mainMenu = this;
             }

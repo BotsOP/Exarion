@@ -126,41 +126,36 @@ public class ImportOBJ : MonoBehaviour, IDataPersistence
     {
         yield return new WaitForEndOfFrameUnit();
         yield return new WaitForEndOfFrameUnit();
-        yield return new WaitForEndOfFrameUnit();
         EventSystem<Renderer, Renderer>.RaiseEvent(EventType.CHANGED_MODEL, _drawingRenderer, _displayRenderer);
     }
 
     public void LoadData(ToolData _data, ToolMetaData _metaData)
     {
-        if (_metaData.projectType == ProjectType.PROJECT3D)
-        {
-            Debug.Log($"is 3d type");
-        }
         if (_data is ToolData3D)
         {
-            Debug.Log($"is 3d");
             ToolData3D toolData3D = (ToolData3D)_data;
             if (toolData3D.meshLoaded)
             {
-                Debug.Log($"mesh is loaded");
                 mesh = toolData3D.LoadMesh();
                 SpawnMesh();
             }
+        }
+        else
+        {
+            Debug.LogError($"Data is not ToolData3D");
         }
     }
 
     public void SaveData(ToolData _data, ToolMetaData _metaData)
     {
-        if (_metaData.projectType == ProjectType.PROJECT3D)
-        {
-            Debug.Log($"is 3d type");
-        }
-
         if (_data is ToolData3D)
         {
-            Debug.Log($"is 3d");
             ToolData3D toolData3D = (ToolData3D)_data;
             toolData3D.SaveMesh(mesh);
+        }
+        else
+        {
+            Debug.LogError($"Data is not ToolData3D");
         }
 
     }
