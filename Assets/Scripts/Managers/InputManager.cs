@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DataPersistence.Data;
 using Managers;
 using TMPro;
 using UI;
@@ -9,17 +10,26 @@ using EventType = Managers.EventType;
 
 public class InputManager : MonoBehaviour, IDataPersistence
 {
-    private RectTransform currentDrawArea;
-    private RectTransform currentDisplayArea;
-    private DrawingInput drawingInput;
-    private int imageWidth;
-    private int imageHeight;
+    [SerializeField] private bool edit3D;
     [SerializeField] private Camera viewCam;
     [SerializeField] private Camera displayCam;
     [SerializeField, Range(0.01f, 1f)] private float scrollZoomSensitivity;
+    [SerializeField] private Transform viewFocus;
+    [SerializeField] private Transform displayFocus;
+    private RectTransform currentDrawArea;
+    private RectTransform currentDisplayArea;
+    private DrawingInput drawingInput;
+    private DrawingInput3D drawingInput3D;
+    private int imageWidth;
+    private int imageHeight;
 
     private void Start()
     {
+        if (edit3D)
+        {
+            drawingInput3D = new DrawingInput3D(viewCam, displayCam, scrollZoomSensitivity, viewFocus, displayFocus);
+            return;
+        }
         drawingInput = new DrawingInput(viewCam, displayCam, scrollZoomSensitivity, imageWidth, imageHeight);
     }
     private void OnEnable()
@@ -45,10 +55,18 @@ public class InputManager : MonoBehaviour, IDataPersistence
         Vector3[] displayAreaCorners = new Vector3[4];
         currentDisplayArea.GetWorldCorners(displayAreaCorners);
         
-        drawingInput.scrollZoomSensitivity = scrollZoomSensitivity;
         if (!UIManager.stopInteracting)
         {
-            drawingInput.UpdateDrawingInput(viewCam.transform.position, viewCam.orthographicSize);
+            if (edit3D)
+            {
+                drawingInput3D.scrollZoomSensitivity = scrollZoomSensitivity;
+                drawingInput3D.UpdateDrawingInput(viewCam, viewCam.transform.position, viewCam.orthographicSize);
+            }
+            else
+            {
+                drawingInput.scrollZoomSensitivity = scrollZoomSensitivity;
+                drawingInput.UpdateDrawingInput(viewCam.transform.position, viewCam.orthographicSize);
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.Space))
@@ -56,12 +74,12 @@ public class InputManager : MonoBehaviour, IDataPersistence
             EventSystem.RaiseEvent(EventType.TIMELINE_PAUSE);
         }
     }
-    public void LoadData(ToolData _data)
+    public void LoadData(ToolData _data, ToolMetaData _metaData)
     {
         imageWidth = _data.imageWidth;
         imageHeight = _data.imageHeight;
     }
-    public void SaveData(ToolData _data)
+    public void SaveData(ToolData _data, ToolMetaData _metaData)
     {
         
     }

@@ -57,6 +57,7 @@ namespace UI
 
         public Vector2 clipTimeOld;
         public int previousBar;
+        public bool hover;
         public List<BrushStrokeID> selectedBrushStrokes = new List<BrushStrokeID>();
 
         public RectTransform rect;
@@ -175,7 +176,6 @@ namespace UI
                 rect.position += new Vector3(clipLength, 0, 0);
                 rect.pivot = new Vector2(1, 1);
             }
-            Debug.Log($"{rect.pivot}");
             mouseOffset = Input.mousePosition.x - rect.position.x + rect.sizeDelta.x;
         }
         private void SetResizeRight()

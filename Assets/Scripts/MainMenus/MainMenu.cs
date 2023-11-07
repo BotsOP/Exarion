@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DataPersistence;
+using DataPersistence.Data;
 using Managers;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -55,17 +57,16 @@ namespace MainMenus
             // set this menu to be active
             gameObject.SetActive(true);
 
-            // load all of the profiles that exist
-            Dictionary<string, ToolData> profilesGameData = DataPersistenceManager.instance.GetAllProfilesToolData();
-
-            List<ToolData> saveSlotData = profilesGameData.Values.ToList();
+            //load all of the profiles that exist
+            List<ToolMetaData> profilesGameData = DataPersistenceManager.instance.GetAllProfileIDs();
+            
             int low = 0;
-            int high = saveSlotData.Count - 1;
-            QuickSort(saveSlotData, low, high);
+            int high = profilesGameData.Count - 1;
+            QuickSort(profilesGameData, low, high);
+            
+            profilesGameData.Reverse();
 
-            saveSlotData.Reverse();
-
-            foreach (var saveSlotInfo in saveSlotData)
+            foreach (var saveSlotInfo in profilesGameData)
             {
                 GameObject saveSlotObject = Instantiate(saveSlotButton, saveSlotContent);
                 SaveSlot saveSlot = saveSlotObject.GetComponent<SaveSlot>();
@@ -74,7 +75,7 @@ namespace MainMenus
             }
         }
         
-        private void QuickSort(List<ToolData> _dateList, int _low, int _high)
+        private void QuickSort(List<ToolMetaData> _dateList, int _low, int _high)
         {
             if (_low < _high)
             {
@@ -85,7 +86,7 @@ namespace MainMenus
             }
         }
 
-        private int Partition(List<ToolData> _dateList, int low, int high)
+        private int Partition(List<ToolMetaData> _dateList, int low, int high)
         {
             long pivot = _dateList[high].lastUpdated;
             int i = (low - 1);
@@ -102,7 +103,7 @@ namespace MainMenus
             return (i + 1);
         }
 
-        private void Swap(List<ToolData> _dateList, int i, int j)
+        private void Swap(List<ToolMetaData> _dateList, int i, int j)
         {
             (_dateList[i], _dateList[j]) = (_dateList[j], _dateList[i]);
         }

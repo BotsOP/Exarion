@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DataPersistence.Data;
 using Drawing;
 using Managers;
 using TMPro;
@@ -232,7 +233,6 @@ namespace UI
             time += _addTime;
             if (time > 1)
             {
-                Debug.Log($"reset time after placing stamp");
                 EventSystem.RaiseEvent(EventType.RESET_TIME);
                 time = 0;
             }
@@ -521,7 +521,7 @@ namespace UI
                 firstTimeSelected = false;
             }
 
-            List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
+            //List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
             for (int i = 0; i < selectedClips.Count; i++)
             {
                 var clip = selectedClips[i];
@@ -534,30 +534,37 @@ namespace UI
                     Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) > 0.001)
                 {
                     clip.SetTime(clip.ClipTime);
-                    brushStrokeIDs.AddRange(clip.GetBrushStrokeIDs());
+                    //brushStrokeIDs.AddRange(clip.GetBrushStrokeIDs());
                 }
             }
-            if (brushStrokeIDs.Count > 0)
-            {
-                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs);
-            }
+            // if (brushStrokeIDs.Count > 0)
+            // {
+            //     EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs);
+            // }
 
             return true;
         }
-        private bool ClickedTimelineClip()
+        private void ClickedTimelineClip()
         {
             for (int i = 0; i < clipsOrdered.Count; i++)
             {
                 for (int j = 0; j < clipsOrdered[i].Count; j++)
                 {
                     var clip = clipsOrdered[i][j];
-                    if (!clip.IsMouseOver())
+                    bool isMouseOver = clip.IsMouseOver();
+                    if (!isMouseOver)
                     {
-                        OnHoverExit(clip);
+                        if (clip.hover)
+                        {
+                            OnHoverExit(clip);
+                        }
                         continue;
                     }
 
-                    OnHoverEnter(clip);
+                    if (!clip.hover)
+                    {
+                        OnHoverEnter(clip);
+                    }
 
                     if (!selectedClips.Contains(clip) && Input.GetMouseButton(0))
                     {
@@ -570,7 +577,7 @@ namespace UI
                             clip.selectedBrushStrokes.AddRange(clip.GetBrushStrokeIDs());
                             clip.rawImage.color = selectedColor;
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, clip.GetBrushStrokeIDs());
-                            return true;
+                            return;
                         }
                         if (Input.GetMouseButtonDown(0) && clip != lastSelectedClip)
                         {
@@ -587,7 +594,7 @@ namespace UI
                             UpdateClipInfo();
                             clip.selectedBrushStrokes.AddRange(clip.GetBrushStrokeIDs());
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, clip.GetBrushStrokeIDs());
-                            return true;
+                            return;
                         }
                     }
                     if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButton(0) && (clip != lastSelectedClip && clip.previousBar == clip.currentBar 
@@ -601,38 +608,28 @@ namespace UI
                         clip.rawImage.color = clip.GetNotSelectedColor();
                         firstTimeSelected = true;
                         EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, clip.GetBrushStrokeIDs());
-                        return true;
+                        return;
                     }
                 }
             }
-            
-            return false;
         }
-        private void OnHoverEnter(TimelineClip clip)
+        private void OnHoverEnter(TimelineClip _clip)
         {
-            if (lastHoverClip != null)
-            {
-                OnHoverExit(lastHoverClip);
-            }
-            if (lastHoverClip != clip)
-            {
-                lastHoverClip = clip;
-                if (selectedClips.Contains(clip))
-                    return;
+            lastHoverClip = _clip;
+            if (selectedClips.Contains(_clip))
+                return;
 
-                List<BrushStrokeID> brushStrokeIDs = clip.GetBrushStrokeIDs();
-                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, brushStrokeIDs);
-            }
+            _clip.hover = true;
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, _clip.GetBrushStrokeIDs());
         }
-        private void OnHoverExit(TimelineClip clip)
+        private void OnHoverExit(TimelineClip _clip)
         {
-            if (lastHoverClip == clip)
-            {
-                lastHoverClip = null;
-                if (selectedClips.Contains(clip))
-                    return;
-                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, clip.GetBrushStrokeIDs());
-            }
+            lastHoverClip = null;
+            if (selectedClips.Contains(_clip))
+                return;
+
+            _clip.hover = false;
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, _clip.GetBrushStrokeIDs());
         }
         private void StoppedMakingChanges()
         {
@@ -661,6 +658,7 @@ namespace UI
                 {
                     ICommand redrawCommand = new RedrawMultipleCommand(redraws);
                     EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, redrawCommand);
+                    EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, redraws.SelectMany(timelineClip => timelineClip.GetBrushStrokeIDs()).ToList());
                 }
             }
         }
@@ -1315,7 +1313,7 @@ namespace UI
             return Input.mousePosition.x > _corners[0].x && Input.mousePosition.x < _corners[2].x && 
                    Input.mousePosition.y > _corners[0].y && Input.mousePosition.y < _corners[2].y;
         }
-        public void LoadData(ToolData _data)
+        public void LoadData(ToolData _data, ToolMetaData _metaData)
         {
             for (int i = 0; i < _data.extraTimelineBars; i++)
             {
@@ -1373,10 +1371,9 @@ namespace UI
             yield return new WaitForEndOfFrameUnit();
             yield return new WaitForEndOfFrameUnit();
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_STROKE, _brushStrokeIDs);
-
         }
 
-        public void SaveData(ToolData _data)
+        public void SaveData(ToolData _data, ToolMetaData _metaData)
         {
             List<CondensedClip> condensedTimelineClips = new List<CondensedClip>();
             List<TimelineClip> timelineClips = clipsOrdered.SelectMany(clips => clips).ToList();

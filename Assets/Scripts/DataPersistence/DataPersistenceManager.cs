@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DataPersistence.Data;
 using Managers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -17,13 +18,13 @@ namespace DataPersistence
         [SerializeField] private string testSelectedProfileID     = "test";
 
         [Header("File Storage Config")]
-        [SerializeField] private string fileName;
         [SerializeField] private bool   useEncryption;
 
         [Header("Auto Saving Configuration")]
         [SerializeField] private float autoSaveTimeSeconds = 60f;
 
         public ToolData toolData;
+        public ToolMetaData toolMetaData;
         private List<IDataPersistence> dataPersistenceObjects = new List<IDataPersistence>();
         private FileDataHandler dataHandler;
 
@@ -51,7 +52,7 @@ namespace DataPersistence
                 Debug.LogWarning("Data Persistence is currently disabled!");
             }
 
-            this.dataHandler = new FileDataHandler(Application.persistentDataPath, fileName, useEncryption);
+            this.dataHandler = new FileDataHandler(Application.persistentDataPath, useEncryption);
 
             InitializeSelectedProfileId();
         }
@@ -84,6 +85,14 @@ namespace DataPersistence
         }
 
         #region Profile Change/Delete/Initialize
+
+        public void InitializeNewTool(string _newProfileID, ToolMetaData _metaData, ToolData _data)
+        {
+            // update the profile to use for saving and loading
+            this.selectedProfileID = _newProfileID;
+            toolMetaData = _metaData;
+            toolData = _data;
+        }
         public void ChangeSelectedProfileId(string _newProfileID) 
         {
             // update the profile to use for saving and loading
@@ -101,9 +110,15 @@ namespace DataPersistence
             LoadProject();
         }
 
-        private void InitializeSelectedProfileId() 
+        private void InitializeSelectedProfileId()
         {
-            this.selectedProfileID = dataHandler.GetMostRecentlyUpdatedProfileID();
+            ToolMetaData mostRecentMetaData = dataHandler.GetMostRecentlyUpdatedProject();
+            if (mostRecentMetaData == null)
+            {
+                return;
+            }
+
+            selectedProfileID = mostRecentMetaData.projectName;
             if (overrideSelectedProfileID) 
             {
                 this.selectedProfileID = testSelectedProfileID;
@@ -115,7 +130,8 @@ namespace DataPersistence
 
         public void NewTool() 
         {
-            this.toolData = new ToolData();
+            this.toolData = new ToolData2D();
+            this.toolMetaData = new ToolMetaData(System.DateTime.Now.ToBinary(), "ProjectName");
         }
 
         public void LoadProject()
@@ -127,7 +143,8 @@ namespace DataPersistence
             }
 
             // load any saved data from a file using the data handler
-            this.toolData = dataHandler.Load(selectedProfileID);
+            toolMetaData = dataHandler.LoadMeta(selectedProfileID);
+            this.toolData = dataHandler.Load(selectedProfileID, toolMetaData.projectType);
 
             // start a new tool if the data is null and we're configured to initialize data for debugging purposes
             if (this.toolData == null && initializeDataIfNull) 
@@ -145,7 +162,7 @@ namespace DataPersistence
             // push the loaded data to all other scripts that need it
             foreach (IDataPersistence dataPersistenceObj in dataPersistenceObjects) 
             {
-                dataPersistenceObj.LoadData(toolData);
+                dataPersistenceObj.LoadData(toolData, toolMetaData);
             }
         }
 
@@ -167,13 +184,14 @@ namespace DataPersistence
             // pass the data to other scripts so they can update it
             foreach (IDataPersistence dataPersistenceObj in dataPersistenceObjects) 
             {
-                dataPersistenceObj.SaveData(toolData);
+                dataPersistenceObj.SaveData(toolData, toolMetaData);
             }
 
             // timestamp the data so we know when it was last saved
-            toolData.lastUpdated = System.DateTime.Now.ToBinary();
+            toolMetaData.lastUpdated = System.DateTime.Now.ToBinary();
 
             // save that data to a file using the data handler
+            dataHandler.SaveMetaData(toolMetaData, selectedProfileID);
             dataHandler.Save(toolData, selectedProfileID);
         }
 
@@ -192,16 +210,16 @@ namespace DataPersistence
             return toolData != null;
         }
 
-        public bool IsProfileIDTaken(string _newProfileID)
+        public List<ToolMetaData> GetAllProfileIDs()
         {
-            Dictionary<string, ToolData> saveslots = dataHandler.LoadAllProfiles();
-            bool isProfileIDTaken = saveslots.ContainsKey(_newProfileID);
-            return isProfileIDTaken;
+            return dataHandler.LoadAllMetaProfiles();
         }
 
-        public Dictionary<string, ToolData> GetAllProfilesToolData() 
+        public bool IsProfileIDTaken(string _newProfileID)
         {
-            return dataHandler.LoadAllProfiles();
+            List<ToolMetaData> metaDatas = dataHandler.LoadAllMetaProfiles();
+            bool isProfileIDTaken = metaDatas.Select(_data => _data.projectName).ToList().Contains(_newProfileID);
+            return isProfileIDTaken;
         }
 
         private IEnumerator AutoSave() 

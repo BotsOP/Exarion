@@ -1,4 +1,5 @@
 using DataPersistence;
+using DataPersistence.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -19,7 +20,10 @@ namespace MainMenus
         [SerializeField]
         private TMP_InputField imageHeightInput;
 
+        private bool project3D;
+
         private ToolData toolData;
+        private ToolMetaData metaData;
 
         public void ResetprojectExistsText()
         {
@@ -45,18 +49,44 @@ namespace MainMenus
             success = int.TryParse(imageHeightInput.text, out num);
             if (success) { imageHeight = num; }
 
-            toolData = new ToolData
-            {
-                lastUpdated = System.DateTime.Now.ToBinary(),
-                projectName = projectName.text,
-                imageWidth = imageWidth,
-                imageHeight = imageHeight,
-            };
+            metaData = new ToolMetaData(System.DateTime.Now.ToBinary(), projectName.text);
 
-            DataPersistenceManager.instance.ChangeSelectedProfileId(projectName.text);
-            DataPersistenceManager.instance.toolData = toolData;
+            if (project3D)
+            {
+                toolData = new ToolData3D
+                {
+                    imageWidth = imageWidth,
+                    imageHeight = imageHeight,
+                };
+                metaData.projectType = ProjectType.PROJECT3D;
+            }
+            else
+            {
+                toolData = new ToolData2D
+                {
+                    imageWidth = imageWidth,
+                    imageHeight = imageHeight,
+                };
+                metaData.projectType = ProjectType.PROJECT2D;
+            }
+            
+            DataPersistenceManager.instance.InitializeNewTool(projectName.text, metaData, toolData);
             DataPersistenceManager.instance.SaveTool();
-            SceneManager.LoadSceneAsync("DrawScene");
+            SceneManager.LoadSceneAsync(project3D ? "3DDrawScene" : "2DDrawScene");
+        }
+
+        public void SetProjectType(bool _project3D)
+        {
+            project3D = _project3D;
+        }
+
+        public void ActiveGameObject(GameObject _gameObject)
+        {
+            _gameObject.SetActive(true);
+        }
+        public void DeActiveGameObject(GameObject _gameObject)
+        {
+            _gameObject.SetActive(false);
         }
 
         public void ActivateMenu()

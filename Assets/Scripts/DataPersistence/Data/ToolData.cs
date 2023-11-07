@@ -4,22 +4,19 @@ using Drawing;
 using UI;
 using UnityEngine;
 
-[System.Serializable]
-public class ToolData
+public enum ProjectType
 {
-    //Data not for us
-    public long lastUpdated;
-    public float timeSpentMinutes;
+    PROJECT2D,
+    PROJECT3D,
+    FAILED,
+}
 
-    //Data for us
+public abstract class ToolData
+{
     //Variables per project
-    public string projectName;
     public List<CondensedClip> timelineClips;
     public int extraTimelineBars;
-
-    public byte[] overlayImg;
-    public byte[] displayImg;
-
+    
     public int imageWidth;
     public int imageHeight;
 
@@ -29,15 +26,49 @@ public class ToolData
     {
         imageWidth = 1024;
         imageHeight = 1024;
-        projectName = "";
-        overlayImg = null;
-        displayImg = null;
         timelineClips = new List<CondensedClip>();
     }
+}
 
-    public string GetProjectName() 
+public struct JsonVector2
+{
+    public float x;
+    public float y;
+
+    public JsonVector2(float _x, float _y)
     {
-        return projectName;
+        x = _x;
+        y = _y;
+    }
+}
+
+public struct JsonVector3
+{
+    public float x;
+    public float y;
+    public float z;
+
+    public JsonVector3(float _x, float _y, float _z)
+    {
+        x = _x;
+        y = _y;
+        z = _z;
+    }
+}
+
+public struct JsonVector4
+{
+    public float x;
+    public float y;
+    public float z;
+    public float w;
+
+    public JsonVector4(float _x, float _y, float _z, float _w)
+    {
+        x = _x;
+        y = _y;
+        z = _z;
+        w = _w;
     }
 }
 

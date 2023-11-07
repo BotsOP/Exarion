@@ -1,0 +1,42 @@
+#pragma kernel Copy
+#pragma kernel Erase
+#pragma kernel CopyHighlight
+
+Texture2D<float4> _OrgTex4;
+RWTexture2D<float4> _FinalTex4;
+RWTexture2D<float4> _FinalTexInt;
+
+float _StrokeID;
+float _OffsetUV;
+
+[numthreads(32,32,1)]
+void Copy (uint2 id : SV_DispatchThreadID)
+{
+    if(_OrgTex4[id].x > 0)
+    {
+        _FinalTex4[id] = _OrgTex4[id];
+        _FinalTexInt[id] = float4(_StrokeID, 0, 0, 0);
+    }
+}
+
+
+[numthreads(32,32,1)]
+void Erase (uint2 id : SV_DispatchThreadID)
+{
+    if(_OrgTex4[id].x > 0)
+    {
+        _FinalTex4[id] = float4(0, 0, 0, 0);
+        _FinalTexInt[id] = float4(-1, 0, 0, 0);
+    }
+}
+
+[numthreads(32,32,1)]
+void CopyHighlight (uint2 id : SV_DispatchThreadID)
+{
+    if(_OrgTex4[id].x > 0)
+    {
+        _FinalTex4[id] = _OrgTex4[id];
+    }
+}
+
+

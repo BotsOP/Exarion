@@ -1,16 +1,20 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using AnotherFileBrowser.Windows;
 using DataPersistence;
+using DataPersistence.Data;
 using Drawing;
 using Managers;
-using SFB;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using EventType = Managers.EventType;
+using FileBrowser = Crosstales.FB.FileBrowser;
 
 namespace UI
 {
@@ -59,6 +63,8 @@ namespace UI
         [SerializeField] private Button exrButton;
         [SerializeField] private Image pivotButton;
         [SerializeField] private Image centerButton;
+
+        
         
         private CustomRenderTexture viewFullRT;
         private CustomRenderTexture viewFocusRT;
@@ -73,7 +79,7 @@ namespace UI
         private bool exportPNG;
         private bool toggleSave;
         private float startTime;
-
+        
         private void OnEnable()
         {
             rectTransformViewFull = viewImageFull.rectTransform;
@@ -183,13 +189,29 @@ namespace UI
             return Input.mousePosition.x > viewCorners[0].x && Input.mousePosition.x < viewCorners[2].x && 
                    Input.mousePosition.y > viewCorners[0].y && Input.mousePosition.y < viewCorners[2].y;
         }
-
+        
         public void ExportResult()
         {
-            string path = StandaloneFileBrowser.SaveFilePanel("Save File", "", projectName, pngToggle ? "png" : "exr");
+            string path = FileBrowser.Instance.SaveFile("Save texture", "", projectName, pngToggle ? "png" : "exr");
             DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
-            byte[] bytes = pngToggle ? drawingManager.drawer.rt.ToBytesPNG() : drawingManager.drawer.rt.ToBytesEXR();
+            //byte[] bytes = pngToggle ? drawingManager.drawer.rt.ToBytesPNG() : drawingManager.drawer.rt.ToBytesEXR();
+            byte[] bytes = pngToggle ? drawingManager.drawer.ReverseRtoB().ToBytesPNG() : drawingManager.drawer.ReverseRtoB().ToBytesEXR();
             File.WriteAllBytes(path, bytes);
+        }
+
+        public void ExportResult3d()
+        {
+            string path = FileBrowser.Instance.SaveFile("Save texture", "", projectName, pngToggle ? "png" : "exr");
+            DrawingManager3D drawingManager = FindObjectOfType<DrawingManager3D>();
+            List<CustomRenderTexture> rts = drawingManager.GetTextures();
+
+            for (int i = 0; i < rts.Count; i++)
+            {
+                CustomRenderTexture result = rts[i];
+                byte[] bytes = pngToggle ? result.ToBytesPNG() : result.ToBytesEXR();
+                string tempPath = path.Insert(path.Length - 4, "_" + i);
+                File.WriteAllBytes(tempPath, bytes);
+            }
         }
 
         public void BackToMainMenu()
@@ -296,32 +318,50 @@ namespace UI
             focusView.SetActive(true);
         }
 
+        private bool changedBrushSize;
         public void OnBrushSizeChanged(bool _sliderChanged)
         {
+            if(changedBrushSize) { return; }
+            changedBrushSize = true;
             if (_sliderChanged)
             {
                 brushSizeInput.text = brushSizeSlider.value.ToString(CultureInfo.CurrentCulture);
             }
             else
             {
-                brushSizeSlider.value = int.Parse(brushSizeInput.text);
+                try
+                {
+                    brushSizeSlider.value = float.Parse(brushSizeInput.text);
+                }
+                catch (Exception e)
+                {
+                    //Debug.LogError(e);
+                    throw;
+                }
             }
             EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSizeSlider.value);
         }
 
+        public void LateUpdate()
+        {
+            changedBrushSize = false;
+        }
+
         private void SetBrushSize(float _brushSize)
         {
-            int brushSize = (int)_brushSize;
+            float brushSize = _brushSize;
             brushSizeInput.text = brushSize.ToString(CultureInfo.CurrentCulture);
             brushSizeSlider.value = brushSize;
         }
-        public void LoadData(ToolData _data)
+
+        
+        public void LoadData(ToolData _data, ToolMetaData _metaData)
         {
             imageWidth = _data.imageWidth;
             imageHeight = _data.imageHeight;
-            projectName = _data.projectName;
+            projectName = _metaData.projectName;
         }
-        public void SaveData(ToolData _data)
+        public void SaveData(ToolData _data, ToolMetaData _metaData)
         {
         }
     }

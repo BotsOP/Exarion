@@ -41,6 +41,9 @@ namespace Managers
         CHANGE_BRUSH_SIZE,
         TIMELINE_PAUSE,
         SAVED,
+        CHANGED_MODEL,
+        IMPORT_MODEL_TEXTURE,
+        UPDATE_SUBMESH_COUNT,
     }
 
 

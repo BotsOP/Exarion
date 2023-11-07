@@ -1,7 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using AnotherFileBrowser.Windows;
+using Crosstales.FB;
+using DataPersistence.Data;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
@@ -16,19 +17,13 @@ public class ImportImage : MonoBehaviour, IDataPersistence
     [SerializeField] private GameObject overlaySettings;
     
     [HideInInspector] public byte[] imgData;
-
+    
+    private string[] extensions = { "jpg, jpeg, jpe, jfif, png" };
+    
     public void OpenFileBrowser()
     {
-        var bp = new BrowserProperties();
-        bp.filter = "Image files (*.jpg, *.jpeg, *.jpe, *.jfif, *.png) | *.jpg; *.jpeg; *.jpe; *.jfif; *.png";
-        bp.filterIndex = 0;
-
-        new FileBrowser().OpenFileBrowser(bp, path =>
-        {
-            //Load image from local path with UWR
-            StartCoroutine(LoadImage(path));
-        });
-        
+        String path = FileBrowser.Instance.OpenSingleFile("Open file", "", "", extensions);
+        StartCoroutine(LoadImage(path));
     }
 
     public void RemoveImage()
@@ -87,13 +82,15 @@ public class ImportImage : MonoBehaviour, IDataPersistence
         displayMat.SetInt("_UseTexture", 1);
     }
 
-    public void LoadData(ToolData _data)
+    public void LoadData(ToolData _data, ToolMetaData _metaData)
     {
-        imgData = _data.overlayImg;
+        ToolData2D data = (ToolData2D)_data;
+        imgData = data.overlayImg;
     }
 
-    public void SaveData(ToolData _data)
+    public void SaveData(ToolData _data, ToolMetaData _metaData)
     {
-        _data.overlayImg = imgData;
+        ToolData2D data = (ToolData2D)_data;
+        data.overlayImg = imgData;
     }
 }

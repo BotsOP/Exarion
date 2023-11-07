@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Managers;
+using UI;
 using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -112,8 +113,8 @@ namespace Drawing
                     kernelID = paintUnderOwnLineKernelID;
                     break;
                 case PaintType.Erase:
-                    // if (_firstStroke)
-                    //     _strokeBrushSize++;
+                    if (_firstStroke)
+                        _strokeBrushSize++;
                     kernelID = eraseKernelID;
                     break;
             }
@@ -141,7 +142,7 @@ namespace Drawing
             return new Vector2(lowestX, lowestY);
         }
 
-        public void RedrawStroke(BrushStrokeID _brushstrokeID)
+        private void RedrawStroke(BrushStrokeID _brushstrokeID)
         {
             int newStrokeID = GetNewID();
             bool firstLoop = true;
@@ -149,7 +150,7 @@ namespace Drawing
 
             foreach (var brushStroke in _brushstrokeID.brushStrokes)
             {
-                Draw(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, paintType, 
+                Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, paintType, 
                      brushStroke.startTime, brushStroke.endTime, firstLoop, newStrokeID);
 
                 firstLoop = false;
@@ -164,14 +165,14 @@ namespace Drawing
             
             foreach (var brushStroke in _brushstrokeID.brushStrokes)
             {
-                Draw(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, paintType, 
+                Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, paintType, 
                      brushStroke.startTime, brushStroke.endTime, firstLoop, newStrokeID);
 
                 firstLoop = false;
             }
         }
 
-        public void RedrawStrokeOptimized(BrushStrokeID _brushstrokeID, Vector4 _collisionBox)
+        private void RedrawStrokeOptimized(BrushStrokeID _brushstrokeID, Vector4 _collisionBox)
         {
             int newStrokeID = GetNewID();
             bool firstLoop = true;
@@ -184,15 +185,27 @@ namespace Drawing
             
             foreach (var brushStroke in _brushstrokeID.brushStrokes)
             {
-                Draw(brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, paintType, 
+                Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, paintType, 
                      brushStroke.startTime, brushStroke.endTime, firstLoop, newStrokeID);
                 
                 firstLoop = false;
             }
         }
 
+        public void ReverseBrushStroke(BrushStrokeID _brushStrokeID)
+        {
+            RedrawStroke(_brushStrokeID, PaintType.Erase);
+            _brushStrokeID.Reverse();
+            RedrawStrokeInterpolation(_brushStrokeID);
+        }
+        
         public void RedrawStrokeInterpolation(BrushStrokeID _brushstrokeID)
         {
+            if (_brushstrokeID.brushStrokes.Count == 0)
+            {
+                Debug.LogError("Brush stroke holds no draw data");
+                return;
+            }
             int newStrokeID = GetNewID();
             PaintType paintType = _brushstrokeID.paintType;
 
@@ -209,7 +222,7 @@ namespace Drawing
                 strokeStart.startTime = lastTime;
                 _brushstrokeID.brushStrokes[0] = strokeStart;
                 
-                Draw(strokeStart.GetLastPos(), strokeStart.GetCurrentPos(), strokeStart.brushSize, paintType, 
+                Draw(strokeStart.GetStartPos(), strokeStart.GetEndPos(), strokeStart.brushSize, paintType, 
                      strokeStart.startTime, strokeStart.endTime, true, newStrokeID);
                 return;
             }
@@ -223,9 +236,9 @@ namespace Drawing
                 float lastTime = _brushstrokeID.startTime;
                 
                 BrushStroke strokeStartReference = _brushstrokeID.brushStrokes[1];
-                Vector2 lineDir = (strokeStartReference.GetCurrentPos() - strokeStartReference.GetLastPos()).normalized * strokeStartReference.brushSize;
-                Vector2 currentPos = strokeStartReference.GetCurrentPos() + lineDir;
-                float distLine = Vector2.Distance(strokeStartReference.GetLastPos(), currentPos);
+                Vector3 lineDir = (strokeStartReference.GetEndPos() - strokeStartReference.GetStartPos()).normalized * strokeStartReference.brushSize;
+                Vector3 currentPos = strokeStartReference.GetEndPos() + lineDir;
+                float distLine = Vector3.Distance(strokeStartReference.GetStartPos(), currentPos);
                 timePadding = strokeStartReference.brushSize.Remap(0, distLine, 0, newTime - lastTime);
 
                 BrushStroke strokeStart = _brushstrokeID.brushStrokes[0];
@@ -233,7 +246,7 @@ namespace Drawing
                 strokeStart.startTime = lastTime;
                 _brushstrokeID.brushStrokes[0] = strokeStart;
                 
-                Draw(strokeStart.GetLastPos(), strokeStart.GetCurrentPos(), strokeStart.brushSize, paintType, 
+                Draw(strokeStart.GetStartPos(), strokeStart.GetEndPos(), strokeStart.brushSize, paintType, 
                      strokeStart.startTime, strokeStart.endTime, true, newStrokeID);
             }
             
@@ -243,9 +256,9 @@ namespace Drawing
                 float newTime = _brushstrokeID.startTime + extraTime * (1 + extraTime + extraTime) * (i + 1);
                 float lastTime = _brushstrokeID.startTime + extraTime * (1 + extraTime + extraTime) * (i);
 
-                Vector2 lineDir = (brushStroke.GetCurrentPos() - brushStroke.GetLastPos()).normalized * brushStroke.brushSize;
-                Vector2 currentPos = brushStroke.GetCurrentPos() + lineDir;
-                float distLine = Vector2.Distance(brushStroke.GetLastPos(), currentPos);
+                Vector3 lineDir = (brushStroke.GetEndPos() - brushStroke.GetStartPos()).normalized * brushStroke.brushSize;
+                Vector3 currentPos = brushStroke.GetEndPos() + lineDir;
+                float distLine = Vector3.Distance(brushStroke.GetStartPos(), currentPos);
                 float brushSizeTime = brushStroke.brushSize.Remap(0, distLine, 0, newTime - lastTime);
 
                 lastTime -= brushSizeTime;
@@ -255,7 +268,7 @@ namespace Drawing
                 _brushstrokeID.brushStrokes[i] = brushStroke;
 
                 Draw(
-                    brushStroke.GetLastPos(), brushStroke.GetCurrentPos(), brushStroke.brushSize, paintType,
+                    brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, paintType,
                     brushStroke.startTime, brushStroke.endTime, false, newStrokeID);
             }
         }
@@ -315,6 +328,11 @@ namespace Drawing
             for (var i = brushStrokesID.Count - 1; i >= 0; i--)
             {
                 BrushStrokeID brushStrokeID = brushStrokesID[i];
+                if (brushStrokeID.brushStrokes.Count == 0)
+                {
+                    Debug.LogError("Brush stroke holds no draw data");
+                    return;
+                }
                 float brushStart = brushStrokeID.brushStrokes[0].startTime;
                 float brushEnd = brushStrokeID.brushStrokes[^1].endTime;
                 float brushIDStart = brushStrokeID.startTime;
@@ -339,6 +357,52 @@ namespace Drawing
                 BrushStrokeID brushStrokeID = brushStrokesID[i];
                 RedrawStrokeOptimized(brushStrokeID, collisionBox);
             }
+        }
+
+        public CustomRenderTexture ReverseRtoB()
+        {
+            CustomRenderTexture tempRT = new CustomRenderTexture(UIManager.imageWidth, UIManager.imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
+            {
+                filterMode = FilterMode.Point,
+                enableRandomWrite = true,
+                name = "rtReverse",
+            };
+
+            int kernelReverse = paintShader.FindKernel("WriteToReverse");
+            
+            paintShader.SetTexture(kernelReverse, "_ResultTexReverse", tempRT);
+            paintShader.SetTexture(kernelReverse, "_ResultTex", rt);
+            paintShader.SetBool("_WriteToG", false);
+            paintShader.Dispatch(kernelReverse, Mathf.CeilToInt(UIManager.imageWidth / 32f), Mathf.CeilToInt(UIManager.imageHeight / 32f), 1);
+
+            for (var i = brushStrokesID.Count - 1; i >= 0; i--)
+            {
+                var brushStrokeID = brushStrokesID[i];
+                RedrawStroke(brushStrokeID, PaintType.Erase);
+                brushStrokeID.Reverse();
+                float newStartTime = brushStrokeID.endTime;
+                float newEndTime = brushStrokeID.startTime;
+                brushStrokeID.startTime = newStartTime;
+                brushStrokeID.endTime = newEndTime;
+                RedrawStrokeInterpolation(brushStrokeID);
+            }
+
+            paintShader.SetBool("_WriteToG", true);
+            paintShader.Dispatch(kernelReverse, Mathf.CeilToInt(UIManager.imageWidth / 32f), Mathf.CeilToInt(UIManager.imageHeight / 32f), 1);
+            
+            for (var i = brushStrokesID.Count - 1; i >= 0; i--)
+            {
+                var brushStrokeID = brushStrokesID[i];
+                RedrawStroke(brushStrokeID, PaintType.Erase);
+                brushStrokeID.Reverse();
+                float newStartTime = brushStrokeID.endTime;
+                float newEndTime = brushStrokeID.startTime;
+                brushStrokeID.startTime = newStartTime;
+                brushStrokeID.endTime = newEndTime;
+                RedrawStrokeInterpolation(brushStrokeID);
+            }
+            
+            return tempRT;
         }
 
         private Vector4 CombineCollisionBox(Vector4[] collisionBoxes)
