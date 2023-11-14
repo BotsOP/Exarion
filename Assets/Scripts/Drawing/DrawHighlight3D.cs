@@ -83,43 +83,43 @@ namespace Drawing
 
         public void HighlightStroke(BrushStrokeID _brushStrokeID)
         {
-            ClearHighlight();
-            foreach (var brushStroke in _brushStrokeID.brushStrokes)
-            {
-                float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
-
-                Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
-            }
-            
-            foreach (var brushStroke in _brushStrokeID.brushStrokes)
-            {
-                Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Erase, -5);
-            }
+            // ClearHighlight();
+            // foreach (var brushStroke in _brushStrokeID.brushStrokes)
+            // {
+            //     float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
+            //
+            //     Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
+            // }
+            //
+            // foreach (var brushStroke in _brushStrokeID.brushStrokes)
+            // {
+            //     Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Erase, -5);
+            // }
         }
         
         public void HighlightStroke(List<BrushStrokeID> _brushStrokeIDs)
         {
-            ClearHighlight();
-            foreach (var brushStrokeID in _brushStrokeIDs)
-            {
-                foreach (var brushStroke in brushStrokeID.brushStrokes)
-                {
-                    float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
-                    highlightBrushThickness = 0;
-
-                    Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
-                }
-            }
-            
-            foreach (var brushStrokeID in _brushStrokeIDs)
-            {
-                foreach (var brushStroke in brushStrokeID.brushStrokes)
-                {
-                    float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
-                    
-                    Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Erase, -highlightBrushThickness);
-                }
-            }
+            // ClearHighlight();
+            // foreach (var brushStrokeID in _brushStrokeIDs)
+            // {
+            //     foreach (var brushStroke in brushStrokeID.brushStrokes)
+            //     {
+            //         float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
+            //         highlightBrushThickness = 0;
+            //
+            //         Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
+            //     }
+            // }
+            //
+            // foreach (var brushStrokeID in _brushStrokeIDs)
+            // {
+            //     foreach (var brushStroke in brushStrokeID.brushStrokes)
+            //     {
+            //         float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
+            //         
+            //         Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Erase, -highlightBrushThickness);
+            //     }
+            // }
         }
 
         public void ClearHighlight()

@@ -28,6 +28,10 @@ void Copy (uint2 id : SV_DispatchThreadID)
 {
     if(_OrgTexColor[id].x > 0)
     {
+        if(_OrgTexColor[id].x > _FinalTexColor[id].x && _FinalTexColor[id].x > 0)
+        {
+            return;
+        }
         _FinalTexColor[id] = _OrgTexColor[id];
     }
 }
