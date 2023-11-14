@@ -94,10 +94,10 @@
             }
 
             float frag (v2f i) : SV_Target {
-                if(tex2D(_IDTex, i.uv).x >= 0)
-                {
-                     return 0;
-                }
+                // if(tex2D(_IDTex, i.uv).x >= 0)
+                // {
+                //      return 0;
+                // }
 
                 float paintColor = LineSegment3DSDF(i.worldPos, _LastCursorPos, _CursorPos);
 

@@ -16,24 +16,27 @@ namespace Drawing
     {
         public List<CustomRenderTexture> rts = new List<CustomRenderTexture>();
         public List<CustomRenderTexture> rtIDs = new List<CustomRenderTexture>();
+        public List<CustomRenderTexture> rtWholeTemps = new List<CustomRenderTexture>();
+        public List<ComputeBuffer> brushStrokeToPixel = new List<ComputeBuffer>();
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
         public Transform sphere1;
         public Renderer rend;
 
-        private readonly CustomRenderTexture rtTemp;
+        private readonly CustomRenderTexture rtIndividualTemp;
         private ComputeShader textureHelperShader;
         private Material paintMaterial;
         private Material simplePaintMaterial;
-        private int paintUnderOwnLineKernelID;
-        private int paintUnderEverythingKernelID;
-        private int paintOverEverythingKernelID;
-        private int paintOverOwnLineKernelID;
-        private int eraseKernelID;
+        private int copyKernelID;
+        private int finalCopyKernelID;
+        private int CopyHighlightKernelID;
+        private int EraseKernelID;
         private Vector3 threadGroupSizeOut;
         private Vector3 threadGroupSize;
         private int imageWidth;
         private int imageHeight;
         private CommandBuffer commandBuffer;
+        private ComputeBuffer counterBuffer;
+        
         private static readonly int FirstStroke = Shader.PropertyToID("_FirstStroke");
         private static readonly int CursorPos = Shader.PropertyToID("_CursorPos");
         private static readonly int LastCursorPos = Shader.PropertyToID("_LastCursorPos");
@@ -43,21 +46,17 @@ namespace Drawing
         private static readonly int StrokeID = Shader.PropertyToID("_StrokeID");
         private static readonly int IDTex = Shader.PropertyToID("_IDTex");
 
-        public float GetNewID()
-        {
-            //lol this looks so bad
-            float id = Random.Range(0, float.MaxValue) / float.MaxValue;
-            if (id == 0)
-            {
-                id = GetNewID();
-            }
-            return id;
-        }
+        
         public Drawing3D(int _imageWidth, int _imageHeight, Transform _sphere1)
         {
             textureHelperShader = Resources.Load<ComputeShader>("TextureHelper");
             paintMaterial = new Material(Resources.Load<Shader>("DrawPainter"));
             simplePaintMaterial = new Material(Resources.Load<Shader>("SimplePainter"));
+
+            copyKernelID = textureHelperShader.FindKernel("Copy");
+            finalCopyKernelID = textureHelperShader.FindKernel("FinalCopy");
+            CopyHighlightKernelID = textureHelperShader.FindKernel("CopyHighlight");
+            EraseKernelID = textureHelperShader.FindKernel("Erase");
 
             commandBuffer = new CommandBuffer();
             commandBuffer.name = "3DUVTimePainter";
@@ -66,20 +65,35 @@ namespace Drawing
             imageHeight = _imageHeight;
             sphere1 = _sphere1;
 
-            textureHelperShader.GetKernelThreadGroupSizes(0, out uint threadGroupSizeX, out uint threadGroupSizeY, out _);
+            textureHelperShader.GetKernelThreadGroupSizes(copyKernelID, out uint threadGroupSizeX, out uint threadGroupSizeY, out _);
             threadGroupSizeOut.x = threadGroupSizeX;
             threadGroupSizeOut.y = threadGroupSizeY;
             
             threadGroupSize.x = Mathf.CeilToInt(_imageWidth / threadGroupSizeOut.x);
             threadGroupSize.y = Mathf.CeilToInt(_imageHeight / threadGroupSizeOut.y);
+
+            counterBuffer = new ComputeBuffer(100, sizeof(int), ComputeBufferType.Structured);
             
-            rtTemp = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
+            rtIndividualTemp = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
             {
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
                 useMipMap = false,
-                name = "rtTemp",
+                name = "rtIndividualTemp",
             };
+            
+            
+        }
+
+        public void OnDestroy()
+        {
+            for (int i = 0; i < brushStrokeToPixel.Count; i++)
+            {
+                brushStrokeToPixel[i]?.Release();
+                brushStrokeToPixel[i] = null;
+            }
+            counterBuffer?.Release();
+            counterBuffer = null;
         }
         
         public CustomRenderTexture addRT()
@@ -95,6 +109,21 @@ namespace Drawing
             Color idColor = new Color(-1, -1, -1);
             rtID.Clear(false, true, idColor);
             rtIDs.Add(rtID);
+            
+            CustomRenderTexture rtWholeTemp = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
+            {
+                filterMode = FilterMode.Point,
+                enableRandomWrite = true,
+                useMipMap = false,
+                name = "rtWholeTemp",
+            };
+            
+            rtWholeTemp.Clear(false, true, Color.black);
+            
+            rtWholeTemps.Add(rtWholeTemp);
+            
+            ComputeBuffer brushStrokeBuffer = new ComputeBuffer(imageWidth * imageHeight, sizeof(int), ComputeBufferType.Append);
+            brushStrokeToPixel.Add(brushStrokeBuffer);
             
             CustomRenderTexture rt = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
             {
@@ -125,15 +154,18 @@ namespace Drawing
                     {
                         paintMaterial.SetTexture(IDTex, rtIDs[i]);
                     
-                        commandBuffer.SetRenderTarget(rtTemp);
+                        commandBuffer.SetRenderTarget(rtIndividualTemp);
                         commandBuffer.DrawRenderer(rend, paintMaterial, i);
-                    
-                        commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_OrgTex4", rtTemp);
-                        commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_FinalTex4", rts[i]);
-                        commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_FinalTexInt", rtIDs[i]);
+                        
+                        commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_OrgTexColor", rtIndividualTemp);
+                        commandBuffer.SetComputeTextureParam(textureHelperShader, 0, "_FinalTexColor", rtWholeTemps[i]);
                         commandBuffer.SetComputeFloatParam(textureHelperShader, "_StrokeID", _strokeID);
                         commandBuffer.DispatchCompute(textureHelperShader, 0, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
                         ExecuteBuffer();
+
+                        // int amountPixels = counterBuffer.GetCounter();
+                        // UInt16[] pos = new ushort[amountPixels * 2];
+                        // brushStrokeBuffer.GetData(pos);
                     }
                     break;
                 case PaintType.Erase:
@@ -144,12 +176,12 @@ namespace Drawing
 
                     for (int i = 0; i < rts.Count; i++)
                     {
-                        commandBuffer.SetRenderTarget(rtTemp);
+                        commandBuffer.SetRenderTarget(rtIndividualTemp);
                         commandBuffer.DrawRenderer(rend, simplePaintMaterial, i);
                     
-                        commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_OrgTex4", rtTemp);
-                        commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTex4", rts[i]);
-                        commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTexInt", rtIDs[i]);
+                        commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_OrgTexColor", rtIndividualTemp);
+                        commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTexColor", rts[i]);
+                        commandBuffer.SetComputeTextureParam(textureHelperShader, 1, "_FinalTexID", rtIDs[i]);
                         commandBuffer.DispatchCompute(textureHelperShader, 1, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
                         ExecuteBuffer();
                     }
@@ -158,24 +190,45 @@ namespace Drawing
             
         }
 
-        private void RedrawStroke(BrushStrokeID _brushstrokeID)
+        public void FinishDrawing()
         {
-            float newStrokeID = GetNewID();
-            bool firstLoop = true;
-            PaintType paintType = _brushstrokeID.paintType;
-
-            foreach (var brushStroke in _brushstrokeID.brushStrokes)
+            List<UInt16[]> allPos = new List<ushort[]>();
+            for (int i = 0; i < rts.Count; i++)
             {
-                Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, paintType, 
-                     brushStroke.startTime, brushStroke.endTime, firstLoop, newStrokeID);
-
-                firstLoop = false;
+                textureHelperShader.SetInt("_CurrentSubMesh", i);
+                textureHelperShader.SetBuffer(finalCopyKernelID, "_TexToBuffer", brushStrokeToPixel[i]);
+                textureHelperShader.SetBuffer(finalCopyKernelID, "_Counter", counterBuffer);
+                textureHelperShader.SetTexture(finalCopyKernelID, "_OrgTexColor", rtWholeTemps[i]);
+                textureHelperShader.SetTexture(finalCopyKernelID, "_FinalTexColor", rts[i]);
+                textureHelperShader.SetTexture(finalCopyKernelID, "_FinalTexID", rtIDs[i]);
+                
+                int amountPixels = counterBuffer.GetCounter(100, i);
+                UInt16[] pos = new ushort[amountPixels * 2];
+                brushStrokeToPixel[i].GetData(pos);
+                allPos.Add(pos);
             }
+            
+            counterBuffer.SetData(new int[100]);
         }
 
-        public void RedrawStroke(BrushStrokeID _brushstrokeID, PaintType _newPaintType)
+        // private void RedrawStroke(BrushStrokeID _brushstrokeID)
+        // {
+        //     float newStrokeID = GetNewID();
+        //     bool firstLoop = true;
+        //     PaintType paintType = _brushstrokeID.paintType;
+        //
+        //     foreach (var brushStroke in _brushstrokeID.brushStrokes)
+        //     {
+        //         Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, paintType, 
+        //              brushStroke.startTime, brushStroke.endTime, firstLoop, newStrokeID);
+        //
+        //         firstLoop = false;
+        //     }
+        // }
+
+        public void RedrawStroke(BrushStrokeID _brushstrokeID, int _strokeID, PaintType _newPaintType)
         {
-            float newStrokeID = GetNewID();
+            int newStrokeID = _strokeID;
             bool firstLoop = true;
             PaintType paintType = _newPaintType;
             
@@ -188,16 +241,16 @@ namespace Drawing
             }
         }
 
-        private void RedrawStrokeOptimized(BrushStrokeID _brushstrokeID, Vector3 _minCorner, Vector3 _maxCorner)
+        private void RedrawStrokeOptimized(BrushStrokeID _brushstrokeID, int _strokeID, Vector3 _minCorner, Vector3 _maxCorner)
         {
-            float newStrokeID = GetNewID();
+            int newStrokeID = _strokeID;
             bool firstLoop = true;
             PaintType paintType = _brushstrokeID.paintType;
 
             if (!CheckCollision(_brushstrokeID.GetMinCorner(), _brushstrokeID.GetMaxCorner(), _minCorner, _maxCorner))
                 return;
             
-            RedrawStroke(_brushstrokeID, PaintType.Erase);
+            RedrawStroke(_brushstrokeID, _strokeID, PaintType.Erase);
             
             foreach (var brushStroke in _brushstrokeID.brushStrokes)
             {
@@ -209,27 +262,27 @@ namespace Drawing
             
         }
 
-        public void ReverseBrushStroke(BrushStrokeID _brushStrokeID)
+        public void ReverseBrushStroke(BrushStrokeID _brushStrokeID, int _strokeID)
         {
-            RedrawStroke(_brushStrokeID, PaintType.Erase);
+            RedrawStroke(_brushStrokeID, _strokeID, PaintType.Erase);
             _brushStrokeID.Reverse();
-            RedrawStrokeInterpolation(_brushStrokeID);
+            RedrawStrokeInterpolation(_brushStrokeID, _strokeID);
         }
         
-        public void RedrawStrokeInterpolation(BrushStrokeID _brushstrokeID)
+        public void RedrawStrokeInterpolation(BrushStrokeID _brushstrokeID, int _strokeID)
         {
             if (_brushstrokeID.brushStrokes.Count == 0)
             {
                 Debug.LogError("Brush stroke holds no draw data");
                 return;
             }
-            float newStrokeID = GetNewID();
+            int newStrokeID = _strokeID;
             PaintType paintType = _brushstrokeID.paintType;
 
             //First erase the stroke you want to redraw
             if (paintType is PaintType.PaintUnderEverything or PaintType.PaintOverOwnLine)
             {
-                RedrawStroke(_brushstrokeID, PaintType.Erase);
+                RedrawStroke(_brushstrokeID, _strokeID, PaintType.Erase);
             }
 
             if (_brushstrokeID.brushStrokes.Count == 1)
@@ -300,7 +353,7 @@ namespace Drawing
             {
                 foreach (var brushStroke in _brushStrokeID.brushStrokes)
                 {
-                    float distLine = HandleUtility.DistancePointLine(_worldPos, brushStroke.GetStartPos(), brushStroke.GetEndPos());
+                    float distLine = DistancePointToLine(brushStroke.GetStartPos(), brushStroke.GetEndPos(), _worldPos);
                     if (distLine < brushStroke.brushSize)
                     {
                         return true;
@@ -320,26 +373,27 @@ namespace Drawing
             for (int i = brushStrokesID.Count - 1; i >= 0; i--)
             {
                 BrushStrokeID brushStrokeID = brushStrokesID[i];
-                RedrawStrokeInterpolation(brushStrokeID);
+                RedrawStrokeInterpolation(brushStrokeID, i);
             }
         }
 
         //Redraws everything and if a stroke needs to be interpolated it does so automatically
         public void RedrawAllSafe(BrushStrokeID _brushStrokeID)
         {
-            foreach (BrushStrokeID brushStrokeID in brushStrokesID)
+            for (var i = 0; i < brushStrokesID.Count; i++)
             {
+                var brushStrokeID = brushStrokesID[i];
                 float brushStart = brushStrokeID.brushStrokes[0].startTime;
                 float brushEnd = brushStrokeID.brushStrokes[^1].startTime;
                 float brushIDStart = brushStrokeID.startTime;
                 float brushIDEnd = brushStrokeID.endTime;
                 if (Math.Abs(brushStart - brushIDStart) > 0.000001f || Math.Abs(brushEnd - brushIDEnd) > 0.000001f)
                 {
-                    RedrawStrokeInterpolation(brushStrokeID);
+                    RedrawStrokeInterpolation(brushStrokeID, i);
                     continue;
                 }
 
-                RedrawStrokeOptimized(brushStrokeID, _brushStrokeID.GetMinCorner(), _brushStrokeID.GetMaxCorner());
+                RedrawStrokeOptimized(brushStrokeID, i, _brushStrokeID.GetMinCorner(), _brushStrokeID.GetMaxCorner());
             }
         }
         public void RedrawAllSafe(List<BrushStrokeID> _brushStrokeIDs)
@@ -361,11 +415,11 @@ namespace Drawing
                 float brushIDEnd = brushStrokeID.endTime;
                 if (Math.Abs(brushStart - brushIDStart) > 0.001f || Math.Abs(brushEnd - brushIDEnd) > 0.001f)
                 {
-                    RedrawStrokeInterpolation(brushStrokeID);
+                    RedrawStrokeInterpolation(brushStrokeID, i);
                     continue;
                 }
 
-                RedrawStrokeOptimized(brushStrokeID, minCorner, maxCorner);
+                RedrawStrokeOptimized(brushStrokeID, i, minCorner, maxCorner);
             }
         }
         
@@ -377,7 +431,7 @@ namespace Drawing
             for (var i = brushStrokesID.Count - 1; i >= 0; i--)
             {
                 BrushStrokeID brushStrokeID = brushStrokesID[i];
-                RedrawStrokeOptimized(brushStrokeID, minCorner, maxCorner);
+                RedrawStrokeOptimized(brushStrokeID, i, minCorner, maxCorner);
             }
         }
 

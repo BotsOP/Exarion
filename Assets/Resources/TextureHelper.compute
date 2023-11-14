@@ -1,21 +1,46 @@
 #pragma kernel Copy
 #pragma kernel Erase
 #pragma kernel CopyHighlight
+#pragma kernel FinalCopy
 
-Texture2D<float4> _OrgTex4;
-RWTexture2D<float4> _FinalTex4;
-RWTexture2D<float4> _FinalTexInt;
+Texture2D<float4> _OrgTexColor;
+RWTexture2D<float4> _FinalTexColor;
+RWTexture2D<float4> _FinalTexID;
+AppendStructuredBuffer<int> _TexToBuffer;
+RWStructuredBuffer<int> _Counter;
+int _CurrentSubMesh;
 
 float _StrokeID;
 float _OffsetUV;
 
+uint CompactPos(uint2 xy)
+{
+    uint x = xy.x;
+    uint y = xy.y;
+    x = x << 16;
+    x = x >> 16;
+    y = y << 16;
+    return x | y;
+}
+
 [numthreads(32,32,1)]
 void Copy (uint2 id : SV_DispatchThreadID)
 {
-    if(_OrgTex4[id].x > 0)
+    if(_OrgTexColor[id].x > 0)
     {
-        _FinalTex4[id] = _OrgTex4[id];
-        _FinalTexInt[id] = float4(_StrokeID, 0, 0, 0);
+        _FinalTexColor[id] = _OrgTexColor[id];
+    }
+}
+
+[numthreads(32,32,1)]
+void FinalCopy (uint2 id : SV_DispatchThreadID)
+{
+    if(_OrgTexColor[id].x > 0)
+    {
+        _TexToBuffer.Append(CompactPos(id));
+        InterlockedAdd(_Counter[_CurrentSubMesh], 1);
+        _FinalTexColor[id] = _OrgTexColor[id];
+        _FinalTexID[id] = float4(_StrokeID, 0, 0, 0);
     }
 }
 
@@ -23,19 +48,19 @@ void Copy (uint2 id : SV_DispatchThreadID)
 [numthreads(32,32,1)]
 void Erase (uint2 id : SV_DispatchThreadID)
 {
-    if(_OrgTex4[id].x > 0)
+    if(_OrgTexColor[id].x > 0)
     {
-        _FinalTex4[id] = float4(0, 0, 0, 0);
-        _FinalTexInt[id] = float4(-1, 0, 0, 0);
+        _FinalTexColor[id] = float4(0, 0, 0, 0);
+        _FinalTexID[id] = float4(-1, 0, 0, 0);
     }
 }
 
 [numthreads(32,32,1)]
 void CopyHighlight (uint2 id : SV_DispatchThreadID)
 {
-    if(_OrgTex4[id].x > 0)
+    if(_OrgTexColor[id].x > 0)
     {
-        _FinalTex4[id] = _OrgTex4[id];
+        _FinalTexColor[id] = _OrgTexColor[id];
     }
 }
 

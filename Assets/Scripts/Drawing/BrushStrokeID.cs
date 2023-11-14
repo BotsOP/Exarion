@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -23,7 +24,7 @@ namespace Drawing
         public float scale;
         
         [JsonConstructor]
-        public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _startTime, float _endTime, Vector4 _collisionBox, int _indexWhenDrawn, Vector2 _avgPos, float _angle = 0, float _scale = 1)
+        public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _startTime, float _endTime, Vector4 _collisionBox, int _indexWhenDrawn, Vector3 _avgPos, float _angle = 0, float _scale = 1)
         {
             brushStrokes = _brushStrokes;
             paintType = _paintType;
@@ -40,7 +41,7 @@ namespace Drawing
             scale = _scale;
         }
         
-        public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _startTime, float _endTime, Vector3 _collisionBoxMin, Vector3 _collisionBoxMax, int _indexWhenDrawn, Vector2 _avgPos, float _angle = 0, float _scale = 1)
+        public BrushStrokeID(List<BrushStroke> _brushStrokes, PaintType _paintType, float _startTime, float _endTime, Vector3 _collisionBoxMin, Vector3 _collisionBoxMax, int _indexWhenDrawn, Vector3 _avgPos, float _angle = 0, float _scale = 1)
         {
             brushStrokes = _brushStrokes;
             paintType = _paintType;
@@ -74,6 +75,23 @@ namespace Drawing
             angle = _brushStrokeID.angle;
             scale = _brushStrokeID.scale;
             indexWhenDrawn = _indexWhenDrawn;
+        }
+        
+        public BrushStrokeID(PaintType _paintType, float _startTime, float _endTime, Vector4 _collisionBox, int _indexWhenDrawn, Vector2 _avgPos, float _angle = 0, float _scale = 1)
+        {
+            
+            paintType = _paintType;
+            startTime = _startTime;
+            endTime = _endTime;
+            collisionBoxMinX = _collisionBox.x;
+            collisionBoxMinY = _collisionBox.y;
+            collisionBoxMaxX = _collisionBox.z;
+            collisionBoxMaxY = _collisionBox.w;
+            indexWhenDrawn = _indexWhenDrawn;
+            avgPosX = _avgPos.x;
+            avgPosY = _avgPos.y;
+            angle = _angle;
+            scale = _scale;
         }
 
         public Vector4 GetCollisionBox()
