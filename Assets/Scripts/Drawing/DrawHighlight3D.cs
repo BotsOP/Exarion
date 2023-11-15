@@ -59,7 +59,6 @@ namespace Drawing
 
         public void HighlightStroke(List<BrushStrokeID> _brushStrokeIDs, List<CustomRenderTexture> _rtIDs, int _totalBrushStrokes)
         {
-            Debug.Log($"multi select");
             ClearHighlight();
             CheckTimeTableBufferSize(_totalBrushStrokes);
 
@@ -73,10 +72,24 @@ namespace Drawing
             textureHelperShader.SetBuffer(copyHighlightKernel, "_HighlightIndex", highlightIndexBuffer);
             for (int i = 0; i < rtHighlights.Count; i++)
             {
+                List<uint[]> allBounds = new List<uint[]>();
+                foreach (var brushStrokeID in _brushStrokeIDs)
+                {
+                    allBounds.Add(brushStrokeID.bounds[i]);
+                }
+                uint[] bounds = CombineBounds(allBounds);
+                uint width = bounds[2] - bounds[0];
+                uint height = bounds[3] - bounds[1];
+                int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
+                int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
+                
                 textureHelperShader.SetTexture(copyHighlightKernel, "_FinalTexID", _rtIDs[i]);
                 textureHelperShader.SetTexture(copyHighlightKernel, "_FinalTexColor", rtHighlights[i]);
+                textureHelperShader.SetInt("_StartPosX", (int)bounds[0]);
+                textureHelperShader.SetInt("_StartPosY", (int)bounds[1]);
                 
-                textureHelperShader.Dispatch(copyHighlightKernel, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+                Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
+                textureHelperShader.Dispatch(copyHighlightKernel, threadGroupX, threadGroupY, 1);
             }
         }
         
@@ -98,6 +111,24 @@ namespace Drawing
             {
                 rtHighlight.Clear(false, true, Color.black);
             }
+        }
+
+        private uint[] CombineBounds(List<uint[]> _bounds)
+        {
+            uint lowX = uint.MaxValue;
+            uint lowY = uint.MaxValue;
+            uint highX = 0;
+            uint highY = 0;
+
+            foreach (var bound in _bounds)
+            {
+                lowX = lowX > bound[0] ? bound[0] : lowX;
+                lowY = lowY > bound[1] ? bound[1] : lowY;
+                highX = highX < bound[2] ? bound[2] : highX;
+                highY = highY < bound[3] ? bound[3] : highY;
+            }
+
+            return new[] { lowX, lowY, highX, highY };
         }
     }
 }

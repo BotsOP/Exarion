@@ -15,6 +15,9 @@ RWStructuredBuffer<int> _Counter;
 RWStructuredBuffer<int> _BrushStrokeBounds;
 int _CurrentSubMesh;
 
+int _StartPosX;
+int _StartPosY;
+
 float _StrokeID;
 float _OffsetUV;
 
@@ -78,6 +81,7 @@ void Erase (uint2 id : SV_DispatchThreadID)
 [numthreads(32,32,1)]
 void CopyHighlight (uint2 id : SV_DispatchThreadID)
 {
+    id += uint2((uint)_StartPosX, (uint)_StartPosY);
     int brushID = _FinalTexID[id].x;
     if(brushID < 0)
     {

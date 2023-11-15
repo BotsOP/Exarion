@@ -41,6 +41,7 @@ namespace Drawing
         private ComputeBuffer brushStrokeBoundsBuffer;
         private ComputeBuffer timeTableBuffer;
         private int timeTableBufferSize;
+        private uint[] brushStrokeBoundsReset;
         
         private static readonly int FirstStroke = Shader.PropertyToID("_FirstStroke");
         private static readonly int CursorPos = Shader.PropertyToID("_CursorPos");
@@ -62,7 +63,7 @@ namespace Drawing
             finalCopyKernelID = textureHelperShader.FindKernel("FinalCopy");
             eraseKernelID = textureHelperShader.FindKernel("Erase");
             timeRemapKernel = textureHelperShader.FindKernel("TimeRemap");
-
+            
             commandBuffer = new CommandBuffer();
             commandBuffer.name = "3DUVTimePainter";
 
@@ -77,8 +78,12 @@ namespace Drawing
             threadGroupSize.x = Mathf.CeilToInt(_imageWidth / threadGroupSizeOut.x);
             threadGroupSize.y = Mathf.CeilToInt(_imageHeight / threadGroupSizeOut.y);
 
+            brushStrokeBoundsReset = new[] { uint.MaxValue, uint.MaxValue, (uint)0, (uint)0 };
+            
             counterBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Structured);
+            counterBuffer.SetData(new int[1]);
             brushStrokeBoundsBuffer = new ComputeBuffer(4, sizeof(int), ComputeBufferType.Structured);
+            brushStrokeBoundsBuffer.SetData(brushStrokeBoundsReset);
             timeTableBufferSize = TIME_TABLE_BUFFER_SIZE_INCREASE;
             timeTableBuffer = new ComputeBuffer(timeTableBufferSize, sizeof(float) * 4, ComputeBufferType.Structured);
             
@@ -118,7 +123,7 @@ namespace Drawing
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
                 useMipMap = false,
-                name = "rt",
+                name = "rt" + rts.Count,
             };
             
             rt.Clear(false, true, Color.black);
@@ -133,7 +138,7 @@ namespace Drawing
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
                 useMipMap = false,
-                name = "rtID",
+                name = "rtID" + rtIDs.Count,
             };
             
             Color idColor = new Color(-1, -1, -1);
@@ -150,7 +155,7 @@ namespace Drawing
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
                 useMipMap = false,
-                name = "rtWholeTemp",
+                name = "rtWholeTemp" + rtWholeTemps.Count,
             };
             
             rtWholeTemp.Clear(false, true, Color.black);
@@ -166,7 +171,7 @@ namespace Drawing
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
                 useMipMap = false,
-                name = "rtWholeIDTemp",
+                name = "rtWholeIDTemp" + rtWholeIDTemps.Count,
             };
             
             rtWholeIDTemp.Clear(false, true, Color.black);
@@ -260,6 +265,8 @@ namespace Drawing
                 uint[] bounds = new uint[4];
                 brushStrokeBoundsBuffer.GetData(bounds);
                 allBounds.Add(bounds);
+                Debug.Log($"width: {bounds[2] - bounds[0]}  height: {bounds[3] - bounds[1]}");
+                brushStrokeBoundsBuffer.SetData(brushStrokeBoundsReset);
                 
                 rtWholeTemps[i].Clear(false, true, Color.black);
                 rtWholeIDTemps[i].Clear(false, true, Color.black);
