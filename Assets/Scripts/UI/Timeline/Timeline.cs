@@ -521,7 +521,8 @@ namespace UI
                 firstTimeSelected = false;
             }
 
-            //List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
+            List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
+            List<Vector2> newTimes = new List<Vector2>();
             for (int i = 0; i < selectedClips.Count; i++)
             {
                 var clip = selectedClips[i];
@@ -533,14 +534,15 @@ namespace UI
                 if (Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) > 0.001 ||
                     Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) > 0.001)
                 {
-                    clip.SetTime(clip.ClipTime);
-                    //brushStrokeIDs.AddRange(clip.GetBrushStrokeIDs());
+                    //clip.SetTime(clip.ClipTime);
+                    brushStrokeIDs.AddRange(clip.GetBrushStrokeIDs());
+                    newTimes.Add(clip.ClipTime);
                 }
             }
-            // if (brushStrokeIDs.Count > 0)
-            // {
-            //     EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs);
-            // }
+            if (brushStrokeIDs.Count > 0)
+            {
+                EventSystem<List<BrushStrokeID>, List<Vector2>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs, newTimes);
+            }
 
             return true;
         }
@@ -639,6 +641,7 @@ namespace UI
             if (selectedClips.Count > 0)
             {
                 List<TimelineClip> redraws = new List<TimelineClip>();
+                List<Vector2> newTimes = new List<Vector2>();
                 for (int i = 0; i < selectedClips.Count; i++)
                 {
                     var clip = selectedClips[i];
@@ -650,7 +653,7 @@ namespace UI
                     {
                         continue;
                     }
-
+                    newTimes.Add(clip.ClipTime);
                     redraws.Add(clip);
                 }
 
@@ -658,7 +661,8 @@ namespace UI
                 {
                     ICommand redrawCommand = new RedrawMultipleCommand(redraws);
                     EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, redrawCommand);
-                    EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, redraws.SelectMany(timelineClip => timelineClip.GetBrushStrokeIDs()).ToList());
+                    List<BrushStrokeID> brushStrokeIDs = redraws.SelectMany(timelineClip => timelineClip.GetBrushStrokeIDs()).ToList();
+                    //EventSystem<List<BrushStrokeID>, List<Vector2>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs, newTimes);
                 }
             }
         }

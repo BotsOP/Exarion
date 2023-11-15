@@ -88,6 +88,9 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
+            
+            EventSystem<List<BrushStrokeID>, List<Vector2>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
+            
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
@@ -138,6 +141,9 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REDRAW_STROKES, RedrawStrokes);
+            
+            EventSystem<List<BrushStrokeID>, List<Vector2>>.Unsubscribe(EventType.REDRAW_STROKES, RedrawStrokes);
+            
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
@@ -186,7 +192,8 @@ namespace Drawing
                 
                 drawer.addRTID();
                 drawer.addBrushStrokeBuffer();
-                CustomRenderTexture drawingTempRT = drawer.addRTWholeTemp(i);
+                drawer.addRTWholeIDTemp();
+                CustomRenderTexture drawingTempRT = drawer.addRTWholeTemp();
                 CustomRenderTexture drawingRT = drawer.addRT();
                 drawingMat.SetTexture("_MainTex", drawingRT);
                 drawingMat.SetTexture("_TempBrushStroke", drawingTempRT);
@@ -269,6 +276,7 @@ namespace Drawing
                 cachedTime = cachedTime > 1 ? 0 : time;
                 lastCursorPos = _worldPos;
                 firstUse = false;
+                newBrushStrokeID = drawer.brushStrokesID.Count;
             }
 
             collisionBoxMin.x = collisionBoxMin.x > _worldPos.x ? _worldPos.x - brushSize: collisionBoxMin.x;
@@ -300,12 +308,12 @@ namespace Drawing
 
         private void StoppedDrawing()
         {
-            List<UInt16[]> pixels = drawer.FinishDrawing();
-            
-            //List<BrushStroke> brushStrokes = new List<BrushStroke>(tempBrushStrokes);
+            (List<UInt16[]>, List<uint[]>) result = drawer.FinishDrawing();
+            List<UInt16[]> pixels = result.Item1;
+            List<uint[]> bounds = result.Item2;
             
             BrushStrokeID brushStrokeID = new BrushStrokeID(
-                pixels, paintType, startBrushStrokeTime, time, collisionBoxMin, collisionBoxMax, drawer.brushStrokesID.Count, tempAvgPos);
+                pixels, bounds, paintType, startBrushStrokeTime, time, collisionBoxMin, collisionBoxMax, drawer.brushStrokesID.Count, tempAvgPos);
 
             sphere1.transform.position = collisionBoxMin;
             sphere2.transform.position = collisionBoxMax;
@@ -328,6 +336,10 @@ namespace Drawing
         private void RedrawStrokes(List<BrushStrokeID> _brushStrokeIDs)
         {
             drawer.RedrawAllSafe(_brushStrokeIDs);
+        }
+        private void RedrawStrokes(List<BrushStrokeID> _brushStrokeIDs, List<Vector2> _newTimes)
+        {
+            drawer.RedrawAllSafe(_brushStrokeIDs, _newTimes);
         }
 
         private void AddStroke(BrushStrokeID _brushStrokeID)
@@ -393,17 +405,19 @@ namespace Drawing
         
         private void HighlightStroke(BrushStrokeID _brushStrokeID)
         {
+            int amountBrushStrokes = drawer.brushStrokesID.Count;
             if (selectedBrushStrokes.Remove(_brushStrokeID))
             {
-                highlighter.HighlightStroke(selectedBrushStrokes);
+                highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, amountBrushStrokes);
                 return;
             }
 
             selectedBrushStrokes.Add(_brushStrokeID);
-            highlighter.HighlightStroke(selectedBrushStrokes);
+            highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, amountBrushStrokes);
         }
         private void HighlightStroke(List<BrushStrokeID> _brushStrokeIDs)
         {
+            int amountBrushStrokes = drawer.brushStrokesID.Count;
             foreach (var brushStrokeID in _brushStrokeIDs)
             {
                 // if (selectedBrushStrokes.Remove(brushStrokeID))
@@ -414,21 +428,23 @@ namespace Drawing
 
                 selectedBrushStrokes.Add(brushStrokeID);
             }
-            highlighter.HighlightStroke(selectedBrushStrokes);
+            highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, amountBrushStrokes);
         }
         private void RemoveHighlight(BrushStrokeID _brushStrokeID)
         {
+            int amountBrushStrokes = drawer.brushStrokesID.Count;
             selectedBrushStrokes.Remove(_brushStrokeID);
-            highlighter.HighlightStroke(selectedBrushStrokes);
+            highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, amountBrushStrokes);
         }
         private void RemoveHighlight(List<BrushStrokeID> _brushStrokeIDs)
         {
+            int amountBrushStrokes = drawer.brushStrokesID.Count;
             for (var i = 0; i < _brushStrokeIDs.Count; i++)
             {
                 selectedBrushStrokes.Remove(_brushStrokeIDs[i]);
             }
 
-            highlighter.HighlightStroke(selectedBrushStrokes);
+            highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, amountBrushStrokes);
         }
         private void ClearHighlightStroke()
         {
@@ -438,6 +454,8 @@ namespace Drawing
         
         private void SelectBrushStroke(Vector3 _worldPos)
         {
+            int amountBrushStrokes = drawer.brushStrokesID.Count;
+
             foreach (BrushStrokeID brushStrokeID in drawer.brushStrokesID)
             {
                 if (drawer.IsMouseOverBrushStroke(brushStrokeID, _worldPos))
@@ -446,18 +464,18 @@ namespace Drawing
                     {
                         if (selectedBrushStrokes.Remove(brushStrokeID))
                         {
-                            highlighter.HighlightStroke(selectedBrushStrokes);
+                            highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, amountBrushStrokes);
                             EventSystem<BrushStrokeID>.RaiseEvent(EventType.REMOVE_SELECT, brushStrokeID);
                             return;
                         }
                         selectedBrushStrokes.Add(brushStrokeID);
-                        highlighter.HighlightStroke(selectedBrushStrokes);
+                        highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, amountBrushStrokes);
                         EventSystem<BrushStrokeID>.RaiseEvent(EventType.SELECT_TIMELINECLIP, brushStrokeID);
                         return;
                     }
                     EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
                     selectedBrushStrokes.Add(brushStrokeID);
-                    highlighter.HighlightStroke(selectedBrushStrokes);
+                    highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, amountBrushStrokes);
                     EventSystem<BrushStrokeID>.RaiseEvent(EventType.SELECT_TIMELINECLIP, brushStrokeID);
                     
                     return;

@@ -39,7 +39,7 @@ float2 ClosestPointOnLine(const float2 lineStart, const float2 lineEnd, const fl
     return lineStart + projectionDistance * lineDirection;
 }
 
-float cubicBezierCircle(float t)
+float LinearToCircle(float t)
 {
     return t * t * t;
 }
@@ -54,7 +54,7 @@ float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
     //paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
     
     float distToLine = distance(paintPosOnLine, paintPos);
-    distToLine = 1 - saturate((cubicBezierCircle(distToLine / _BrushSize) * _BrushSize) / distLine);
+    distToLine = 1 - saturate((LinearToCircle(distToLine / _BrushSize) * _BrushSize) / distLine);
     float paintColorOutside = (_TimeColor - _PreviousTimeColor) * distToLine;
     //paintColorOutside = clamp(paintColorOutside, 0, _TimeColor - _PreviousTimeColor);
     

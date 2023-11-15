@@ -8,6 +8,7 @@ namespace Drawing
     public class BrushStrokeID
     {
         public List<UInt16[]> pixels;
+        public List<uint[]> bounds;
         public float collisionBoxMinX;
         public float collisionBoxMinY;
         public float collisionBoxMinZ;
@@ -25,27 +26,10 @@ namespace Drawing
         public float scale;
         
         [JsonConstructor]
-        public BrushStrokeID(List<UInt16[]> _pixels, PaintType _paintType, float _startTime, float _endTime, Vector4 _collisionBox, int _indexWhenDrawn, Vector3 _avgPos, float _angle = 0, float _scale = 1)
+        public BrushStrokeID(List<UInt16[]> _pixels, List<uint[]> _bounds, PaintType _paintType, float _startTime, float _endTime, Vector3 _collisionBoxMin, Vector3 _collisionBoxMax, int _indexWhenDrawn, Vector3 _avgPos, float _angle = 0, float _scale = 1)
         {
             pixels = _pixels;
-            paintType = _paintType;
-            startTime = _startTime;
-            endTime = _endTime;
-            collisionBoxMinX = _collisionBox.x;
-            collisionBoxMinY = _collisionBox.y;
-            collisionBoxMaxX = _collisionBox.z;
-            collisionBoxMaxY = _collisionBox.w;
-            indexWhenDrawn = _indexWhenDrawn;
-            avgPosX = _avgPos.x;
-            avgPosY = _avgPos.y;
-            avgPosZ = _avgPos.z;
-            angle = _angle;
-            scale = _scale;
-        }
-        
-        public BrushStrokeID(List<UInt16[]> _pixels, PaintType _paintType, float _startTime, float _endTime, Vector3 _collisionBoxMin, Vector3 _collisionBoxMax, int _indexWhenDrawn, Vector3 _avgPos, float _angle = 0, float _scale = 1)
-        {
-            pixels = _pixels;
+            bounds = _bounds;
             paintType = _paintType;
             startTime = _startTime;
             endTime = _endTime;
@@ -96,6 +80,11 @@ namespace Drawing
             avgPosZ = _avgPos.z;
             angle = _angle;
             scale = _scale;
+        }
+
+        public Vector2 GetTime()
+        {
+            return new Vector2(startTime, endTime);
         }
 
         public Vector4 GetCollisionBox()

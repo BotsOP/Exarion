@@ -20,6 +20,7 @@
             float3 _CursorPos;
             int _FirstStroke;
             float _StrokeID;
+            float _StartPadding;
 
             struct appdata{
                 float4 vertex : POSITION;
@@ -56,9 +57,28 @@
                 return lineStart + projectionDistance * lineDirection;
             }
 
+            float LinearToCircle(float t)
+            {
+                //return sqrt(1 - pow(t - 0.9, 2));
+                return sqrt(4 - pow(t * 2 - 2, 2)) / 2;
+            }
+
             float cubicBezierCircle(float t)
             {
                 return sqrt(1 - pow(t - 0.9, 2));
+            }
+
+            float Remap (float value, float from1, float to1, float from2, float to2) 
+            {
+                return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
+            }
+
+            float DistancePointToLine(float2 lineStart, float2 lineEnd, float2 testPoint)
+            {
+                float2 lineDirection = lineEnd - lineStart;
+                float2 perpDirection = float2(lineDirection.y, -lineDirection.x);
+                float2 dirToTestPoint = lineStart - testPoint;
+                return abs(dot(normalize(perpDirection), dirToTestPoint));
             }
 
             float CalculatePaintColor(float3 paintPos, float3 startPos, float3 endPos)
@@ -76,7 +96,7 @@
 
                 float distToLine = distance(paintPosOnLine, paintPos);
                 distToLine = 1 - distToLine / _BrushSize;
-                float paintColorOutside = lerp(0, _TimeColor - _PreviousTimeColor, cubicBezierCircle(distToLine));
+                float paintColorOutside = lerp(0, _TimeColor - _PreviousTimeColor, LinearToCircle(distToLine));
                 
                 paintColor -= paintColorOutside;
                 
