@@ -13,7 +13,7 @@
 
 Texture2D<float> _OrgTexColor;
 RWTexture2D<float> _FinalTexColor;
-RWTexture2D<int> _FinalTexID;
+RWTexture2D<float> _FinalTexID;
 RWTexture2D<int> _TempTexID;
 
 StructuredBuffer<float4> _TimeRemap;
@@ -49,7 +49,7 @@ float Remap (float value, float from1, float to1, float from2, float to2)
 [numthreads(32,32,1)]
 void Copy (uint2 id : SV_DispatchThreadID)
 {
-    if(_OrgTexColor[id].x > 0 && _TempTexID[id].x == 0)
+    if(_OrgTexColor[id] > 0 && _TempTexID[id] == 0)
     {
         _TempTexID[id] = float4(1, 0, 0, 0);
         _FinalTexColor[id] = _OrgTexColor[id];
@@ -59,7 +59,7 @@ void Copy (uint2 id : SV_DispatchThreadID)
 [numthreads(32,32,1)]
 void FinalCopy (uint2 id : SV_DispatchThreadID)
 {
-    if(_OrgTexColor[id].x > 0)
+    if(_OrgTexColor[id] > 0)
     {
         // TexToBuffer texToBuffer;
         // texToBuffer.pos = CompactPos(id);
@@ -72,7 +72,7 @@ void FinalCopy (uint2 id : SV_DispatchThreadID)
         InterlockedMax(_BrushStrokeBounds[2], id.x);
         InterlockedMax(_BrushStrokeBounds[3], id.y);
         
-        if(_FinalTexID[id].x < 0)
+        if(_FinalTexID[id] < 0 || _StrokeID < _FinalTexID[id])
         {
             _FinalTexColor[id] = _OrgTexColor[id];
             _FinalTexID[id] = float4(_StrokeID, 0, 0, 0);
@@ -85,14 +85,14 @@ void FinalCopy (uint2 id : SV_DispatchThreadID)
 void Erase (uint2 id : SV_DispatchThreadID)
 {
     id += uint2((uint)_StartPosX, (uint)_StartPosY);
-    int brushID = _FinalTexID[id].x;
-    if(brushID == -1)
+    int brushID = _FinalTexID[id];
+    if(brushID < 0)
     {
         return;
     }
     
     int shouldErase = _EraseRemap[brushID].x;
-    if(shouldErase == 1)
+    if(shouldErase > 0)
     {
         _FinalTexID[id] = -1;
         _FinalTexColor[id] = 0;
@@ -103,7 +103,7 @@ void Erase (uint2 id : SV_DispatchThreadID)
 void CopyHighlight (uint2 id : SV_DispatchThreadID)
 {
     id += uint2((uint)_StartPosX, (uint)_StartPosY);
-    int brushID = _FinalTexID[id].x;
+    int brushID = _FinalTexID[id];
     if(brushID < 0)
     {
         return;
@@ -120,13 +120,13 @@ void CopyHighlight (uint2 id : SV_DispatchThreadID)
 void TimeRemap (uint2 id : SV_DispatchThreadID)
 {
     id += uint2((uint)_StartPosX, (uint)_StartPosY);
-    int brushID = _FinalTexID[id].x;
+    int brushID = _FinalTexID[id];
     if(brushID < 0)
     {
         return;
     }
     
-    float pixel = _FinalTexColor[id].x;
+    float pixel = _FinalTexColor[id];
 
     float4 time = _TimeRemap[brushID];
     float newPixel = Remap(pixel, time.x, time.y, time.z, time.w);
@@ -136,7 +136,8 @@ void TimeRemap (uint2 id : SV_DispatchThreadID)
 [numthreads(32,32,1)]
 void UpdateIDTex (uint2 id : SV_DispatchThreadID)
 {
-    int brushID = _FinalTexID[id].x;
+    id += uint2((uint)_StartPosX, (uint)_StartPosY);
+    int brushID = _FinalTexID[id];
     if(brushID < 0)
     {
         return;

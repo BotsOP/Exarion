@@ -26,11 +26,13 @@ namespace Drawing
         public float angle;
         public float scale;
         public bool shouldDelete;
-        
+        public List<BrushStroke> brushStrokes;
+
         [JsonConstructor]
-        public BrushStrokeID(List<BrushStrokePixel[]> _pixels, List<uint[]> _bounds, PaintType _paintType, float _startTime, float _endTime, Vector3 _collisionBoxMin, Vector3 _collisionBoxMax, int _indexWhenDrawn, Vector3 _avgPos, float _angle = 0, float _scale = 1)
+        public BrushStrokeID(List<BrushStrokePixel[]> _pixels, List<BrushStroke> _brushStrokes, List<uint[]> _bounds, PaintType _paintType, float _startTime, float _endTime, Vector3 _collisionBoxMin, Vector3 _collisionBoxMax, int _indexWhenDrawn, Vector3 _avgPos, float _angle = 0, float _scale = 1)
         {
             pixels = _pixels;
+            brushStrokes = _brushStrokes;
             bounds = _bounds;
             paintType = _paintType;
             startTime = _startTime;

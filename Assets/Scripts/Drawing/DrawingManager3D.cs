@@ -34,6 +34,7 @@ namespace Drawing
         [SerializeField] private RenderTexture rtTemp;
         [SerializeField] private RenderTexture rtTemp2;
         [SerializeField] private RenderTexture rtShow;
+        [SerializeField] private RenderTexture rtShow2;
         [SerializeField] private RenderTexture rtID;
         [SerializeField] private RenderTexture rtHighlight;
     
@@ -44,6 +45,7 @@ namespace Drawing
         private Vector3 lastCursorPos;
         private bool firstUse = true;
         private List<BrushStrokeID> selectedBrushStrokes;
+        private List<BrushStroke> tempBrushStrokes;
 
         private Drawing3D drawer;
         private DrawHighlight3D highlighter;
@@ -64,7 +66,8 @@ namespace Drawing
             highlighter = new DrawHighlight3D(imageWidth, imageHeight);
             previewer = new DrawPreview(imageWidth, imageHeight);
             drawStamp = new DrawStamp();
-            
+
+            tempBrushStrokes = new List<BrushStroke>();
             selectedBrushStrokes = new List<BrushStrokeID>();
             collisionBoxMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
             collisionBoxMax = new Vector3(-float.MaxValue, -float.MaxValue, -float.MaxValue);
@@ -190,10 +193,10 @@ namespace Drawing
                 Material drawingMat = new Material(drawShader);
                 Material displayMat = new Material(displayShader);
                 
-                drawer.addRTID();
                 drawer.addRTWholeIDTemp();
                 CustomRenderTexture drawingTempRT = drawer.addRTWholeTemp();
                 CustomRenderTexture drawingRT = drawer.addRT();
+                drawingMat.SetTexture("_IDTex", drawer.addRTID());
                 drawingMat.SetTexture("_MainTex", drawingRT);
                 drawingMat.SetTexture("_TempBrushStroke", drawingTempRT);
                 displayMat.SetTexture("_MainTex", drawingRT);
@@ -209,6 +212,7 @@ namespace Drawing
             rtTemp = drawer.rtWholeTemps[0];
             rtTemp2 = drawer.rtWholeTemps[1];
             rtShow = drawer.rts[0];
+            rtShow2 = drawer.rts[1];
             rtID = drawer.rtIDs[0];
             rtHighlight = highlighter.rtHighlights[0];
         }
@@ -286,7 +290,7 @@ namespace Drawing
             collisionBoxMax.z = collisionBoxMax.z < _worldPos.z ? _worldPos.z + brushSize: collisionBoxMax.z;
 
             drawer.Draw(lastCursorPos, _worldPos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
-            //tempBrushStrokes.Add(new BrushStroke(lastCursorPos, _worldPos, brushSize, time, cachedTime));
+            tempBrushStrokes.Add(new BrushStroke(lastCursorPos, _worldPos, brushSize, time, cachedTime));
             
             lastCursorPos = _worldPos;
         }
@@ -311,8 +315,11 @@ namespace Drawing
             List<BrushStrokePixel[]> pixels = result.Item1;
             List<uint[]> bounds = result.Item2;
             
+            tempAvgPos /= tempBrushStrokes.Count;
+            List<BrushStroke> brushStrokes = new List<BrushStroke>(tempBrushStrokes);
+            
             BrushStrokeID brushStrokeID = new BrushStrokeID(
-                pixels, bounds, paintType, startBrushStrokeTime, time, collisionBoxMin, collisionBoxMax, drawer.brushStrokesID.Count, tempAvgPos);
+                pixels, brushStrokes, bounds, paintType, startBrushStrokeTime, time, collisionBoxMin, collisionBoxMax, drawer.brushStrokesID.Count, tempAvgPos);
 
             sphere1.transform.position = collisionBoxMin;
             sphere2.transform.position = collisionBoxMax;
@@ -321,6 +328,7 @@ namespace Drawing
             
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
             
+            tempBrushStrokes.Clear();
             tempAvgPos = Vector2.zero;
             collisionBoxMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
             collisionBoxMax = new Vector3(-float.MaxValue, -float.MaxValue, -float.MaxValue);
@@ -387,8 +395,6 @@ namespace Drawing
         
         private void RemoveStroke(List<BrushStrokeID> _brushStrokeIDs)
         {
-            drawer.EraseBrushStroke(_brushStrokeIDs);
-            
             int lowestIndex = int.MaxValue;
             foreach (var brushStrokeID in _brushStrokeIDs)
             {
@@ -396,13 +402,21 @@ namespace Drawing
                 
                 drawer.brushStrokesID.Remove(brushStrokeID);
             }
-
+            
             int count = drawer.brushStrokesID.Count - lowestIndex;
+
             List<BrushStrokeID> changedIDBrushStrokes = drawer.brushStrokesID.GetRange(lowestIndex, count);
             drawer.UpdateIDTex(changedIDBrushStrokes);
             
             List<BrushStrokeID> affected = drawer.GetOverlappingBrushStrokeID(_brushStrokeIDs);
-            
+
+            _brushStrokeIDs.AddRange(affected);
+            drawer.EraseBrushStroke(_brushStrokeIDs);
+
+            foreach (var brushStrokeID in affected)
+            {
+                drawer.RedrawBrushStroke(brushStrokeID);
+            }
         }
         
         private void HighlightStroke(BrushStrokeID _brushStrokeID)

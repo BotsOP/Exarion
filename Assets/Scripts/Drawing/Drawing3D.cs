@@ -138,7 +138,7 @@ namespace Drawing
         
         public CustomRenderTexture addRTID()
         {
-            CustomRenderTexture rtID = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RInt, RenderTextureReadWrite.Linear)
+            CustomRenderTexture rtID = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
             {
                 filterMode = FilterMode.Point,
                 enableRandomWrite = true,
@@ -187,17 +187,17 @@ namespace Drawing
 
         #endregion
 
-        public void Draw(Vector3 _lastPos, Vector3 _currentPos, float _strokeBrushSize, PaintType _paintType, float _lastTime = 0, float _brushTime = 0, bool _firstStroke = false, float _strokeID = 0)
+        public void Draw(Vector3 _startPos, Vector3 _endPos, float _strokeBrushSize, PaintType _paintType, float _startTime = 0, float _endTime = 0, bool _firstStroke = false, float _strokeID = 0)
         {
             switch (_paintType)
             {
                 case PaintType.PaintUnderEverything:
                     paintMaterial.SetInt(FirstStroke, _firstStroke ? 1 : 0);
-                    paintMaterial.SetVector(CursorPos, _currentPos);
-                    paintMaterial.SetVector(LastCursorPos, _lastPos);
+                    paintMaterial.SetVector(CursorPos, _endPos);
+                    paintMaterial.SetVector(LastCursorPos, _startPos);
                     paintMaterial.SetFloat(BrushSize, _strokeBrushSize);
-                    paintMaterial.SetFloat(TimeColor, _brushTime);
-                    paintMaterial.SetFloat(PreviousTimeColor, _lastTime);
+                    paintMaterial.SetFloat(TimeColor, _endTime);
+                    paintMaterial.SetFloat(PreviousTimeColor, _startTime);
                     paintMaterial.SetFloat(StrokeID, _strokeID);
                     for (int i = 0; i < subMeshCount; i++)
                     {
@@ -214,24 +214,6 @@ namespace Drawing
                         ExecuteBuffer();
                     }
                     break;
-                // case PaintType.Erase:
-                //     simplePaintMaterial.SetInt(FirstStroke, _firstStroke ? 1 : 0);
-                //     simplePaintMaterial.SetVector(CursorPos, _currentPos);
-                //     simplePaintMaterial.SetVector(LastCursorPos, _lastPos);
-                //     simplePaintMaterial.SetFloat(BrushSize, _strokeBrushSize);
-                //
-                //     for (int i = 0; i < subMeshCount; i++)
-                //     {
-                //         commandBuffer.SetRenderTarget(rtIndividualTemp);
-                //         commandBuffer.DrawRenderer(rend, simplePaintMaterial, i);
-                //     
-                //         commandBuffer.SetComputeTextureParam(textureHelperShader, eraseKernelID, "_OrgTexColor", rtIndividualTemp);
-                //         commandBuffer.SetComputeTextureParam(textureHelperShader, eraseKernelID, "_FinalTexColor", rts[i]);
-                //         commandBuffer.SetComputeTextureParam(textureHelperShader, eraseKernelID, "_FinalTexID", rtIDs[i]);
-                //         commandBuffer.DispatchCompute(textureHelperShader, eraseKernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
-                //         ExecuteBuffer();
-                //     }
-                //     break;
             }
             
         }
@@ -318,29 +300,38 @@ namespace Drawing
 
         public void RedrawBrushStroke(BrushStrokeID _brushStrokeID)
         {
-            for (int i = 0; i < subMeshCount; i++)
+            float oldStartTime = _brushStrokeID.brushStrokes[0].startTime;
+            float oldEndTime = _brushStrokeID.brushStrokes[^1].startTime;
+            
+            bool firstStroke = true;
+            foreach (var brushStroke in _brushStrokeID.brushStrokes)
             {
+                float startTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
+                float endTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
                 
+                Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, _brushStrokeID.paintType, 
+                     startTime, endTime, firstStroke, _brushStrokeID.indexWhenDrawn);
+                firstStroke = false;
             }
+            FinishDrawing();
         }
 
         public bool IsMouseOverBrushStroke(BrushStrokeID _brushStrokeID, Vector3 _worldPos)
         {
+            Vector3 minCorner = _brushStrokeID.GetMinCorner();
+            Vector3 maxCorner = _brushStrokeID.GetMaxCorner();
+            if (CheckCollision(minCorner, maxCorner, _worldPos))
+            {
+                foreach (var brushStroke in _brushStrokeID.brushStrokes)
+                {
+                    float distLine = DistancePointToLine(brushStroke.GetStartPos(), brushStroke.GetEndPos(), _worldPos);
+                    if (distLine < brushStroke.brushSize)
+                    {
+                        return true;
+                    }
+                }
+            }
             return false;
-            // Vector3 minCorner = _brushStrokeID.GetMinCorner();
-            // Vector3 maxCorner = _brushStrokeID.GetMaxCorner();
-            // if (CheckCollision(minCorner, maxCorner, _worldPos))
-            // {
-            //     foreach (var brushStroke in _brushStrokeID.brushStrokes)
-            //     {
-            //         float distLine = DistancePointToLine(brushStroke.GetStartPos(), brushStroke.GetEndPos(), _worldPos);
-            //         if (distLine < brushStroke.brushSize)
-            //         {
-            //             return true;
-            //         }
-            //     }
-            // }
-            // return false;
         }
         
         public void RedrawAll()
@@ -517,7 +508,10 @@ namespace Drawing
         //     
         //     return tempRT;
         // }
-
+        public void RedrawStroke(BrushStrokeID _brushStrokeID)
+        {
+            
+        }
 
         public void UpdateIDTex(List<BrushStrokeID> _brushStrokeIDs)
         {
