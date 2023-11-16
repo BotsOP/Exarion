@@ -7,7 +7,8 @@ namespace Drawing
 {
     public class BrushStrokeID
     {
-        public List<UInt16[]> pixels;
+        public List<BrushStrokePixel[]> pixels;
+        public Vector2 timeWhenDrawn;
         public List<uint[]> bounds;
         public float collisionBoxMinX;
         public float collisionBoxMinY;
@@ -24,15 +25,17 @@ namespace Drawing
         public float avgPosZ;
         public float angle;
         public float scale;
+        public bool shouldDelete;
         
         [JsonConstructor]
-        public BrushStrokeID(List<UInt16[]> _pixels, List<uint[]> _bounds, PaintType _paintType, float _startTime, float _endTime, Vector3 _collisionBoxMin, Vector3 _collisionBoxMax, int _indexWhenDrawn, Vector3 _avgPos, float _angle = 0, float _scale = 1)
+        public BrushStrokeID(List<BrushStrokePixel[]> _pixels, List<uint[]> _bounds, PaintType _paintType, float _startTime, float _endTime, Vector3 _collisionBoxMin, Vector3 _collisionBoxMax, int _indexWhenDrawn, Vector3 _avgPos, float _angle = 0, float _scale = 1)
         {
             pixels = _pixels;
             bounds = _bounds;
             paintType = _paintType;
             startTime = _startTime;
             endTime = _endTime;
+            timeWhenDrawn = new Vector2(_startTime, _endTime);
             collisionBoxMinX = _collisionBoxMin.x;
             collisionBoxMinY = _collisionBoxMin.y;
             collisionBoxMinZ = _collisionBoxMin.z;
@@ -49,7 +52,7 @@ namespace Drawing
         
         public BrushStrokeID(BrushStrokeID _brushStrokeID, int _indexWhenDrawn)
         {
-            pixels = new List<UInt16[]>(_brushStrokeID.pixels);
+            pixels = new List<BrushStrokePixel[]>(_brushStrokeID.pixels);
             paintType = _brushStrokeID.paintType;
             startTime = _brushStrokeID.startTime;
             endTime = _brushStrokeID.endTime;
@@ -234,55 +237,62 @@ namespace Drawing
         }
     }
 
-    // public struct BrushStroke
-    // {
-    //     public float startPosX;
-    //     public float startPosY;
-    //     public float startPosZ;
-    //     public float endPosX;
-    //     public float endPosY;
-    //     public float endPosZ;
-    //     public float brushSize;
-    //     public float endTime;
-    //     public float startTime;
-    //
-    //     public BrushStroke(Vector2 _startPos, Vector2 _endPos, float _brushSize, float _endTime, float _startTime)
-    //     {
-    //         startPosX = _startPos.x;
-    //         startPosY = _startPos.y;
-    //         endPosX = _endPos.x;
-    //         endPosY = _endPos.y;
-    //         brushSize = _brushSize;
-    //         endTime = _endTime;
-    //         startTime = _startTime;
-    //         startPosZ = 0;
-    //         endPosZ = 0;
-    //     }
-    //     
-    //     public BrushStroke(Vector3 _startPos, Vector3 _endPos, float _brushSize, float _endTime, float _startTime)
-    //     {
-    //         startPosX = _startPos.x;
-    //         startPosY = _startPos.y;
-    //         endPosX = _endPos.x;
-    //         endPosY = _endPos.y;
-    //         startPosZ = _startPos.z;
-    //         endPosZ = _endPos.z;
-    //         brushSize = _brushSize;
-    //         endTime = _endTime;
-    //         startTime = _startTime;
-    //     }
-    //
-    //     public Vector3 GetStartPos()
-    //     {
-    //         return new Vector3(startPosX, startPosY, startPosZ);
-    //     }
-    //     public Vector3 GetEndPos()
-    //     {
-    //         return new Vector3(endPosX, endPosY, endPosZ);
-    //     }
-    //     public Vector4 GetCollisionBox()
-    //     {
-    //         return new Vector4(startPosX, startPosY, endPosX, endPosY);
-    //     }
-    // }
+    public struct BrushStrokePixel
+    {
+        public UInt16 x;
+        public UInt16 y;
+        public float color;
+    }
+
+    public struct BrushStroke
+    {
+        public float startPosX;
+        public float startPosY;
+        public float startPosZ;
+        public float endPosX;
+        public float endPosY;
+        public float endPosZ;
+        public float brushSize;
+        public float endTime;
+        public float startTime;
+    
+        public BrushStroke(Vector2 _startPos, Vector2 _endPos, float _brushSize, float _endTime, float _startTime)
+        {
+            startPosX = _startPos.x;
+            startPosY = _startPos.y;
+            endPosX = _endPos.x;
+            endPosY = _endPos.y;
+            brushSize = _brushSize;
+            endTime = _endTime;
+            startTime = _startTime;
+            startPosZ = 0;
+            endPosZ = 0;
+        }
+        
+        public BrushStroke(Vector3 _startPos, Vector3 _endPos, float _brushSize, float _endTime, float _startTime)
+        {
+            startPosX = _startPos.x;
+            startPosY = _startPos.y;
+            endPosX = _endPos.x;
+            endPosY = _endPos.y;
+            startPosZ = _startPos.z;
+            endPosZ = _endPos.z;
+            brushSize = _brushSize;
+            endTime = _endTime;
+            startTime = _startTime;
+        }
+    
+        public Vector3 GetStartPos()
+        {
+            return new Vector3(startPosX, startPosY, startPosZ);
+        }
+        public Vector3 GetEndPos()
+        {
+            return new Vector3(endPosX, endPosY, endPosZ);
+        }
+        public Vector4 GetCollisionBox()
+        {
+            return new Vector4(startPosX, startPosY, endPosX, endPosY);
+        }
+    }
 }

@@ -72,23 +72,23 @@ namespace Drawing
             textureHelperShader.SetBuffer(copyHighlightKernel, "_HighlightIndex", highlightIndexBuffer);
             for (int i = 0; i < rtHighlights.Count; i++)
             {
-                List<uint[]> allBounds = new List<uint[]>();
-                foreach (var brushStrokeID in _brushStrokeIDs)
-                {
-                    allBounds.Add(brushStrokeID.bounds[i]);
-                }
-                uint[] bounds = CombineBounds(allBounds);
+                uint[] bounds = CombineBounds(_brushStrokeIDs, i);
                 uint width = bounds[2] - bounds[0];
                 uint height = bounds[3] - bounds[1];
                 int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
                 int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
+
+                Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
+                if (threadGroupX == 0 && threadGroupY == 0)
+                {
+                    continue;
+                }
                 
                 textureHelperShader.SetTexture(copyHighlightKernel, "_FinalTexID", _rtIDs[i]);
                 textureHelperShader.SetTexture(copyHighlightKernel, "_FinalTexColor", rtHighlights[i]);
                 textureHelperShader.SetInt("_StartPosX", (int)bounds[0]);
                 textureHelperShader.SetInt("_StartPosY", (int)bounds[1]);
                 
-                Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
                 textureHelperShader.Dispatch(copyHighlightKernel, threadGroupX, threadGroupY, 1);
             }
         }
@@ -112,23 +112,33 @@ namespace Drawing
                 rtHighlight.Clear(false, true, Color.black);
             }
         }
-
-        private uint[] CombineBounds(List<uint[]> _bounds)
+        
+        private uint[] CombineBounds(List<BrushStrokeID> _brushStrokeIDs, int _subMeshIndex)
         {
-            uint lowX = uint.MaxValue;
-            uint lowY = uint.MaxValue;
-            uint highX = 0;
-            uint highY = 0;
-
-            foreach (var bound in _bounds)
+            uint[] combinedBounds = new uint[4];
+            combinedBounds[0] = uint.MaxValue;
+            combinedBounds[1] = uint.MaxValue;
+            
+            foreach (var brushStrokeID in _brushStrokeIDs)
             {
-                lowX = lowX > bound[0] ? bound[0] : lowX;
-                lowY = lowY > bound[1] ? bound[1] : lowY;
-                highX = highX < bound[2] ? bound[2] : highX;
-                highY = highY < bound[3] ? bound[3] : highY;
+                uint tempLowX = brushStrokeID.bounds[_subMeshIndex][0];
+                uint lowestX = combinedBounds[0];
+                combinedBounds[0] = lowestX > tempLowX ? tempLowX : lowestX;
+                
+                uint tempLowY = brushStrokeID.bounds[_subMeshIndex][1];
+                uint lowestY = combinedBounds[1];
+                combinedBounds[1] = lowestX > tempLowY ? tempLowY : lowestY;
+                
+                uint tempHighestX = brushStrokeID.bounds[_subMeshIndex][2];
+                uint highestX = combinedBounds[2];
+                combinedBounds[2] = highestX < tempHighestX ? tempHighestX : highestX;
+                
+                uint tempHighestY = brushStrokeID.bounds[_subMeshIndex][3];
+                uint highestY = combinedBounds[3];
+                combinedBounds[3] = highestY < tempHighestY ? tempHighestY : highestY;
             }
 
-            return new[] { lowX, lowY, highX, highY };
+            return combinedBounds;
         }
     }
 }
