@@ -668,7 +668,8 @@ namespace UI
         }
         private void DeleteAllSelectedClips()
         {
-            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_STROKE, selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList());
+            List<BrushStrokeID> toDelete = selectedClips.SelectMany(_clip => _clip.GetBrushStrokeIDs()).ToList();
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_STROKE, toDelete);
 
             List<TimelineClip> timelineClips = new List<TimelineClip>(selectedClips);
             ICommand deleteMultiple = new DeleteClipMultipleCommand(timelineClips);

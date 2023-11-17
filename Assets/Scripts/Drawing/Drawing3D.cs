@@ -245,6 +245,7 @@ namespace Drawing
                 brushStrokeBoundsBuffer.GetData(bounds);
                 allBounds.Add(bounds);
                 Debug.Log($"width: {bounds[2] - bounds[0]}  height: {bounds[3] - bounds[1]}");
+                Debug.Log($"corner1: {bounds[0]}, {bounds[1]}  corner2: {bounds[2]}, {bounds[3]}");
                 brushStrokeBoundsBuffer.SetData(brushStrokeBoundsReset);
                 
                 rtWholeTemps[i].Clear(false, true, Color.black);
@@ -252,6 +253,44 @@ namespace Drawing
             }
             
             return (allPos, allBounds);
+        }
+        
+        public void EraseBrushStroke(BrushStrokeID _brushStrokeID)
+        {
+            CheckTimeTableBufferSize();
+            int[] shouldDeleteTable = new int[timeTableBufferSize * 4];
+
+            _brushStrokeID.shouldDelete = true;
+            for (int i = 0; i < brushStrokesID.Count; i++)
+            {
+                shouldDeleteTable[i * 4] = brushStrokesID[i].shouldDelete ? 1 : 0;
+            }
+            _brushStrokeID.shouldDelete = false;
+            
+            brushStrokeTableBuffer.SetData(shouldDeleteTable);
+            
+            for (int i = 0; i < subMeshCount; i++)
+            {
+                uint[] bounds = _brushStrokeID.bounds[i];
+                uint width = bounds[2] - bounds[0];
+                uint height = bounds[3] - bounds[1];
+                int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
+                int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
+                
+                Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
+                if (threadGroupX == 0 && threadGroupY == 0)
+                {
+                    continue;
+                }
+                
+                textureHelperShader.SetBuffer(eraseKernelID, "_EraseRemap", brushStrokeTableBuffer);
+                textureHelperShader.SetTexture(eraseKernelID, "_FinalTexColor", rts[i]);
+                textureHelperShader.SetTexture(eraseKernelID, "_FinalTexID", rtIDs[i]);
+                textureHelperShader.SetInt("_StartPosX", (int)bounds[0]);
+                textureHelperShader.SetInt("_StartPosY", (int)bounds[1]);
+                
+                textureHelperShader.Dispatch(eraseKernelID, threadGroupX, threadGroupY, 1);
+            }
         }
 
         public void EraseBrushStroke(List<BrushStrokeID> _brushStrokeIDs)
@@ -298,7 +337,7 @@ namespace Drawing
             }
         }
 
-        public void RedrawBrushStroke(BrushStrokeID _brushStrokeID)
+        public void DrawBrushStroke(BrushStrokeID _brushStrokeID)
         {
             float oldStartTime = _brushStrokeID.brushStrokes[0].startTime;
             float oldEndTime = _brushStrokeID.brushStrokes[^1].startTime;
@@ -333,67 +372,37 @@ namespace Drawing
             }
             return false;
         }
-        
-        public void RedrawAll()
+        public void UpdateIDTex(List<BrushStrokeID> _brushStrokeIDs)
         {
-            foreach (var rtID in rtIDs)
+            CheckTimeTableBufferSize();
+            int[] newIDs = new int[timeTableBufferSize * 4];
+            
+            for (int i = 0; i < brushStrokesID.Count; i++)
             {
-                rtID.Clear(false, true, new Color(-1, -1, -1));
+                newIDs[brushStrokesID[i].indexWhenDrawn * 4] = i;
+                brushStrokesID[i].indexWhenDrawn = i;
             }
+            
+            brushStrokeTableBuffer.SetData(newIDs);
 
-            for (int i = brushStrokesID.Count - 1; i >= 0; i--)
+            for (int i = 0; i < subMeshCount; i++)
             {
-                BrushStrokeID brushStrokeID = brushStrokesID[i];
-                //RedrawStrokeInterpolation(brushStrokeID, i);
+                uint[] bounds = CombineBounds(_brushStrokeIDs, i);
+                uint width = bounds[2] - bounds[0];
+                uint height = bounds[3] - bounds[1];
+                int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
+                int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
+                
+                textureHelperShader.SetBuffer(updateIDTexKernel, "_IndexRemap", brushStrokeTableBuffer);
+                textureHelperShader.SetTexture(updateIDTexKernel, "_FinalTexID", rtIDs[i]);
+                textureHelperShader.SetInt("_StartPosX", (int)bounds[0]);
+                textureHelperShader.SetInt("_StartPosY", (int)bounds[1]);
+                
+                textureHelperShader.Dispatch(updateIDTexKernel, threadGroupX, threadGroupY, 1);
             }
         }
 
-        //Redraws everything and if a stroke needs to be interpolated it does so automatically
-        public void RedrawAllSafe(BrushStrokeID _brushStrokeID)
-        {
-            // for (var i = 0; i < brushStrokesID.Count; i++)
-            // {
-            //     var brushStrokeID = brushStrokesID[i];
-            //     float brushStart = brushStrokeID.brushStrokes[0].startTime;
-            //     float brushEnd = brushStrokeID.brushStrokes[^1].startTime;
-            //     float brushIDStart = brushStrokeID.startTime;
-            //     float brushIDEnd = brushStrokeID.endTime;
-            //     if (Math.Abs(brushStart - brushIDStart) > 0.000001f || Math.Abs(brushEnd - brushIDEnd) > 0.000001f)
-            //     {
-            //         RedrawStrokeInterpolation(brushStrokeID, i);
-            //         continue;
-            //     }
-            //
-            //     RedrawStrokeOptimized(brushStrokeID, i, _brushStrokeID.GetMinCorner(), _brushStrokeID.GetMaxCorner());
-            // }
-        }
-        public void RedrawAllSafe(List<BrushStrokeID> _brushStrokeIDs)
-        {
-            // Vector3 minCorner = CombineMinCorner(_brushStrokeIDs.Select(_id => _id.GetMinCorner()).ToArray());
-            // Vector3 maxCorner = CombineMinCorner(_brushStrokeIDs.Select(_id => _id.GetMaxCorner()).ToArray());
-            //
-            // for (var i = brushStrokesID.Count - 1; i >= 0; i--)
-            // {
-            //     BrushStrokeID brushStrokeID = brushStrokesID[i];
-            //     if (brushStrokeID.brushStrokes.Count == 0)
-            //     {
-            //         Debug.LogError("Brush stroke holds no draw data");
-            //         return;
-            //     }
-            //     float brushStart = brushStrokeID.brushStrokes[0].startTime;
-            //     float brushEnd = brushStrokeID.brushStrokes[^1].endTime;
-            //     float brushIDStart = brushStrokeID.startTime;
-            //     float brushIDEnd = brushStrokeID.endTime;
-            //     if (Math.Abs(brushStart - brushIDStart) > 0.001f || Math.Abs(brushEnd - brushIDEnd) > 0.001f)
-            //     {
-            //         RedrawStrokeInterpolation(brushStrokeID, i);
-            //         continue;
-            //     }
-            //
-            //     RedrawStrokeOptimized(brushStrokeID, i, minCorner, maxCorner);
-            // }
-        }
-        public void RedrawAllSafe(List<BrushStrokeID> _brushStrokeIDs, List<Vector2> _newTimes)
+        public void RedrawBrushStrokes(List<BrushStrokeID> _brushStrokeIDs, List<Vector2> _newTimes)
         {
             if (_brushStrokeIDs.Count != _newTimes.Count)
             {
@@ -440,7 +449,6 @@ namespace Drawing
                 
                 textureHelperShader.Dispatch(timeRemapKernel, threadGroupX, threadGroupY, 1);
             }
-            
         }
 
         private void CheckTimeTableBufferSize()
@@ -508,12 +516,8 @@ namespace Drawing
         //     
         //     return tempRT;
         // }
-        public void RedrawStroke(BrushStrokeID _brushStrokeID)
-        {
-            
-        }
 
-        public void UpdateIDTex(List<BrushStrokeID> _brushStrokeIDs)
+        public void UpdateIDTex(BrushStrokeID _brushStrokeID)
         {
             CheckTimeTableBufferSize();
             int[] newIDs = new int[timeTableBufferSize * 4];
@@ -528,7 +532,7 @@ namespace Drawing
 
             for (int i = 0; i < subMeshCount; i++)
             {
-                uint[] bounds = CombineBounds(_brushStrokeIDs, i);
+                uint[] bounds = _brushStrokeID.bounds[i];
                 uint width = bounds[2] - bounds[0];
                 uint height = bounds[3] - bounds[1];
                 int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
@@ -541,7 +545,27 @@ namespace Drawing
                 
                 textureHelperShader.Dispatch(updateIDTexKernel, threadGroupX, threadGroupY, 1);
             }
-            
+        }
+        
+        public List<BrushStrokeID> GetOverlappingBrushStrokeID(BrushStrokeID _brushStrokeIDs)
+        {
+            List<BrushStrokeID> affected = new List<BrushStrokeID>();
+            foreach (var toCheck in brushStrokesID)
+            {
+                if (affected.Contains(toCheck) || _brushStrokeIDs == toCheck )
+                {
+                    continue;
+                }
+                    
+                if (CheckCollision(
+                        toCheck.GetMinCorner(), toCheck.GetMaxCorner(), 
+                        _brushStrokeIDs.GetMinCorner(), _brushStrokeIDs.GetMaxCorner()))
+                {
+                    affected.Add(toCheck);
+                }
+            }
+
+            return affected;
         }
         public List<BrushStrokeID> GetOverlappingBrushStrokeID(List<BrushStrokeID> _brushStrokeIDs)
         {
@@ -562,6 +586,10 @@ namespace Drawing
                         affected.Add(toCheck);
                     }
                 }
+            }
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                affected.Remove(brushStrokeID);
             }
 
             return affected;
