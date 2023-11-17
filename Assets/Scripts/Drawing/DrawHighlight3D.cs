@@ -73,6 +73,7 @@ namespace Drawing
             for (int i = 0; i < rtHighlights.Count; i++)
             {
                 uint[] bounds = CombineBounds(_brushStrokeIDs, i);
+                Debug.Log($"corner1: {bounds[0]}, {bounds[1]}  corner2: {bounds[2]}, {bounds[3]}");
                 uint width = bounds[2] - bounds[0];
                 uint height = bounds[3] - bounds[1];
                 int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
@@ -127,7 +128,7 @@ namespace Drawing
                 
                 uint tempLowY = brushStrokeID.bounds[_subMeshIndex][1];
                 uint lowestY = combinedBounds[1];
-                combinedBounds[1] = lowestX > tempLowY ? tempLowY : lowestY;
+                combinedBounds[1] = lowestY > tempLowY ? tempLowY : lowestY;
                 
                 uint tempHighestX = brushStrokeID.bounds[_subMeshIndex][2];
                 uint highestX = combinedBounds[2];

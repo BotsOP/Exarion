@@ -609,7 +609,7 @@ namespace Drawing
                 
                 uint tempLowY = brushStrokeID.bounds[_subMeshIndex][1];
                 uint lowestY = combinedBounds[1];
-                combinedBounds[1] = lowestX > tempLowY ? tempLowY : lowestY;
+                combinedBounds[1] = lowestY > tempLowY ? tempLowY : lowestY;
                 
                 uint tempHighestX = brushStrokeID.bounds[_subMeshIndex][2];
                 uint highestX = combinedBounds[2];

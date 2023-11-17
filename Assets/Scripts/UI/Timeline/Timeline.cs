@@ -535,8 +535,25 @@ namespace UI
                     Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) > 0.001)
                 {
                     //clip.SetTime(clip.ClipTime);
-                    brushStrokeIDs.AddRange(clip.GetBrushStrokeIDs());
-                    newTimes.Add(clip.ClipTime);
+                    List<BrushStrokeID> clipBrushStrokes = clip.GetBrushStrokeIDs();
+                    brushStrokeIDs.AddRange(clipBrushStrokes);
+                    for (int j = 0; j < clipBrushStrokes.Count; j++)
+                    {
+                        var brushStrokeID = clipBrushStrokes[j];
+                        float newStartTime = brushStrokeID.startTime.Remap(clip.clipTimeOld.x, clip.clipTimeOld.y, 0, 1);
+                        float newEndTime = brushStrokeID.endTime.Remap(clip.clipTimeOld.x, clip.clipTimeOld.y, 0, 1);
+                        if (j == 0)
+                        {
+                            Debug.Log($"{newStartTime}  {newEndTime}");
+                        }
+                        newStartTime = newStartTime.Remap(0, 1, clip.ClipTime.x, clip.ClipTime.y);
+                        newEndTime = newEndTime.Remap(0, 1, clip.ClipTime.x, clip.ClipTime.y);
+                        if (j == 0)
+                        {
+                            Debug.Log($"{newStartTime}  {newEndTime}");
+                        }
+                        newTimes.Add(new Vector2(newStartTime, newEndTime));
+                    }
                 }
             }
             if (brushStrokeIDs.Count > 0)
@@ -661,8 +678,6 @@ namespace UI
                 {
                     ICommand redrawCommand = new RedrawMultipleCommand(redraws);
                     EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, redrawCommand);
-                    List<BrushStrokeID> brushStrokeIDs = redraws.SelectMany(timelineClip => timelineClip.GetBrushStrokeIDs()).ToList();
-                    //EventSystem<List<BrushStrokeID>, List<Vector2>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs, newTimes);
                 }
             }
         }

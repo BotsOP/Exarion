@@ -296,15 +296,6 @@ namespace Drawing
         void Update()
         {
             cachedTime = time;
-
-            //Move this to drawing unput
-            // if (Input.GetKeyDown(KeyCode.J) && selectedBrushStrokes.Count > 0)
-            // {
-            //     foreach (var brushStrokeID in selectedBrushStrokes)
-            //     {
-            //         drawer.ReverseBrushStroke(brushStrokeID);
-            //     }
-            // }
         }
 
         private void StoppedDrawing()

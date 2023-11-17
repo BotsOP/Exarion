@@ -29,6 +29,27 @@ namespace Drawing
         public List<BrushStroke> brushStrokes;
 
         [JsonConstructor]
+        public BrushStrokeID(List<BrushStroke> _brushStrokes, List<uint[]> _bounds, PaintType _paintType, float _startTime, float _endTime, Vector3 _collisionBoxMin, Vector3 _collisionBoxMax, int _indexWhenDrawn, Vector3 _avgPos, float _angle = 0, float _scale = 1)
+        {
+            brushStrokes = _brushStrokes;
+            bounds = _bounds;
+            paintType = _paintType;
+            startTime = _startTime;
+            endTime = _endTime;
+            timeWhenDrawn = new Vector2(_startTime, _endTime);
+            collisionBoxMinX = _collisionBoxMin.x;
+            collisionBoxMinY = _collisionBoxMin.y;
+            collisionBoxMinZ = _collisionBoxMin.z;
+            collisionBoxMaxX = _collisionBoxMax.x;
+            collisionBoxMaxY = _collisionBoxMax.y;
+            collisionBoxMaxZ = _collisionBoxMax.z;
+            indexWhenDrawn = _indexWhenDrawn;
+            avgPosX = _avgPos.x;
+            avgPosY = _avgPos.y;
+            avgPosZ = _avgPos.z;
+            angle = _angle;
+            scale = _scale;
+        }
         public BrushStrokeID(List<BrushStrokePixel[]> _pixels, List<BrushStroke> _brushStrokes, List<uint[]> _bounds, PaintType _paintType, float _startTime, float _endTime, Vector3 _collisionBoxMin, Vector3 _collisionBoxMax, int _indexWhenDrawn, Vector3 _avgPos, float _angle = 0, float _scale = 1)
         {
             pixels = _pixels;

@@ -300,14 +300,11 @@ namespace UI
         
             if (inputOffset < Corners[0].y - spacing)
             {
-                //int amountBarsMoved = (int)((Corners[0].y - spacing - inputOffset) / (Corners[2].y - Corners[0].y));
                 currentBar ++;
                 return yPos - timelineBarHeight;
             }
             if (inputOffset > Corners[2].y + spacing)
             {
-                // float smth = Mathf.CeilToInt((inputOffset - Corners[0].y + spacing) / (Corners[2].y - Corners[0].y));
-                // int amountBarsMoved = Mathf.CeilToInt(smth);
                 currentBar --;
                 return yPos + timelineBarHeight;
             }
