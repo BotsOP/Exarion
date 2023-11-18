@@ -321,7 +321,6 @@ namespace Drawing
                 int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
                 int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
                 
-                Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
                 if (threadGroupX == 0 && threadGroupY == 0)
                 {
                     continue;
@@ -356,6 +355,30 @@ namespace Drawing
 
                 textureHelperShader.Dispatch(drawBrushStrokeKernel, threadGroupX, 1, 1);
                 tempPixelsBuffer.Release();
+            }
+        }
+        public void DrawBrushStroke(List<BrushStrokeID> _brushStrokeIDs)
+        {
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                for (int i = 0; i < subMeshCount; i++)
+                {
+                    BrushStrokePixel[] pixels = brushStrokeID.pixels[i];
+                    int threadGroupX = Mathf.CeilToInt(pixels.Length / 1024f);
+                    ComputeBuffer tempPixelsBuffer = new ComputeBuffer(pixels.Length, sizeof(int) + sizeof(float), ComputeBufferType.Structured);
+                    tempPixelsBuffer.SetData(pixels);
+                
+                    Vector4 timeRemap = new Vector4(brushStrokeID.startTimeWhenDrawn, brushStrokeID.endTimeWhenDrawn, brushStrokeID.startTime, brushStrokeID.endTime);
+
+                    textureHelperShader.SetBuffer(drawBrushStrokeKernel, "_BufferToTex", tempPixelsBuffer);
+                    textureHelperShader.SetTexture(drawBrushStrokeKernel, "_FinalTexColor", rts[i]);
+                    textureHelperShader.SetTexture(drawBrushStrokeKernel, "_FinalTexID", rtIDs[i]);
+                    textureHelperShader.SetFloat("_StrokeID", brushStrokeID.indexWhenDrawn);
+                    textureHelperShader.SetVector("_TimeRemapBrushStroke", timeRemap);
+
+                    textureHelperShader.Dispatch(drawBrushStrokeKernel, threadGroupX, 1, 1);
+                    tempPixelsBuffer.Release();
+                }
             }
         }
         
@@ -585,6 +608,50 @@ namespace Drawing
                 if (CheckCollision(
                         toCheck.GetMinCorner(), toCheck.GetMaxCorner(), 
                         _brushStrokeIDs.GetMinCorner(), _brushStrokeIDs.GetMaxCorner()))
+                {
+                    affected.Add(toCheck);
+                }
+            }
+
+            return affected;
+        }
+        public List<BrushStrokeID> GetOverlappingBrushStrokeIDBelow(BrushStrokeID _brushStrokeIDs)
+        {
+            List<BrushStrokeID> affected = new List<BrushStrokeID>();
+            foreach (var toCheck in brushStrokesID)
+            {
+                if (affected.Contains(toCheck) || _brushStrokeIDs == toCheck )
+                {
+                    continue;
+                }
+                    
+                if (CheckCollision(
+                        toCheck.GetMinCorner(), toCheck.GetMaxCorner(), 
+                        _brushStrokeIDs.GetMinCorner(), _brushStrokeIDs.GetMaxCorner()) 
+                    && _brushStrokeIDs.indexWhenDrawn < toCheck.indexWhenDrawn
+                    )
+                {
+                    affected.Add(toCheck);
+                }
+            }
+
+            return affected;
+        }
+        public List<BrushStrokeID> GetOverlappingBrushStrokeIDAbove(BrushStrokeID _brushStrokeIDs)
+        {
+            List<BrushStrokeID> affected = new List<BrushStrokeID>();
+            foreach (var toCheck in brushStrokesID)
+            {
+                if (affected.Contains(toCheck) || _brushStrokeIDs == toCheck )
+                {
+                    continue;
+                }
+                    
+                if (CheckCollision(
+                        toCheck.GetMinCorner(), toCheck.GetMaxCorner(), 
+                        _brushStrokeIDs.GetMinCorner(), _brushStrokeIDs.GetMaxCorner()) 
+                    && _brushStrokeIDs.indexWhenDrawn > toCheck.indexWhenDrawn
+                   )
                 {
                     affected.Add(toCheck);
                 }

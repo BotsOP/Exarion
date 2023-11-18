@@ -21,7 +21,7 @@ namespace Undo
 
         private void AddCommand(ICommand _command)
         {
-            Debug.Log($"Added command {_command.GetCommandName()}");
+            //Debug.Log($"Added command {_command.GetCommandName()}");
             historyStack.Push(_command);
         }
 
