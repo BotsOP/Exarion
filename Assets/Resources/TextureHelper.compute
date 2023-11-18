@@ -4,12 +4,13 @@
 #pragma kernel FinalCopy
 #pragma kernel TimeRemap
 #pragma kernel UpdateIDTex
+#pragma kernel DrawBrushStroke
 
-// struct TexToBuffer
-// {
-//     uint pos;
-//     float color;
-// };
+struct CompressedPixel
+{
+    uint pos;
+    float color;
+};
 
 Texture2D<float> _OrgTexColor;
 RWTexture2D<float> _FinalTexColor;
@@ -21,7 +22,8 @@ StructuredBuffer<int4> _IndexRemap;
 StructuredBuffer<int4> _EraseRemap;
 StructuredBuffer<int> _HighlightIndex;
 
-//AppendStructuredBuffer<TexToBuffer> _TexToBuffer;
+AppendStructuredBuffer<CompressedPixel> _TexToBuffer;
+StructuredBuffer<CompressedPixel> _BufferToTex;
 RWStructuredBuffer<int> _Counter;
 RWStructuredBuffer<int> _BrushStrokeBounds;
 
@@ -29,16 +31,23 @@ int _StartPosX;
 int _StartPosY;
 
 float _StrokeID;
-float _OffsetUV;
+
+float4 _TimeRemapBrushStroke;
 
 uint CompactPos(uint2 xy)
 {
-    uint x = xy.x;
-    uint y = xy.y;
-    x = x << 16;
-    x = x >> 16;
-    y = y << 16;
-    return x | y;
+    uint highPart = xy.x & 0xFFFF; // Take the lower 16 bits of the first uint
+    uint lowPart = xy.y & 0xFFFF;  // Take the lower 16 bits of the second uint
+
+    return (highPart << 16) | lowPart;
+}
+
+uint2 DeCompactPos(uint compacted)
+{
+    uint highPart = (compacted >> 16) & 0xFFFF; // Get the upper 16 bits
+    uint lowPart = compacted & 0xFFFF;          // Get the lower 16 bits
+
+    return uint2(highPart, lowPart);
 }
 
 float Remap (float value, float from1, float to1, float from2, float to2) 
@@ -61,11 +70,11 @@ void FinalCopy (uint2 id : SV_DispatchThreadID)
 {
     if(_OrgTexColor[id] > 0)
     {
-        // TexToBuffer texToBuffer;
-        // texToBuffer.pos = CompactPos(id);
-        // texToBuffer.color = _OrgTexColor[id];
-        // _TexToBuffer.Append(texToBuffer);
-        // InterlockedAdd(_Counter[0], 1);
+        CompressedPixel texToBuffer;
+        texToBuffer.pos = CompactPos(id);
+        texToBuffer.color = _OrgTexColor[id];
+        _TexToBuffer.Append(texToBuffer);
+        InterlockedAdd(_Counter[0], 1);
         
         InterlockedMin(_BrushStrokeBounds[0], id.x);
         InterlockedMin(_BrushStrokeBounds[1], id.y);
@@ -148,9 +157,16 @@ void UpdateIDTex (uint2 id : SV_DispatchThreadID)
 }
 
 [numthreads(1024,1,1)]
-void RedrawBrushStroke (uint id : SV_DispatchThreadID)
+void DrawBrushStroke (uint id : SV_DispatchThreadID)
 {
-    
+    CompressedPixel pixel = _BufferToTex[id];
+    uint2 pos = DeCompactPos(pixel.pos);
+
+    if(_FinalTexID[pos] < 0 || _StrokeID < _FinalTexID[pos])
+    {
+        _FinalTexColor[pos] = Remap(pixel.color, _TimeRemapBrushStroke.x, _TimeRemapBrushStroke.y, _TimeRemapBrushStroke.z, _TimeRemapBrushStroke.w);
+        _FinalTexID[pos] = _StrokeID;
+    }
 }
 
 

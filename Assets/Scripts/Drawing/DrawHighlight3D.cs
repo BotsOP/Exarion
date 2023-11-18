@@ -60,6 +60,12 @@ namespace Drawing
         public void HighlightStroke(List<BrushStrokeID> _brushStrokeIDs, List<CustomRenderTexture> _rtIDs, int _totalBrushStrokes)
         {
             ClearHighlight();
+
+            if (_brushStrokeIDs.Count == 0)
+            {
+                return;
+            }
+            
             CheckTimeTableBufferSize(_totalBrushStrokes);
 
             int[] highlightIndex = new int[highlightIndexBufferSize];
@@ -73,14 +79,17 @@ namespace Drawing
             for (int i = 0; i < rtHighlights.Count; i++)
             {
                 uint[] bounds = CombineBounds(_brushStrokeIDs, i);
-                Debug.Log($"corner1: {bounds[0]}, {bounds[1]}  corner2: {bounds[2]}, {bounds[3]}");
                 uint width = bounds[2] - bounds[0];
                 uint height = bounds[3] - bounds[1];
                 int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
                 int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
 
-                Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
+                //Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
                 if (threadGroupX == 0 && threadGroupY == 0)
+                {
+                    continue;
+                }
+                if (threadGroupX == 1 && threadGroupY == 1)
                 {
                     continue;
                 }

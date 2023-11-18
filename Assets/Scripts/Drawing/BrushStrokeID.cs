@@ -8,7 +8,7 @@ namespace Drawing
     public class BrushStrokeID
     {
         public List<BrushStrokePixel[]> pixels;
-        public Vector2 timeWhenDrawn;
+        
         public List<uint[]> bounds;
         public float collisionBoxMinX;
         public float collisionBoxMinY;
@@ -19,6 +19,8 @@ namespace Drawing
         public PaintType paintType;
         public float startTime;
         public float endTime;
+        public float startTimeWhenDrawn;
+        public float endTimeWhenDrawn;
         public int indexWhenDrawn;
         public float avgPosX;
         public float avgPosY;
@@ -36,7 +38,8 @@ namespace Drawing
             paintType = _paintType;
             startTime = _startTime;
             endTime = _endTime;
-            timeWhenDrawn = new Vector2(_startTime, _endTime);
+            startTimeWhenDrawn = _startTime;
+            endTimeWhenDrawn = _endTime;
             collisionBoxMinX = _collisionBoxMin.x;
             collisionBoxMinY = _collisionBoxMin.y;
             collisionBoxMinZ = _collisionBoxMin.z;
@@ -58,7 +61,8 @@ namespace Drawing
             paintType = _paintType;
             startTime = _startTime;
             endTime = _endTime;
-            timeWhenDrawn = new Vector2(_startTime, _endTime);
+            startTimeWhenDrawn = _startTime;
+            endTimeWhenDrawn = _endTime;
             collisionBoxMinX = _collisionBoxMin.x;
             collisionBoxMinY = _collisionBoxMin.y;
             collisionBoxMinZ = _collisionBoxMin.z;

@@ -34,6 +34,7 @@ namespace Drawing
         private int eraseKernelID;
         private int timeRemapKernel;
         private int updateIDTexKernel;
+        private int drawBrushStrokeKernel;
         private Vector3 threadGroupSizeOut;
         private Vector3 threadGroupSize;
         private int imageWidth;
@@ -67,6 +68,7 @@ namespace Drawing
             eraseKernelID = textureHelperShader.FindKernel("Erase");
             timeRemapKernel = textureHelperShader.FindKernel("TimeRemap");
             updateIDTexKernel = textureHelperShader.FindKernel("UpdateIDTex");
+            drawBrushStrokeKernel = textureHelperShader.FindKernel("DrawBrushStroke");
             
             commandBuffer = new CommandBuffer();
             commandBuffer.name = "3DUVTimePainter";
@@ -224,8 +226,8 @@ namespace Drawing
             List<uint[]> allBounds = new List<uint[]>();
             for (int i = 0; i < subMeshCount; i++)
             {
-                // textureHelperShader.SetBuffer(finalCopyKernelID, "_TexToBuffer", brushStrokeToPixel);
-                // textureHelperShader.SetBuffer(finalCopyKernelID, "_Counter", counterBuffer);
+                textureHelperShader.SetBuffer(finalCopyKernelID, "_TexToBuffer", brushStrokeToPixel);
+                textureHelperShader.SetBuffer(finalCopyKernelID, "_Counter", counterBuffer);
                 
                 textureHelperShader.SetBuffer(finalCopyKernelID, "_BrushStrokeBounds", brushStrokeBoundsBuffer);
                 textureHelperShader.SetTexture(finalCopyKernelID, "_OrgTexColor", rtWholeTemps[i]);
@@ -234,12 +236,12 @@ namespace Drawing
                 
                 textureHelperShader.Dispatch(finalCopyKernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
                 
-                // int amountPixels = counterBuffer.GetCounter();
-                // Debug.Log($"{amountPixels} mb: {amountPixels * 2 / 1000000f}");
-                // BrushStrokePixel[] pos = new BrushStrokePixel[amountPixels];
-                // brushStrokeToPixel.GetData(pos);
-                // brushStrokeToPixel.SetCounterValue(0);
-                // allPos.Add(pos);
+                int amountPixels = counterBuffer.GetCounter();
+                Debug.Log($"{amountPixels} mb: {amountPixels * 2 / 1000000f}");
+                BrushStrokePixel[] pos = new BrushStrokePixel[amountPixels];
+                brushStrokeToPixel.GetData(pos);
+                brushStrokeToPixel.SetCounterValue(0);
+                allPos.Add(pos);
 
                 uint[] bounds = new uint[4];
                 brushStrokeBoundsBuffer.GetData(bounds);
@@ -339,6 +341,42 @@ namespace Drawing
 
         public void DrawBrushStroke(BrushStrokeID _brushStrokeID)
         {
+            for (int i = 0; i < subMeshCount; i++)
+            {
+                BrushStrokePixel[] pixels = _brushStrokeID.pixels[i];
+                int threadGroupX = Mathf.CeilToInt(pixels.Length / 1024f);
+                ComputeBuffer tempPixelsBuffer = new ComputeBuffer(pixels.Length, sizeof(int) + sizeof(float), ComputeBufferType.Structured);
+                tempPixelsBuffer.SetData(pixels);
+                
+                Vector4 timeRemap = new Vector4(_brushStrokeID.startTimeWhenDrawn, _brushStrokeID.endTimeWhenDrawn, _brushStrokeID.startTime, _brushStrokeID.endTime);
+
+                textureHelperShader.SetBuffer(drawBrushStrokeKernel, "_BufferToTex", tempPixelsBuffer);
+                textureHelperShader.SetTexture(drawBrushStrokeKernel, "_FinalTexColor", rts[i]);
+                textureHelperShader.SetTexture(drawBrushStrokeKernel, "_FinalTexID", rtIDs[i]);
+                textureHelperShader.SetFloat("_StrokeID", _brushStrokeID.indexWhenDrawn);
+                textureHelperShader.SetVector("_TimeRemapBrushStroke", timeRemap);
+
+                textureHelperShader.Dispatch(drawBrushStrokeKernel, threadGroupX, 1, 1);
+                tempPixelsBuffer.Release();
+            }
+            // float oldStartTime = _brushStrokeID.brushStrokes[0].startTime;
+            // float oldEndTime = _brushStrokeID.brushStrokes[^1].startTime;
+            //
+            // bool firstStroke = true;
+            // foreach (var brushStroke in _brushStrokeID.brushStrokes)
+            // {
+            //     float startTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
+            //     float endTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
+            //     
+            //     Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, _brushStrokeID.paintType, 
+            //          startTime, endTime, firstStroke, _brushStrokeID.indexWhenDrawn);
+            //     firstStroke = false;
+            // }
+            // FinishDrawing();
+        }
+        
+        public void SetupDrawBrushStroke(BrushStrokeID _brushStrokeID)
+        {
             float oldStartTime = _brushStrokeID.brushStrokes[0].startTime;
             float oldEndTime = _brushStrokeID.brushStrokes[^1].startTime;
             
@@ -352,7 +390,9 @@ namespace Drawing
                      startTime, endTime, firstStroke, _brushStrokeID.indexWhenDrawn);
                 firstStroke = false;
             }
-            FinishDrawing();
+            
+            (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing();
+            _brushStrokeID.pixels = result.Item1;
         }
 
         public bool IsMouseOverBrushStroke(BrushStrokeID _brushStrokeID, Vector3 _worldPos)
@@ -435,7 +475,7 @@ namespace Drawing
                 int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
                 int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
                 
-                Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
+                //Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
                 if (threadGroupX == 0 && threadGroupY == 0)
                 {
                     continue;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using DataPersistence.Data;
 using Managers;
@@ -8,6 +9,7 @@ using UI;
 using Undo;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Debug = UnityEngine.Debug;
 using EventType = Managers.EventType;
 
 namespace Drawing
@@ -76,7 +78,6 @@ namespace Drawing
         void OnEnable()
         {
             EventSystem.Subscribe(EventType.FINISHED_STROKE, StoppedDrawing);
-            EventSystem.Subscribe(EventType.REDRAW_ALL, RedrawAll);
             EventSystem.Subscribe(EventType.CLEAR_SELECT, ClearHighlightStroke);
             EventSystem.Subscribe(EventType.STOPPED_SETTING_BRUSH_SIZE, ClearPreview);
             EventSystem<int>.Subscribe(EventType.CHANGE_PAINTTYPE, SetPaintType);
@@ -89,11 +90,7 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
-            EventSystem<BrushStrokeID>.Subscribe(EventType.REDRAW_STROKE, RedrawStroke);
-            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
-            
             EventSystem<List<BrushStrokeID>, List<Vector2>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
-            
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
@@ -129,7 +126,6 @@ namespace Drawing
             drawer.OnDestroy();
             
             EventSystem.Unsubscribe(EventType.FINISHED_STROKE, StoppedDrawing);
-            EventSystem.Unsubscribe(EventType.REDRAW_ALL, RedrawAll);
             EventSystem.Unsubscribe(EventType.CLEAR_SELECT, ClearHighlightStroke);
             EventSystem.Unsubscribe(EventType.STOPPED_SETTING_BRUSH_SIZE, ClearPreview);
             EventSystem<int>.Unsubscribe(EventType.CHANGE_PAINTTYPE, SetPaintType);
@@ -142,11 +138,7 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
-            EventSystem<BrushStrokeID>.Unsubscribe(EventType.REDRAW_STROKE, RedrawStroke);
-            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REDRAW_STROKES, RedrawStrokes);
-            
             EventSystem<List<BrushStrokeID>, List<Vector2>>.Unsubscribe(EventType.REDRAW_STROKES, RedrawStrokes);
-            
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
@@ -323,20 +315,6 @@ namespace Drawing
             collisionBoxMax = new Vector3(-float.MaxValue, -float.MaxValue, -float.MaxValue);
             firstUse = true;
         }
-
-        private void RedrawAll()
-        {
-            Debug.LogError("Deprecated RedrawAll");
-        }
-        private void RedrawStroke(BrushStrokeID _brushStrokeID)
-        {
-            Debug.LogError("Deprecated RedrawStroke");
-        }
-        
-        private void RedrawStrokes(List<BrushStrokeID> _brushStrokeIDs)
-        {
-            Debug.LogError("Deprecated RedrawStrokes");
-        }
         private void RedrawStrokes(List<BrushStrokeID> _brushStrokeIDs, List<Vector2> _newTimes)
         {
             drawer.RedrawBrushStrokes(_brushStrokeIDs, _newTimes);
@@ -435,10 +413,15 @@ namespace Drawing
             List<BrushStrokeID> changedIDBrushStrokes = drawer.brushStrokesID.GetRange(lowestIndex, count);
             drawer.UpdateIDTex(changedIDBrushStrokes);
 
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             foreach (var brushStrokeID in affected)
             {
                 drawer.DrawBrushStroke(brushStrokeID);
             }
+            stopwatch.Stop();
+
+            Debug.Log($"time: {stopwatch.ElapsedMilliseconds}");
         }
         
         private void HighlightStroke(BrushStrokeID _brushStrokeID)

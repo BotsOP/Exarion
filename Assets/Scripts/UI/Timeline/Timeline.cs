@@ -527,6 +527,7 @@ namespace UI
             {
                 var clip = selectedClips[i];
                 clip.mouseAction = lastMouseAction;
+                Vector2 tempOldClipTime = clip.ClipTime;
 
                 clip.UpdateTransform();
 
@@ -534,24 +535,15 @@ namespace UI
                 if (Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) > 0.001 ||
                     Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) > 0.001)
                 {
-                    //clip.SetTime(clip.ClipTime);
                     List<BrushStrokeID> clipBrushStrokes = clip.GetBrushStrokeIDs();
                     brushStrokeIDs.AddRange(clipBrushStrokes);
                     for (int j = 0; j < clipBrushStrokes.Count; j++)
                     {
                         var brushStrokeID = clipBrushStrokes[j];
-                        float newStartTime = brushStrokeID.startTime.Remap(clip.clipTimeOld.x, clip.clipTimeOld.y, 0, 1);
-                        float newEndTime = brushStrokeID.endTime.Remap(clip.clipTimeOld.x, clip.clipTimeOld.y, 0, 1);
-                        if (j == 0)
-                        {
-                            Debug.Log($"{newStartTime}  {newEndTime}");
-                        }
+                        float newStartTime = brushStrokeID.startTime.Remap(tempOldClipTime.x, tempOldClipTime.y, 0, 1);
+                        float newEndTime = brushStrokeID.endTime.Remap(tempOldClipTime.x, tempOldClipTime.y, 0, 1);
                         newStartTime = newStartTime.Remap(0, 1, clip.ClipTime.x, clip.ClipTime.y);
                         newEndTime = newEndTime.Remap(0, 1, clip.ClipTime.x, clip.ClipTime.y);
-                        if (j == 0)
-                        {
-                            Debug.Log($"{newStartTime}  {newEndTime}");
-                        }
                         newTimes.Add(new Vector2(newStartTime, newEndTime));
                     }
                 }
@@ -1382,8 +1374,11 @@ namespace UI
             }
 
             List<BrushStrokeID> brushStrokeIDs = clipsOrdered.SelectMany(clips => clips.SelectMany(clip => clip.GetBrushStrokeIDs())).ToList();
-            StartCoroutine(WaitAndPrint(brushStrokeIDs));
-        }
+            if (brushStrokeIDs.Count > 0)
+            {
+                StartCoroutine(WaitAndPrint(brushStrokeIDs));
+            }
+        } 
         
         private IEnumerator WaitAndPrint(List<BrushStrokeID> _brushStrokeIDs)
         {
