@@ -7,9 +7,17 @@ namespace Drawing
 {
     public class BrushStrokeID
     {
+        [JsonIgnore]
         public List<BrushStrokePixel[]> pixels;
-        
+        [JsonIgnore]
         public List<uint[]> bounds;
+        [JsonIgnore]
+        public bool shouldDelete;
+        [JsonIgnore]
+        public float startTimeWhenDrawn;
+        [JsonIgnore]
+        public float endTimeWhenDrawn;
+        
         public float collisionBoxMinX;
         public float collisionBoxMinY;
         public float collisionBoxMinZ;
@@ -19,15 +27,13 @@ namespace Drawing
         public PaintType paintType;
         public float startTime;
         public float endTime;
-        public float startTimeWhenDrawn;
-        public float endTimeWhenDrawn;
         public int indexWhenDrawn;
         public float avgPosX;
         public float avgPosY;
         public float avgPosZ;
         public float angle;
         public float scale;
-        public bool shouldDelete;
+        
         public List<BrushStroke> brushStrokes;
 
         [JsonConstructor]

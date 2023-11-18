@@ -95,6 +95,7 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
+            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.SETUP_BRUSHSTROKES, SetupBrushStrokes);
             // EventSystem<Vector2>.Subscribe(EventType.MOVE_STROKE, MoveDirStrokes);
             // EventSystem<float, bool>.Subscribe(EventType.RESIZE_STROKE, ResizeStrokes);
             // EventSystem<float, bool>.Subscribe(EventType.ROTATE_STROKE, RotateStroke);
@@ -143,6 +144,7 @@ namespace Drawing
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
+            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.SETUP_BRUSHSTROKES, SetupBrushStrokes);
             // EventSystem<Vector2>.Unsubscribe(EventType.MOVE_STROKE, MoveDirStrokes);
             // EventSystem<float, bool>.Unsubscribe(EventType.RESIZE_STROKE, ResizeStrokes);
             // EventSystem<float, bool>.Unsubscribe(EventType.ROTATE_STROKE, RotateStroke);
@@ -314,6 +316,15 @@ namespace Drawing
             collisionBoxMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
             collisionBoxMax = new Vector3(-float.MaxValue, -float.MaxValue, -float.MaxValue);
             firstUse = true;
+        }
+
+        private void SetupBrushStrokes(List<BrushStrokeID> _brushStrokeIDs)
+        {
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                drawer.brushStrokesID.Add(brushStrokeID);
+                drawer.SetupDrawBrushStroke(brushStrokeID);
+            }
         }
         private void RedrawStrokes(List<BrushStrokeID> _brushStrokeIDs, List<Vector2> _newTimes)
         {

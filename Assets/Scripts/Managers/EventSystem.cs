@@ -14,6 +14,7 @@ namespace Managers
         REDRAW_STROKE,
         REDRAW_STROKES,
         REDRAW_ALL,
+        SETUP_BRUSHSTROKES,
         REMOVE_STROKE,
         MOVE_STROKE,
         RESIZE_STROKE,

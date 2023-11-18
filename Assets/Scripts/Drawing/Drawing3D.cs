@@ -237,7 +237,7 @@ namespace Drawing
                 textureHelperShader.Dispatch(finalCopyKernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
                 
                 int amountPixels = counterBuffer.GetCounter();
-                Debug.Log($"{amountPixels} mb: {amountPixels * 2 / 1000000f}");
+                //Debug.Log($"mb: {amountPixels * 2 / 1000000f}");
                 BrushStrokePixel[] pos = new BrushStrokePixel[amountPixels];
                 brushStrokeToPixel.GetData(pos);
                 brushStrokeToPixel.SetCounterValue(0);
@@ -246,8 +246,6 @@ namespace Drawing
                 uint[] bounds = new uint[4];
                 brushStrokeBoundsBuffer.GetData(bounds);
                 allBounds.Add(bounds);
-                Debug.Log($"width: {bounds[2] - bounds[0]}  height: {bounds[3] - bounds[1]}");
-                Debug.Log($"corner1: {bounds[0]}, {bounds[1]}  corner2: {bounds[2]}, {bounds[3]}");
                 brushStrokeBoundsBuffer.SetData(brushStrokeBoundsReset);
                 
                 rtWholeTemps[i].Clear(false, true, Color.black);
@@ -359,20 +357,6 @@ namespace Drawing
                 textureHelperShader.Dispatch(drawBrushStrokeKernel, threadGroupX, 1, 1);
                 tempPixelsBuffer.Release();
             }
-            // float oldStartTime = _brushStrokeID.brushStrokes[0].startTime;
-            // float oldEndTime = _brushStrokeID.brushStrokes[^1].startTime;
-            //
-            // bool firstStroke = true;
-            // foreach (var brushStroke in _brushStrokeID.brushStrokes)
-            // {
-            //     float startTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
-            //     float endTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
-            //     
-            //     Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, _brushStrokeID.paintType, 
-            //          startTime, endTime, firstStroke, _brushStrokeID.indexWhenDrawn);
-            //     firstStroke = false;
-            // }
-            // FinishDrawing();
         }
         
         public void SetupDrawBrushStroke(BrushStrokeID _brushStrokeID)
@@ -393,6 +377,7 @@ namespace Drawing
             
             (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing();
             _brushStrokeID.pixels = result.Item1;
+            _brushStrokeID.bounds = result.Item2;
         }
 
         public bool IsMouseOverBrushStroke(BrushStrokeID _brushStrokeID, Vector3 _worldPos)

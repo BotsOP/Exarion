@@ -1385,7 +1385,7 @@ namespace UI
             yield return new WaitForEndOfFrameUnit();
             yield return new WaitForEndOfFrameUnit();
             yield return new WaitForEndOfFrameUnit();
-            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_STROKE, _brushStrokeIDs);
+            EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.SETUP_BRUSHSTROKES, _brushStrokeIDs);
         }
 
         public void SaveData(ToolData _data, ToolMetaData _metaData)
