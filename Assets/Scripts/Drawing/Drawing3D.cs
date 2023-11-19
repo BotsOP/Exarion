@@ -402,6 +402,29 @@ namespace Drawing
             _brushStrokeID.pixels = result.Item1;
             _brushStrokeID.bounds = result.Item2;
         }
+        public void SetupDrawBrushStroke(List<BrushStrokeID> _brushStrokeIDs)
+        {
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                float oldStartTime = brushStrokeID.brushStrokes[0].startTime;
+                float oldEndTime = brushStrokeID.brushStrokes[^1].startTime;
+            
+                bool firstStroke = true;
+                foreach (var brushStroke in brushStrokeID.brushStrokes)
+                {
+                    float startTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, brushStrokeID.startTime, brushStrokeID.endTime);
+                    float endTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, brushStrokeID.startTime, brushStrokeID.endTime);
+                
+                    Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, brushStrokeID.paintType, 
+                        startTime, endTime, firstStroke, brushStrokeID.indexWhenDrawn);
+                    firstStroke = false;
+                }
+            
+                (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing();
+                brushStrokeID.pixels = result.Item1;
+                brushStrokeID.bounds = result.Item2;
+            }
+        }
 
         public bool IsMouseOverBrushStroke(BrushStrokeID _brushStrokeID, Vector3 _worldPos)
         {

@@ -225,12 +225,12 @@ namespace Drawing
 
         public void SetBrushSize(float _amount)
         {
-            // for (var i = 0; i < brushStrokes.Count; i++)
-            // {
-            //     var brushStroke = brushStrokes[i];
-            //     brushStroke.brushSize = Mathf.Clamp(_amount, 1, float.MaxValue);
-            //     brushStrokes[i] = brushStroke;
-            // }
+            for (var i = 0; i < brushStrokes.Count; i++)
+            {
+                var brushStroke = brushStrokes[i];
+                brushStroke.brushSize = Mathf.Clamp(_amount, 1, float.MaxValue);
+                brushStrokes[i] = brushStroke;
+            }
         }
 
         public void Reverse()
