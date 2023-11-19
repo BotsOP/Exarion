@@ -214,13 +214,12 @@ namespace Drawing
 
         public float GetAverageBrushSize()
         {
-            // float avgBrushSize = 0;
-            // foreach (var brushStroke in brushStrokes)
-            // {
-            //     avgBrushSize += brushStroke.brushSize;
-            // }
-            // return avgBrushSize / brushStrokes.Count;
-            return 0;
+            float avgBrushSize = 0;
+            foreach (var brushStroke in brushStrokes)
+            {
+                avgBrushSize += brushStroke.brushSize;
+            }
+            return avgBrushSize / brushStrokes.Count;
         }
 
         public void SetBrushSize(float _amount)
@@ -228,7 +227,7 @@ namespace Drawing
             for (var i = 0; i < brushStrokes.Count; i++)
             {
                 var brushStroke = brushStrokes[i];
-                brushStroke.brushSize = Mathf.Clamp(_amount, 1, float.MaxValue);
+                brushStroke.brushSize = Mathf.Clamp(_amount, 0.000000000001f, float.MaxValue);
                 brushStrokes[i] = brushStroke;
             }
         }

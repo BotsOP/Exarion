@@ -115,8 +115,8 @@ namespace Drawing
             // EventSystem<List<BrushStrokeID>, float>.Subscribe(EventType.ROTATE_STROKE, RotateStroke);
             // EventSystem<List<BrushStrokeID>, List<float>>.Subscribe(EventType.ROTATE_STROKE, RotateStroke);
             EventSystem<List<BrushStrokeID>, int>.Subscribe(EventType.CHANGE_DRAW_ORDER, ChangeDrawOrder);
-            // EventSystem<List<BrushStrokeID>, float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
-            // EventSystem<List<BrushStrokeID>, List<float>>.Subscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
+            EventSystem<List<BrushStrokeID>, float>.Subscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
+            EventSystem<List<BrushStrokeID>, List<float>>.Subscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
             EventSystem.Subscribe(EventType.DUPLICATE_STROKE, DuplicateBrushStrokes);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.SELECT_BRUSHSTROKE, HighlightStroke);
             EventSystem<Renderer, Renderer>.Subscribe(EventType.CHANGED_MODEL, SetRenderer);
@@ -164,8 +164,8 @@ namespace Drawing
             // EventSystem<List<BrushStrokeID>, float>.Unsubscribe(EventType.ROTATE_STROKE, RotateStroke);
             // EventSystem<List<BrushStrokeID>, List<float>>.Unsubscribe(EventType.ROTATE_STROKE, RotateStroke);
             EventSystem<List<BrushStrokeID>, int>.Unsubscribe(EventType.CHANGE_DRAW_ORDER, ChangeDrawOrder);
-            // EventSystem<List<BrushStrokeID>, float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
-            // EventSystem<List<BrushStrokeID>, List<float>>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
+            EventSystem<List<BrushStrokeID>, float>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
+            EventSystem<List<BrushStrokeID>, List<float>>.Unsubscribe(EventType.CHANGE_BRUSH_SIZE, ChangeBrushStrokeBrushSize);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.SELECT_BRUSHSTROKE, HighlightStroke);
             EventSystem.Unsubscribe(EventType.DUPLICATE_STROKE, DuplicateBrushStrokes);
             EventSystem<Renderer, Renderer>.Unsubscribe(EventType.CHANGED_MODEL, SetRenderer);
@@ -1108,33 +1108,26 @@ namespace Drawing
                 drawer.DrawBrushStroke(movedBrushStrokes);
             }
             
-            highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, drawer.brushStrokesID.Count());
+            highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, drawer.brushStrokesID.Count);
         }
         
         private void ChangeBrushStrokeBrushSize(List<BrushStrokeID> _brushStrokeIDs, float _newBrushSize)
         {
-            if (_newBrushSize < 0)
-            {
-                List<BrushStrokeID> affected = drawer.GetOverlappingBrushStrokeID(_brushStrokeIDs);
-                List<BrushStrokeID> affectedWithBase = new List<BrushStrokeID>(affected);
-                affectedWithBase.AddRange(_brushStrokeIDs);
-                
-                drawer.EraseBrushStroke(affectedWithBase);
-                foreach (var brushStrokeID in _brushStrokeIDs)
-                {
-                    brushStrokeID.SetBrushSize(_newBrushSize);
-                }
-                drawer.DrawBrushStroke(affected);
-                drawer.SetupDrawBrushStroke(_brushStrokeIDs);
-                return;
-            }
-
-            drawer.EraseBrushStroke(_brushStrokeIDs);
+            List<BrushStrokeID> affected = drawer.GetOverlappingBrushStrokeID(_brushStrokeIDs);
+            
+            List<BrushStrokeID> affectedWithBase = new List<BrushStrokeID>(affected);
+            affectedWithBase.AddRange(_brushStrokeIDs);
+            drawer.EraseBrushStroke(affectedWithBase);
+            
             foreach (var brushStrokeID in _brushStrokeIDs)
             {
                 brushStrokeID.SetBrushSize(_newBrushSize);
             }
+            
+            drawer.DrawBrushStroke(affected);
             drawer.SetupDrawBrushStroke(_brushStrokeIDs);
+            
+            highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, drawer.brushStrokesID.Count);
         }
         private void ChangeBrushStrokeBrushSize(List<BrushStrokeID> _brushStrokeIDs, List<float> _newBrushSizes)
         {
@@ -1145,27 +1138,14 @@ namespace Drawing
             for (int i = 0; i < _newBrushSizes.Count; i++)
             {
                 float newBrushSize = _newBrushSizes[i];
-                BrushStrokeID
-                if (_newBrushSize < 0)
-                {
-                    affectedWithBase.AddRange(_brushStrokeIDs);
+                BrushStrokeID brushStrokeID = _brushStrokeIDs[i];
                 
-                    foreach (var brushStrokeID in _brushStrokeIDs)
-                    {
-                        brushStrokeID.SetBrushSize(_newBrushSize);
-                    }
-                    drawer.DrawBrushStroke(affected);
-                    drawer.SetupDrawBrushStroke(_brushStrokeIDs);
-                    return;
-                }
-
-                drawer.EraseBrushStroke(_brushStrokeIDs);
-                foreach (var brushStrokeID in _brushStrokeIDs)
-                {
-                    brushStrokeID.SetBrushSize(_newBrushSize);
-                }
-                drawer.SetupDrawBrushStroke(_brushStrokeIDs);
+                brushStrokeID.SetBrushSize(newBrushSize);
+                drawer.DrawBrushStroke(affected);
+                drawer.SetupDrawBrushStroke(brushStrokeID);
             }
+            
+            highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, drawer.brushStrokesID.Count);
         }
 
         // private void DrawStamp(Vector2 _mousePos, string _key)
