@@ -522,12 +522,10 @@ namespace UI
             }
 
             List<BrushStrokeID> brushStrokeIDs = new List<BrushStrokeID>();
-            List<Vector2> newTimes = new List<Vector2>();
             for (int i = 0; i < selectedClips.Count; i++)
             {
                 var clip = selectedClips[i];
                 clip.mouseAction = lastMouseAction;
-                Vector2 tempOldClipTime = clip.ClipTime;
 
                 clip.UpdateTransform();
 
@@ -535,22 +533,13 @@ namespace UI
                 if (Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) > 0.001 ||
                     Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) > 0.001)
                 {
-                    List<BrushStrokeID> clipBrushStrokes = clip.GetBrushStrokeIDs();
-                    brushStrokeIDs.AddRange(clipBrushStrokes);
-                    for (int j = 0; j < clipBrushStrokes.Count; j++)
-                    {
-                        var brushStrokeID = clipBrushStrokes[j];
-                        float newStartTime = brushStrokeID.startTime.Remap(tempOldClipTime.x, tempOldClipTime.y, 0, 1);
-                        float newEndTime = brushStrokeID.endTime.Remap(tempOldClipTime.x, tempOldClipTime.y, 0, 1);
-                        newStartTime = newStartTime.Remap(0, 1, clip.ClipTime.x, clip.ClipTime.y);
-                        newEndTime = newEndTime.Remap(0, 1, clip.ClipTime.x, clip.ClipTime.y);
-                        newTimes.Add(new Vector2(newStartTime, newEndTime));
-                    }
+                    clip.SetTime(clip.ClipTime);
+                    brushStrokeIDs.AddRange(clip.GetBrushStrokeIDs());
                 }
             }
             if (brushStrokeIDs.Count > 0)
             {
-                EventSystem<List<BrushStrokeID>, List<Vector2>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs, newTimes);
+                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, brushStrokeIDs);
             }
 
             return true;
@@ -650,20 +639,18 @@ namespace UI
             if (selectedClips.Count > 0)
             {
                 List<TimelineClip> redraws = new List<TimelineClip>();
-                List<Vector2> newTimes = new List<Vector2>();
                 for (int i = 0; i < selectedClips.Count; i++)
                 {
                     var clip = selectedClips[i];
                     clip.mouseAction = MouseAction.Nothing;
                     CheckClipCollisions(clip);
                     
-                    if (Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) < 0.001f &&
-                        Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) < 0.001f)
+                    if (Math.Abs(clip.clipTimeOld.x - clip.ClipTime.x) > 0.001f &&
+                        Math.Abs(clip.clipTimeOld.y - clip.ClipTime.y) > 0.001f)
                     {
-                        continue;
+                        clip.SetTime(clip.ClipTime);
+                        redraws.Add(clip);
                     }
-                    newTimes.Add(clip.ClipTime);
-                    redraws.Add(clip);
                 }
 
                 if (redraws.Count > 0)
@@ -874,7 +861,7 @@ namespace UI
                     positionYInput.text = brushStrokeIDs[0].avgPosY.ToString("0.#");
                     rotationInput.text = (brushStrokeIDs[0].angle * (180 / Mathf.PI)).ToString("0.#");
                     scaleInput.text = brushStrokeIDs[0].scale.ToString("0.###");
-                    brushSizeInput.text = brushStrokeIDs[0].GetAverageBrushSize().ToString("0.#");
+                    brushSizeInput.text = brushStrokeIDs[0].GetAverageBrushSize().ToString("0.########");
                 }
                 startTimeInputCached = startTimeInput.text;
                 endTimeInputCached = endTimeInput.text;
@@ -1162,7 +1149,7 @@ namespace UI
             clipImage.color = timelineClip.GetNotSelectedColor();
             clipsOrdered[0].Add(timelineClip);
             CheckClipCollisions(timelineClip);
-            ICommand draw;
+            ICommand draw = new DrawCommand(timelineClip);
             
             if (_brushStrokeID.endTime > 1)
             {
@@ -1170,7 +1157,6 @@ namespace UI
                 ResizeTimeline(sizeDelta);
                 
                 Debug.Log($"delta: {delta}");
-                draw = new DrawCommand(timelineClip);
                 ICommand resizeTimelineCommand = new ResizeTimelineCommand(-(1 - _brushStrokeID.startTime));
                 List<ICommand> commands = new List<ICommand> { draw, resizeTimelineCommand };
                 ICommand multiCommand = new MultiCommand(commands);
@@ -1178,7 +1164,6 @@ namespace UI
                 return;
             }
             
-            draw = new DrawCommand(timelineClip);
             EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, draw);
         }
         private void AddNewBrushClip(TimelineClip _timelineClip)
@@ -1314,6 +1299,7 @@ namespace UI
                 float lastTime = clip.ClipTime.x.Remap(0, 1 + _sizeDelta, 0, 1);
                 float currentTime = clip.ClipTime.y.Remap(0, 1 + _sizeDelta, 0, 1);
                 Vector2 clipTime = new Vector2(lastTime, currentTime);
+                
                 clip.SetTime(clipTime);
                 clip.ClipTime = clipTime;
             }

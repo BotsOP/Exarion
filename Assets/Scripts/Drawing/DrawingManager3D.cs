@@ -52,7 +52,7 @@ namespace Drawing
 
         private Drawing3D drawer;
         private DrawHighlight3D highlighter;
-        private DrawPreview previewer;
+        private DrawPreview3D previewer;
         private DrawStamp drawStamp;
         private float brushSize;
         private float newBrushStrokeID;
@@ -67,7 +67,7 @@ namespace Drawing
         {
             drawer = new Drawing3D(imageWidth, imageHeight, sphere1.transform);
             highlighter = new DrawHighlight3D(imageWidth, imageHeight);
-            previewer = new DrawPreview(imageWidth, imageHeight);
+            previewer = new DrawPreview3D(imageWidth, imageHeight);
             drawStamp = new DrawStamp();
 
             tempBrushStrokes = new List<BrushStroke>();
@@ -84,14 +84,15 @@ namespace Drawing
             EventSystem<int>.Subscribe(EventType.CHANGE_PAINTTYPE, SetPaintType);
             EventSystem<Vector3>.Subscribe(EventType.DRAW, Draw);
             EventSystem<float>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
-            EventSystem<Vector2>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+            EventSystem<Vector3>.Subscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<Vector3>.Subscribe(EventType.SELECT_BRUSHSTROKE, SelectBrushStroke);
             EventSystem<float>.Subscribe(EventType.TIME, SetTime);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
-            EventSystem<List<BrushStrokeID>, List<Vector2>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
+            EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REDRAW_STROKES, RedrawStrokes);
+            EventSystem.Subscribe(EventType.REDRAW_ALL, RedrawAllStrokes);
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
@@ -133,14 +134,15 @@ namespace Drawing
             EventSystem<int>.Unsubscribe(EventType.CHANGE_PAINTTYPE, SetPaintType);
             EventSystem<Vector3>.Unsubscribe(EventType.DRAW, Draw);
             EventSystem<float>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
-            EventSystem<Vector2>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
+            EventSystem<Vector3>.Unsubscribe(EventType.SET_BRUSH_SIZE, SetBrushSize);
             EventSystem<Vector3>.Unsubscribe(EventType.SELECT_BRUSHSTROKE, SelectBrushStroke);
             EventSystem<float>.Unsubscribe(EventType.TIME, SetTime);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.ADD_SELECT, HighlightStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_SELECT, HighlightStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_STROKE, RemoveStroke);
-            EventSystem<List<BrushStrokeID>, List<Vector2>>.Unsubscribe(EventType.REDRAW_STROKES, RedrawStrokes);
+            EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REDRAW_STROKES, RedrawStrokes);
+            EventSystem.Unsubscribe(EventType.REDRAW_ALL, RedrawAllStrokes);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
@@ -177,6 +179,7 @@ namespace Drawing
             rend = _drawingRend;
             drawer.rend = _drawingRend;
             highlighter.rend = _drawingRend;
+            previewer.rend = _drawingRend;
 
             Mesh mesh = _drawingRend.gameObject.GetComponent<MeshFilter>().sharedMesh;
             EventSystem<int>.RaiseEvent(EventType.UPDATE_SUBMESH_COUNT, mesh.subMeshCount);
@@ -191,6 +194,7 @@ namespace Drawing
                 drawer.addRTWholeIDTemp();
                 CustomRenderTexture drawingTempRT = drawer.addRTWholeTemp();
                 CustomRenderTexture drawingRT = drawer.addRT();
+                drawingMat.SetTexture("_PreviewTex", previewer.AddRTPReview());
                 drawingMat.SetTexture("_IDTex", drawer.addRTID());
                 drawingMat.SetTexture("_MainTex", drawingRT);
                 drawingMat.SetTexture("_TempBrushStroke", drawingTempRT);
@@ -247,11 +251,11 @@ namespace Drawing
         {
             brushSize = _brushSize;
         }
-        private void SetBrushSize(Vector2 _mousePos)
+        private void SetBrushSize(Vector3 _worldPos)
         {
-            previewer.Preview(_mousePos, brushSize);
+            sphere1.transform.position = _worldPos;
+            previewer.DrawPreview(_worldPos, brushSize, time);
         }
-
         private void ClearPreview()
         {
             previewer.ClearPreview();
@@ -269,7 +273,7 @@ namespace Drawing
             if (firstUse)
             {
                 startBrushStrokeTime = time;
-                cachedTime = cachedTime > 1 ? 0 : time;
+                //cachedTime = cachedTime > 1 ? 0 : time;
                 lastCursorPos = _worldPos;
                 firstUse = false;
                 newBrushStrokeID = drawer.brushStrokesID.Count;
@@ -327,9 +331,13 @@ namespace Drawing
                 drawer.SetupDrawBrushStroke(brushStrokeID);
             }
         }
-        private void RedrawStrokes(List<BrushStrokeID> _brushStrokeIDs, List<Vector2> _newTimes)
+        private void RedrawStrokes(List<BrushStrokeID> _brushStrokeIDs)
         {
-            drawer.RedrawBrushStrokes(_brushStrokeIDs, _newTimes);
+            drawer.RedrawBrushStrokes(_brushStrokeIDs);
+        }
+        private void RedrawAllStrokes()
+        {
+            drawer.RedrawBrushStrokes(drawer.brushStrokesID);
         }
 
         private void AddStroke(BrushStrokeID _brushStrokeID)
@@ -400,6 +408,9 @@ namespace Drawing
         
         private void RemoveStroke(List<BrushStrokeID> _brushStrokeIDs)
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            
             List<BrushStrokeID> affected = drawer.GetOverlappingBrushStrokeID(_brushStrokeIDs);
 
             List<BrushStrokeID> toErase = new List<BrushStrokeID>(_brushStrokeIDs);
@@ -419,12 +430,10 @@ namespace Drawing
             List<BrushStrokeID> changedIDBrushStrokes = drawer.brushStrokesID.GetRange(lowestIndex, count);
             drawer.UpdateIDTex(changedIDBrushStrokes);
 
-            Stopwatch stopwatch = new Stopwatch();
             
-            stopwatch.Start();
             drawer.DrawBrushStroke(affected);
+            
             stopwatch.Stop();
-
             Debug.Log($"time: {stopwatch.ElapsedMilliseconds}");
         }
         

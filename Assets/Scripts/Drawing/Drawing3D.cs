@@ -19,6 +19,7 @@ namespace Drawing
         public List<CustomRenderTexture> rtIDs = new List<CustomRenderTexture>();
         public List<CustomRenderTexture> rtWholeTemps = new List<CustomRenderTexture>();
         public List<CustomRenderTexture> rtWholeIDTemps = new List<CustomRenderTexture>();
+        public List<CustomRenderTexture> rtPreviews = new List<CustomRenderTexture>();
         public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
         public Transform sphere1;
         public Renderer rend;
@@ -186,6 +187,22 @@ namespace Drawing
 
             return rtWholeIDTemp;
         }
+        
+        public CustomRenderTexture addRTPreview()
+        {
+            CustomRenderTexture rtPreview = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RInt, RenderTextureReadWrite.Linear)
+            {
+                filterMode = FilterMode.Point,
+                enableRandomWrite = true,
+                useMipMap = false,
+                name = "rtPreview" + rtPreviews.Count,
+            };
+            
+            rtPreview.Clear(false, true, Color.black);
+            rtPreviews.Add(rtPreview);
+
+            return rtPreview;
+        }
 
         #endregion
 
@@ -217,7 +234,21 @@ namespace Drawing
                     }
                     break;
             }
-            
+        }
+
+        public void DrawPreview(Vector3 _worldPos, float _strokeBrushSize, float _colorTime)
+        {
+            simplePaintMaterial.SetVector(LastCursorPos, _worldPos);
+            simplePaintMaterial.SetVector(CursorPos, _worldPos);
+            simplePaintMaterial.SetFloat(BrushSize, _strokeBrushSize);
+            paintMaterial.SetFloat(TimeColor, _colorTime);
+            for (int i = 0; i < subMeshCount; i++)
+            {
+                commandBuffer.SetRenderTarget(rtPreviews[i]);
+                commandBuffer.DrawRenderer(rend, simplePaintMaterial, i);
+                        
+                ExecuteBuffer();
+            }
         }
 
         public (List<BrushStrokePixel[]>, List<uint[]>) FinishDrawing()
@@ -473,13 +504,8 @@ namespace Drawing
             }
         }
 
-        public void RedrawBrushStrokes(List<BrushStrokeID> _brushStrokeIDs, List<Vector2> _newTimes)
+        public void RedrawBrushStrokes(List<BrushStrokeID> _brushStrokeIDs)
         {
-            if (_brushStrokeIDs.Count != _newTimes.Count)
-            {
-                Debug.LogError($"Trying to redraw but the amount of brushstroke and new times does not match {_brushStrokeIDs.Count} {_newTimes.Count}");
-            }
-
             CheckTimeTableBufferSize();
             
             Vector4[] timeTable = new Vector4[timeTableBufferSize];
@@ -490,10 +516,16 @@ namespace Drawing
             }
             for (int i = 0; i < _brushStrokeIDs.Count; i++)
             {
-                Vector2 time = _brushStrokeIDs[i].GetTime();
-                timeTable[_brushStrokeIDs[i].indexWhenDrawn] = new Vector4(time.x, time.y, _newTimes[i].x, _newTimes[i].y);
-                _brushStrokeIDs[i].startTime = _newTimes[i].x;
-                _brushStrokeIDs[i].endTime = _newTimes[i].y;
+                BrushStrokeID brushStrokeID = _brushStrokeIDs[i];
+                
+                float startTimeOld = brushStrokeID.startTimeOld;
+                float endTimeOld = brushStrokeID.endTimeOld;
+                float startTime = brushStrokeID.startTime;
+                float endTime = brushStrokeID.endTime;
+                
+                timeTable[brushStrokeID.indexWhenDrawn] = new Vector4(startTimeOld, endTimeOld, startTime, endTime);
+                brushStrokeID.startTimeOld = startTime;
+                brushStrokeID.endTimeOld = endTime;
             }
             
             brushStrokeTableBuffer.SetData(timeTable);

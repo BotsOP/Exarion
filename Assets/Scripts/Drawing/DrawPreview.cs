@@ -60,5 +60,7 @@ namespace Drawing
                 clearedTexture = true;
             }
         }
+        
+        
     }
 }

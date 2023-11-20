@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Managers;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -17,6 +18,10 @@ namespace Drawing
         public float startTimeWhenDrawn;
         [JsonIgnore]
         public float endTimeWhenDrawn;
+        [JsonIgnore]
+        public float startTimeOld;
+        [JsonIgnore]
+        public float endTimeOld;
         
         public float collisionBoxMinX;
         public float collisionBoxMinY;
@@ -46,6 +51,8 @@ namespace Drawing
             endTime = _endTime;
             startTimeWhenDrawn = _startTime;
             endTimeWhenDrawn = _endTime;
+            startTimeOld = _startTime;
+            endTimeOld = _endTime;
             collisionBoxMinX = _collisionBoxMin.x;
             collisionBoxMinY = _collisionBoxMin.y;
             collisionBoxMinZ = _collisionBoxMin.z;
@@ -69,6 +76,8 @@ namespace Drawing
             endTime = _endTime;
             startTimeWhenDrawn = _startTime;
             endTimeWhenDrawn = _endTime;
+            startTimeOld = _startTime;
+            endTimeOld = _endTime;
             collisionBoxMinX = _collisionBoxMin.x;
             collisionBoxMinY = _collisionBoxMin.y;
             collisionBoxMinZ = _collisionBoxMin.z;
@@ -89,6 +98,10 @@ namespace Drawing
             paintType = _brushStrokeID.paintType;
             startTime = _brushStrokeID.startTime;
             endTime = _brushStrokeID.endTime;
+            startTimeWhenDrawn = _brushStrokeID.startTime;
+            endTimeWhenDrawn = _brushStrokeID.endTime;
+            startTimeOld = _brushStrokeID.startTime;
+            endTimeOld = _brushStrokeID.endTime;
             collisionBoxMinX = _brushStrokeID.collisionBoxMinX;
             collisionBoxMinY = _brushStrokeID.collisionBoxMinY;
             collisionBoxMaxX = _brushStrokeID.collisionBoxMaxX;
@@ -106,6 +119,10 @@ namespace Drawing
             paintType = _paintType;
             startTime = _startTime;
             endTime = _endTime;
+            startTimeWhenDrawn = _startTime;
+            endTimeWhenDrawn = _endTime;
+            startTimeOld = _startTime;
+            endTimeOld = _endTime;
             collisionBoxMinX = _collisionBox.x;
             collisionBoxMinY = _collisionBox.y;
             collisionBoxMaxX = _collisionBox.z;

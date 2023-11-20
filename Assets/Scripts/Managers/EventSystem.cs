@@ -5,6 +5,7 @@ namespace Managers
     public enum EventType
     {
         DRAW,
+        DRAW_PREVIEW,
         FINISHED_STROKE,
         TIME,
         ADD_TIME,
