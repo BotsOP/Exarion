@@ -101,7 +101,7 @@ void Erase (uint2 id : SV_DispatchThreadID)
     }
     
     int shouldErase = _EraseRemap[brushID].x;
-    if(shouldErase > 0)
+    if(shouldErase == 1)
     {
         _FinalTexID[id] = -1;
         _FinalTexColor[id] = 0;

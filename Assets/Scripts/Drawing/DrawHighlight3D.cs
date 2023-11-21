@@ -84,7 +84,6 @@ namespace Drawing
                 int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
                 int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
 
-                //Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
                 if (threadGroupX == 0 && threadGroupY == 0)
                 {
                     continue;

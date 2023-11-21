@@ -42,9 +42,6 @@ namespace Drawing
         [SerializeField] private RenderTexture rtHighlight;
     
         private RenderTexture drawingRenderTexture;
-        private int kernelID;
-        private Vector2 threadGroupSizeOut;
-        private Vector2 threadGroupSize;
         private Vector3 lastCursorPos;
         private bool firstUse = true;
         private List<BrushStrokeID> selectedBrushStrokes;
@@ -55,7 +52,7 @@ namespace Drawing
         private DrawPreview3D previewer;
         private DrawStamp drawStamp;
         private float brushSize;
-        private float newBrushStrokeID;
+        private int newBrushStrokeID;
         private float cachedTime;
         private float startBrushStrokeTime;
         private Vector3 collisionBoxMin;
@@ -63,15 +60,13 @@ namespace Drawing
         private Vector2 tempAvgPos;
         private float time;
 
-        private void Start()
+        protected virtual void Start()
         {
             drawer = new Drawing3D(imageWidth, imageHeight, sphere1.transform);
             highlighter = new DrawHighlight3D(imageWidth, imageHeight);
             previewer = new DrawPreview3D(imageWidth, imageHeight);
             drawStamp = new DrawStamp();
-
-            tempBrushStrokes = new List<BrushStroke>();
-            selectedBrushStrokes = new List<BrushStrokeID>();
+            
             collisionBoxMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
             collisionBoxMax = new Vector3(-float.MaxValue, -float.MaxValue, -float.MaxValue);
         }
@@ -299,7 +294,7 @@ namespace Drawing
 
         private void StoppedDrawing()
         {
-            (List<BrushStrokePixel[]>, List<uint[]>) result = drawer.FinishDrawing();
+            (List<BrushStrokePixel[]>, List<uint[]>) result = drawer.FinishDrawing(newBrushStrokeID);
             List<BrushStrokePixel[]> pixels = result.Item1;
             List<uint[]> bounds = result.Item2;
             

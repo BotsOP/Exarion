@@ -73,6 +73,7 @@ namespace UI
         private RectTransform timelineAreaRect;
     
         private float mouseOffset;
+        private float clipHandle = 5;
         private float minumunWidth = 10;
         private float spacing = 10;
         
@@ -192,7 +193,7 @@ namespace UI
         {
             if (IsMouseOver() && mouseAction == MouseAction.Nothing)
             {
-                if (Input.mousePosition.x > Corners[0].x && Input.mousePosition.x < Corners[0].x + 10)
+                if (Input.mousePosition.x > Corners[0].x && Input.mousePosition.x < Corners[0].x + clipHandle)
                 {
                     if (rect.pivot.x < 1)
                     {
@@ -202,7 +203,7 @@ namespace UI
                     }
                     return MouseAction.ResizeClipLeft;
                 }
-                if (Input.mousePosition.x < Corners[2].x && Input.mousePosition.x > Corners[2].x - 10)
+                if (Input.mousePosition.x < Corners[2].x && Input.mousePosition.x > Corners[2].x - clipHandle)
                 {
                     if (rect.pivot.x > 0)
                     {

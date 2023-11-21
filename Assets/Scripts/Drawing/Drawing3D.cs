@@ -12,91 +12,30 @@ using Random = UnityEngine.Random;
 
 namespace Drawing
 {
-    public class Drawing3D
+    public class Drawing3D : DrawingLib
     {
-        private const int TIME_TABLE_BUFFER_SIZE_INCREASE = 50;
-        public List<CustomRenderTexture> rts = new List<CustomRenderTexture>();
-        public List<CustomRenderTexture> rtIDs = new List<CustomRenderTexture>();
-        public List<CustomRenderTexture> rtWholeTemps = new List<CustomRenderTexture>();
-        public List<CustomRenderTexture> rtWholeIDTemps = new List<CustomRenderTexture>();
-        public List<CustomRenderTexture> rtPreviews = new List<CustomRenderTexture>();
-        public List<BrushStrokeID> brushStrokesID = new List<BrushStrokeID>();
-        public Transform sphere1;
-        public Renderer rend;
+        private CustomRenderTexture rtIndividualTemp;
 
-        private int subMeshCount => rend.materials.Length;
-        
-        private readonly CustomRenderTexture rtIndividualTemp;
-        private ComputeShader textureHelperShader;
         private Material paintMaterial;
-        private Material simplePaintMaterial;
-        private int copyKernelID;
-        private int finalCopyKernelID;
-        private int eraseKernelID;
-        private int timeRemapKernel;
-        private int updateIDTexKernel;
-        private int drawBrushStrokeKernel;
-        private Vector3 threadGroupSizeOut;
-        private Vector3 threadGroupSize;
-        private int imageWidth;
-        private int imageHeight;
         private CommandBuffer commandBuffer;
-        private ComputeBuffer counterBuffer;
-        private ComputeBuffer brushStrokeBoundsBuffer;
-        private ComputeBuffer brushStrokeTableBuffer;
-        private ComputeBuffer brushStrokeToPixel;
-        private int timeTableBufferSize;
-        private uint[] brushStrokeBoundsReset;
+        public Renderer rend;
         
-        private static readonly int FirstStroke = Shader.PropertyToID("_FirstStroke");
-        private static readonly int CursorPos = Shader.PropertyToID("_CursorPos");
-        private static readonly int LastCursorPos = Shader.PropertyToID("_LastCursorPos");
-        private static readonly int BrushSize = Shader.PropertyToID("_BrushSize");
-        private static readonly int TimeColor = Shader.PropertyToID("_TimeColor");
-        private static readonly int PreviousTimeColor = Shader.PropertyToID("_PreviousTimeColor");
-        private static readonly int StrokeID = Shader.PropertyToID("_StrokeID");
-        private static readonly int IDTex = Shader.PropertyToID("_IDTex");
+        private readonly int FirstStroke = Shader.PropertyToID("_FirstStroke");
+        private readonly int LastCursorPos = Shader.PropertyToID("_LastCursorPos");
+        private readonly int BrushSize = Shader.PropertyToID("_BrushSize");
+        private readonly int TimeColor = Shader.PropertyToID("_TimeColor");
+        private readonly int PreviousTimeColor = Shader.PropertyToID("_PreviousTimeColor");
+        private readonly int StrokeID = Shader.PropertyToID("_StrokeID");
+        private readonly int CursorPos = Shader.PropertyToID("_CursorPos");
+        private readonly int IDTex = Shader.PropertyToID("_IDTex");
 
-        
-        public Drawing3D(int _imageWidth, int _imageHeight, Transform _sphere1)
+
+        public Drawing3D(int _imageWidth, int _imageHeight, Transform _sphere1) : base(_imageWidth, _imageHeight)
         {
-            textureHelperShader = Resources.Load<ComputeShader>("TextureHelper");
             paintMaterial = new Material(Resources.Load<Shader>("DrawPainter"));
-            simplePaintMaterial = new Material(Resources.Load<Shader>("SimplePainter"));
-
-            copyKernelID = textureHelperShader.FindKernel("Copy");
-            finalCopyKernelID = textureHelperShader.FindKernel("FinalCopy");
-            eraseKernelID = textureHelperShader.FindKernel("Erase");
-            timeRemapKernel = textureHelperShader.FindKernel("TimeRemap");
-            updateIDTexKernel = textureHelperShader.FindKernel("UpdateIDTex");
-            drawBrushStrokeKernel = textureHelperShader.FindKernel("DrawBrushStroke");
             
             commandBuffer = new CommandBuffer();
             commandBuffer.name = "3DUVTimePainter";
-
-            imageWidth = _imageWidth;
-            imageHeight = _imageHeight;
-            sphere1 = _sphere1;
-
-            textureHelperShader.GetKernelThreadGroupSizes(copyKernelID, out uint threadGroupSizeX, out uint threadGroupSizeY, out _);
-            threadGroupSizeOut.x = threadGroupSizeX;
-            threadGroupSizeOut.y = threadGroupSizeY;
-            
-            threadGroupSize.x = Mathf.CeilToInt(_imageWidth / threadGroupSizeOut.x);
-            threadGroupSize.y = Mathf.CeilToInt(_imageHeight / threadGroupSizeOut.y);
-
-            brushStrokeBoundsReset = new[] { uint.MaxValue, uint.MaxValue, (uint)0, (uint)0 };
-            
-            counterBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Structured);
-            counterBuffer.SetData(new int[1]);
-            
-            brushStrokeBoundsBuffer = new ComputeBuffer(4, sizeof(int), ComputeBufferType.Structured);
-            brushStrokeBoundsBuffer.SetData(brushStrokeBoundsReset);
-            
-            timeTableBufferSize = TIME_TABLE_BUFFER_SIZE_INCREASE;
-            brushStrokeTableBuffer = new ComputeBuffer(timeTableBufferSize, sizeof(float) * 4, ComputeBufferType.Structured);
-
-            brushStrokeToPixel = new ComputeBuffer(imageWidth * imageHeight, sizeof(int) + sizeof(float), ComputeBufferType.Append);
             
             rtIndividualTemp = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
             {
@@ -107,106 +46,7 @@ namespace Drawing
             };
         }
 
-        public void OnDestroy()
-        {
-            brushStrokeToPixel?.Release();
-            brushStrokeToPixel = null;
-            
-            counterBuffer?.Release();
-            counterBuffer = null;
-            
-            brushStrokeTableBuffer?.Release();
-            brushStrokeTableBuffer = null;
-            
-            brushStrokeBoundsBuffer?.Release();
-            brushStrokeBoundsBuffer = null;
-        }
-
-        #region addRT
-
-        public CustomRenderTexture addRT()
-        {
-            CustomRenderTexture rt = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                useMipMap = false,
-                name = "rt" + rts.Count,
-            };
-            
-            rt.Clear(false, true, Color.black);
-            rts.Add(rt);
-            return rt;
-        }
-        
-        public CustomRenderTexture addRTID()
-        {
-            CustomRenderTexture rtID = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                useMipMap = false,
-                name = "rtID" + rtIDs.Count,
-            };
-            
-            Color idColor = new Color(-1, -1, -1);
-            rtID.Clear(false, true, idColor);
-            rtIDs.Add(rtID);
-
-            return rtID;
-        }
-        
-        public CustomRenderTexture addRTWholeTemp()
-        {
-            CustomRenderTexture rtWholeTemp = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                useMipMap = false,
-                name = "rtWholeTemp" + rtWholeTemps.Count,
-            };
-            
-            rtWholeTemp.Clear(false, true, Color.black);
-            rtWholeTemps.Add(rtWholeTemp);
-
-            return rtWholeTemp;
-        }
-        
-        public CustomRenderTexture addRTWholeIDTemp()
-        {
-            CustomRenderTexture rtWholeIDTemp = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RInt, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                useMipMap = false,
-                name = "rtWholeIDTemp" + rtWholeIDTemps.Count,
-            };
-            
-            rtWholeIDTemp.Clear(false, true, Color.black);
-            rtWholeIDTemps.Add(rtWholeIDTemp);
-
-            return rtWholeIDTemp;
-        }
-        
-        public CustomRenderTexture addRTPreview()
-        {
-            CustomRenderTexture rtPreview = new CustomRenderTexture(imageWidth, imageHeight, RenderTextureFormat.RInt, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                useMipMap = false,
-                name = "rtPreview" + rtPreviews.Count,
-            };
-            
-            rtPreview.Clear(false, true, Color.black);
-            rtPreviews.Add(rtPreview);
-
-            return rtPreview;
-        }
-
-        #endregion
-
-        public void Draw(Vector3 _startPos, Vector3 _endPos, float _strokeBrushSize, PaintType _paintType, float _startTime = 0, float _endTime = 0, bool _firstStroke = false, float _strokeID = 0)
+        public virtual void Draw(Vector3 _startPos, Vector3 _endPos, float _strokeBrushSize, PaintType _paintType, float _startTime = 0, float _endTime = 0, bool _firstStroke = false, float _strokeID = 0)
         {
             switch (_paintType)
             {
@@ -236,181 +76,10 @@ namespace Drawing
             }
         }
 
-        public void DrawPreview(Vector3 _worldPos, float _strokeBrushSize, float _colorTime)
+        private void ExecuteBuffer()
         {
-            simplePaintMaterial.SetVector(LastCursorPos, _worldPos);
-            simplePaintMaterial.SetVector(CursorPos, _worldPos);
-            simplePaintMaterial.SetFloat(BrushSize, _strokeBrushSize);
-            paintMaterial.SetFloat(TimeColor, _colorTime);
-            for (int i = 0; i < subMeshCount; i++)
-            {
-                commandBuffer.SetRenderTarget(rtPreviews[i]);
-                commandBuffer.DrawRenderer(rend, simplePaintMaterial, i);
-                        
-                ExecuteBuffer();
-            }
-        }
-
-        public (List<BrushStrokePixel[]>, List<uint[]>) FinishDrawing()
-        {
-            List<BrushStrokePixel[]> allPos = new List<BrushStrokePixel[]>();
-            List<uint[]> allBounds = new List<uint[]>();
-            for (int i = 0; i < subMeshCount; i++)
-            {
-                textureHelperShader.SetBuffer(finalCopyKernelID, "_TexToBuffer", brushStrokeToPixel);
-                textureHelperShader.SetBuffer(finalCopyKernelID, "_Counter", counterBuffer);
-                
-                textureHelperShader.SetBuffer(finalCopyKernelID, "_BrushStrokeBounds", brushStrokeBoundsBuffer);
-                textureHelperShader.SetTexture(finalCopyKernelID, "_OrgTexColor", rtWholeTemps[i]);
-                textureHelperShader.SetTexture(finalCopyKernelID, "_FinalTexColor", rts[i]);
-                textureHelperShader.SetTexture(finalCopyKernelID, "_FinalTexID", rtIDs[i]);
-                
-                textureHelperShader.Dispatch(finalCopyKernelID, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
-                
-                int amountPixels = counterBuffer.GetCounter();
-                //Debug.Log($"mb: {amountPixels * 2 / 1000000f}");
-                BrushStrokePixel[] pos = new BrushStrokePixel[amountPixels];
-                brushStrokeToPixel.GetData(pos);
-                brushStrokeToPixel.SetCounterValue(0);
-                allPos.Add(pos);
-
-                uint[] bounds = new uint[4];
-                brushStrokeBoundsBuffer.GetData(bounds);
-                allBounds.Add(bounds);
-                brushStrokeBoundsBuffer.SetData(brushStrokeBoundsReset);
-                
-                rtWholeTemps[i].Clear(false, true, Color.black);
-                rtWholeIDTemps[i].Clear(false, true, Color.black);
-            }
-            
-            return (allPos, allBounds);
-        }
-        
-        public void EraseBrushStroke(BrushStrokeID _brushStrokeID)
-        {
-            CheckTimeTableBufferSize();
-            int[] shouldDeleteTable = new int[timeTableBufferSize * 4];
-
-            _brushStrokeID.shouldDelete = true;
-            for (int i = 0; i < brushStrokesID.Count; i++)
-            {
-                shouldDeleteTable[i * 4] = brushStrokesID[i].shouldDelete ? 1 : 0;
-            }
-            _brushStrokeID.shouldDelete = false;
-            
-            brushStrokeTableBuffer.SetData(shouldDeleteTable);
-            
-            for (int i = 0; i < subMeshCount; i++)
-            {
-                uint[] bounds = _brushStrokeID.bounds[i];
-                uint width = bounds[2] - bounds[0];
-                uint height = bounds[3] - bounds[1];
-                int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
-                int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
-                
-                Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
-                if (threadGroupX == 0 && threadGroupY == 0)
-                {
-                    continue;
-                }
-                
-                textureHelperShader.SetBuffer(eraseKernelID, "_EraseRemap", brushStrokeTableBuffer);
-                textureHelperShader.SetTexture(eraseKernelID, "_FinalTexColor", rts[i]);
-                textureHelperShader.SetTexture(eraseKernelID, "_FinalTexID", rtIDs[i]);
-                textureHelperShader.SetInt("_StartPosX", (int)bounds[0]);
-                textureHelperShader.SetInt("_StartPosY", (int)bounds[1]);
-                
-                textureHelperShader.Dispatch(eraseKernelID, threadGroupX, threadGroupY, 1);
-            }
-        }
-
-        public void EraseBrushStroke(List<BrushStrokeID> _brushStrokeIDs)
-        {
-            CheckTimeTableBufferSize();
-            int[] shouldDeleteTable = new int[timeTableBufferSize * 4];
-
-            foreach (var brushStrokeID in _brushStrokeIDs)
-            {
-                brushStrokeID.shouldDelete = true;
-            }
-            for (int i = 0; i < brushStrokesID.Count; i++)
-            {
-                shouldDeleteTable[i * 4] = brushStrokesID[i].shouldDelete ? 1 : 0;
-            }
-            foreach (var brushStrokeID in _brushStrokeIDs)
-            {
-                brushStrokeID.shouldDelete = false;
-            }
-            
-            brushStrokeTableBuffer.SetData(shouldDeleteTable);
-            
-            for (int i = 0; i < subMeshCount; i++)
-            {
-                uint[] bounds = CombineBounds(_brushStrokeIDs, i);
-                uint width = bounds[2] - bounds[0];
-                uint height = bounds[3] - bounds[1];
-                int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
-                int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
-                
-                if (threadGroupX == 0 && threadGroupY == 0)
-                {
-                    continue;
-                }
-                
-                textureHelperShader.SetBuffer(eraseKernelID, "_EraseRemap", brushStrokeTableBuffer);
-                textureHelperShader.SetTexture(eraseKernelID, "_FinalTexColor", rts[i]);
-                textureHelperShader.SetTexture(eraseKernelID, "_FinalTexID", rtIDs[i]);
-                textureHelperShader.SetInt("_StartPosX", (int)bounds[0]);
-                textureHelperShader.SetInt("_StartPosY", (int)bounds[1]);
-                
-                textureHelperShader.Dispatch(eraseKernelID, threadGroupX, threadGroupY, 1);
-            }
-        }
-
-        public void DrawBrushStroke(BrushStrokeID _brushStrokeID)
-        {
-            for (int i = 0; i < subMeshCount; i++)
-            {
-                BrushStrokePixel[] pixels = _brushStrokeID.pixels[i];
-                int threadGroupX = Mathf.CeilToInt(pixels.Length / 1024f);
-                ComputeBuffer tempPixelsBuffer = new ComputeBuffer(pixels.Length, sizeof(int) + sizeof(float), ComputeBufferType.Structured);
-                tempPixelsBuffer.SetData(pixels);
-                
-                Vector4 timeRemap = new Vector4(_brushStrokeID.startTimeWhenDrawn, _brushStrokeID.endTimeWhenDrawn, _brushStrokeID.startTime, _brushStrokeID.endTime);
-
-                textureHelperShader.SetBuffer(drawBrushStrokeKernel, "_BufferToTex", tempPixelsBuffer);
-                textureHelperShader.SetTexture(drawBrushStrokeKernel, "_FinalTexColor", rts[i]);
-                textureHelperShader.SetTexture(drawBrushStrokeKernel, "_FinalTexID", rtIDs[i]);
-                textureHelperShader.SetFloat("_StrokeID", _brushStrokeID.indexWhenDrawn);
-                textureHelperShader.SetVector("_TimeRemapBrushStroke", timeRemap);
-
-                textureHelperShader.Dispatch(drawBrushStrokeKernel, threadGroupX, 1, 1);
-                tempPixelsBuffer.Release();
-            }
-        }
-        public void DrawBrushStroke(List<BrushStrokeID> _brushStrokeIDs)
-        {
-            foreach (var brushStrokeID in _brushStrokeIDs)
-            {
-                for (int i = 0; i < subMeshCount; i++)
-                {
-                    BrushStrokePixel[] pixels = brushStrokeID.pixels[i];
-                    int threadGroupX = Mathf.CeilToInt(pixels.Length / 1024f);
-                    ComputeBuffer tempPixelsBuffer = new ComputeBuffer(pixels.Length, sizeof(int) + sizeof(float), ComputeBufferType.Structured);
-                    tempPixelsBuffer.SetData(pixels);
-                
-                    Vector4 timeRemap = new Vector4(brushStrokeID.startTimeWhenDrawn, brushStrokeID.endTimeWhenDrawn, brushStrokeID.startTime, brushStrokeID.endTime);
-
-                    textureHelperShader.SetBuffer(drawBrushStrokeKernel, "_BufferToTex", tempPixelsBuffer);
-                    textureHelperShader.SetTexture(drawBrushStrokeKernel, "_FinalTexColor", rts[i]);
-                    textureHelperShader.SetTexture(drawBrushStrokeKernel, "_FinalTexID", rtIDs[i]);
-                    textureHelperShader.SetFloat("_StrokeID", brushStrokeID.indexWhenDrawn);
-                    textureHelperShader.SetVector("_TimeRemapBrushStroke", timeRemap);
-
-                    textureHelperShader.Dispatch(drawBrushStrokeKernel, threadGroupX, 1, 1);
-                    tempPixelsBuffer.Release();
-                }
-            }
+            Graphics.ExecuteCommandBuffer(commandBuffer);
+            commandBuffer.Clear();
         }
         
         public void SetupDrawBrushStroke(BrushStrokeID _brushStrokeID)
@@ -422,14 +91,14 @@ namespace Drawing
             foreach (var brushStroke in _brushStrokeID.brushStrokes)
             {
                 float startTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
-                float endTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
+                float endTime = brushStroke.endTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
                 
                 Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, _brushStrokeID.paintType, 
                      startTime, endTime, firstStroke, _brushStrokeID.indexWhenDrawn);
                 firstStroke = false;
             }
             
-            (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing();
+            (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing(_brushStrokeID.indexWhenDrawn);
             _brushStrokeID.pixels = result.Item1;
             _brushStrokeID.bounds = result.Item2;
         }
@@ -444,19 +113,19 @@ namespace Drawing
                 foreach (var brushStroke in brushStrokeID.brushStrokes)
                 {
                     float startTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, brushStrokeID.startTime, brushStrokeID.endTime);
-                    float endTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, brushStrokeID.startTime, brushStrokeID.endTime);
+                    float endTime = brushStroke.endTime.Remap(oldStartTime, oldEndTime, brushStrokeID.startTime, brushStrokeID.endTime);
                 
                     Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, brushStrokeID.paintType, 
                         startTime, endTime, firstStroke, brushStrokeID.indexWhenDrawn);
                     firstStroke = false;
                 }
             
-                (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing();
+                (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing(brushStrokeID.indexWhenDrawn);
                 brushStrokeID.pixels = result.Item1;
                 brushStrokeID.bounds = result.Item2;
             }
         }
-
+        
         public bool IsMouseOverBrushStroke(BrushStrokeID _brushStrokeID, Vector3 _worldPos)
         {
             Vector3 minCorner = _brushStrokeID.GetMinCorner();
@@ -473,273 +142,6 @@ namespace Drawing
                 }
             }
             return false;
-        }
-        public void UpdateIDTex(List<BrushStrokeID> _brushStrokeIDs)
-        {
-            CheckTimeTableBufferSize();
-            int[] newIDs = new int[timeTableBufferSize * 4];
-            
-            for (int i = 0; i < brushStrokesID.Count; i++)
-            {
-                newIDs[brushStrokesID[i].indexWhenDrawn * 4] = i;
-                brushStrokesID[i].indexWhenDrawn = i;
-            }
-            
-            brushStrokeTableBuffer.SetData(newIDs);
-
-            for (int i = 0; i < subMeshCount; i++)
-            {
-                uint[] bounds = CombineBounds(_brushStrokeIDs, i);
-                uint width = bounds[2] - bounds[0];
-                uint height = bounds[3] - bounds[1];
-                int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
-                int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
-                
-                textureHelperShader.SetBuffer(updateIDTexKernel, "_IndexRemap", brushStrokeTableBuffer);
-                textureHelperShader.SetTexture(updateIDTexKernel, "_FinalTexID", rtIDs[i]);
-                textureHelperShader.SetInt("_StartPosX", (int)bounds[0]);
-                textureHelperShader.SetInt("_StartPosY", (int)bounds[1]);
-                
-                textureHelperShader.Dispatch(updateIDTexKernel, threadGroupX, threadGroupY, 1);
-            }
-        }
-
-        public void RedrawBrushStrokes(List<BrushStrokeID> _brushStrokeIDs)
-        {
-            CheckTimeTableBufferSize();
-            
-            Vector4[] timeTable = new Vector4[timeTableBufferSize];
-            for (int i = 0; i < brushStrokesID.Count; i++)
-            {
-                Vector2 time = brushStrokesID[i].GetTime();
-                timeTable[i] = new Vector4(time.x, time.y, time.x, time.y);
-            }
-            for (int i = 0; i < _brushStrokeIDs.Count; i++)
-            {
-                BrushStrokeID brushStrokeID = _brushStrokeIDs[i];
-                
-                float startTimeOld = brushStrokeID.startTimeOld;
-                float endTimeOld = brushStrokeID.endTimeOld;
-                float startTime = brushStrokeID.startTime;
-                float endTime = brushStrokeID.endTime;
-                
-                timeTable[brushStrokeID.indexWhenDrawn] = new Vector4(startTimeOld, endTimeOld, startTime, endTime);
-                brushStrokeID.startTimeOld = startTime;
-                brushStrokeID.endTimeOld = endTime;
-            }
-            
-            brushStrokeTableBuffer.SetData(timeTable);
-
-            for (int i = 0; i < subMeshCount; i++)
-            {
-                uint[] bounds = CombineBounds(_brushStrokeIDs, i);
-                uint width = bounds[2] - bounds[0];
-                uint height = bounds[3] - bounds[1];
-                int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
-                int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
-                
-                //Debug.Log($"x: {threadGroupX}  y: {threadGroupY}");
-                if (threadGroupX == 0 && threadGroupY == 0)
-                {
-                    continue;
-                }
-                
-                textureHelperShader.SetBuffer(timeRemapKernel, "_TimeRemap", brushStrokeTableBuffer);
-                textureHelperShader.SetTexture(timeRemapKernel, "_FinalTexColor", rts[i]);
-                textureHelperShader.SetTexture(timeRemapKernel, "_FinalTexID", rtIDs[i]);
-                textureHelperShader.SetInt("_StartPosX", (int)bounds[0]);
-                textureHelperShader.SetInt("_StartPosY", (int)bounds[1]);
-                
-                textureHelperShader.Dispatch(timeRemapKernel, threadGroupX, threadGroupY, 1);
-            }
-        }
-
-        private void CheckTimeTableBufferSize()
-        {
-            if (brushStrokesID.Count >= timeTableBufferSize)
-            {
-                brushStrokeTableBuffer?.Release();
-                brushStrokeTableBuffer = null;
-                timeTableBufferSize += TIME_TABLE_BUFFER_SIZE_INCREASE;
-                
-                brushStrokeTableBuffer = new ComputeBuffer(timeTableBufferSize, sizeof(float) * 4, ComputeBufferType.Structured);
-            }
-        }
-
-        public void ExecuteBuffer()
-        {
-            Graphics.ExecuteCommandBuffer(commandBuffer);
-            commandBuffer.Clear();
-        }
-
-        // public CustomRenderTexture ReverseRtoB()
-        // {
-        //     CustomRenderTexture tempRT = new CustomRenderTexture(UIManager.imageWidth, UIManager.imageHeight, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
-        //     {
-        //         filterMode = FilterMode.Point,
-        //         enableRandomWrite = true,
-        //         name = "rtReverse",
-        //     };
-        //
-        //     int kernelReverse = textureHelperShader.FindKernel("WriteToReverse");
-        //     
-        //     textureHelperShader.SetTexture(kernelReverse, "_ResultTexReverse", tempRT);
-        //     textureHelperShader.SetTexture(kernelReverse, "_ResultTex", rt);
-        //     textureHelperShader.SetBool("_WriteToG", false);
-        //     textureHelperShader.Dispatch(kernelReverse, Mathf.CeilToInt(UIManager.imageWidth / 32f), Mathf.CeilToInt(UIManager.imageHeight / 32f), 1);
-        //
-        //     for (var i = brushStrokesID.Count - 1; i >= 0; i--)
-        //     {
-        //         var brushStrokeID = brushStrokesID[i];
-        //         RedrawStroke(brushStrokeID, PaintType.Erase);
-        //         brushStrokeID.Reverse();
-        //         float newStartTime = brushStrokeID.endTime;
-        //         float newEndTime = brushStrokeID.startTime;
-        //         brushStrokeID.startTime = newStartTime;
-        //         brushStrokeID.endTime = newEndTime;
-        //         RedrawStrokeInterpolation(brushStrokeID);
-        //     }
-        //
-        //     textureHelperShader.SetBool("_WriteToG", true);
-        //     textureHelperShader.Dispatch(kernelReverse, Mathf.CeilToInt(UIManager.imageWidth / 32f), Mathf.CeilToInt(UIManager.imageHeight / 32f), 1);
-        //     
-        //     for (var i = brushStrokesID.Count - 1; i >= 0; i--)
-        //     {
-        //         var brushStrokeID = brushStrokesID[i];
-        //         RedrawStroke(brushStrokeID, PaintType.Erase);
-        //         brushStrokeID.Reverse();
-        //         float newStartTime = brushStrokeID.endTime;
-        //         float newEndTime = brushStrokeID.startTime;
-        //         brushStrokeID.startTime = newStartTime;
-        //         brushStrokeID.endTime = newEndTime;
-        //         RedrawStrokeInterpolation(brushStrokeID);
-        //     }
-        //     
-        //     ExecuteBuffer();
-        //     
-        //     return tempRT;
-        // }
-
-        public void UpdateIDTex(BrushStrokeID _brushStrokeID)
-        {
-            CheckTimeTableBufferSize();
-            int[] newIDs = new int[timeTableBufferSize * 4];
-            
-            for (int i = 0; i < brushStrokesID.Count; i++)
-            {
-                newIDs[i * 4] = i;
-                brushStrokesID[i].indexWhenDrawn = i;
-            }
-            
-            brushStrokeTableBuffer.SetData(newIDs);
-
-            for (int i = 0; i < subMeshCount; i++)
-            {
-                uint[] bounds = _brushStrokeID.bounds[i];
-                uint width = bounds[2] - bounds[0];
-                uint height = bounds[3] - bounds[1];
-                int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
-                int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
-                
-                textureHelperShader.SetBuffer(updateIDTexKernel, "_IndexRemap", brushStrokeTableBuffer);
-                textureHelperShader.SetTexture(updateIDTexKernel, "_FinalTexID", rtIDs[i]);
-                textureHelperShader.SetInt("_StartPosX", (int)bounds[0]);
-                textureHelperShader.SetInt("_StartPosY", (int)bounds[1]);
-                
-                textureHelperShader.Dispatch(updateIDTexKernel, threadGroupX, threadGroupY, 1);
-            }
-        }
-        
-        public List<BrushStrokeID> GetOverlappingBrushStrokeID(BrushStrokeID _brushStrokeIDs)
-        {
-            List<BrushStrokeID> affected = new List<BrushStrokeID>();
-            foreach (var toCheck in brushStrokesID)
-            {
-                if (affected.Contains(toCheck) || _brushStrokeIDs == toCheck )
-                {
-                    continue;
-                }
-                    
-                if (CheckCollision(
-                        toCheck.GetMinCorner(), toCheck.GetMaxCorner(), 
-                        _brushStrokeIDs.GetMinCorner(), _brushStrokeIDs.GetMaxCorner()))
-                {
-                    affected.Add(toCheck);
-                }
-            }
-
-            return affected;
-        }
-        public List<BrushStrokeID> GetOverlappingBrushStrokeIDBelow(BrushStrokeID _brushStrokeIDs)
-        {
-            List<BrushStrokeID> affected = new List<BrushStrokeID>();
-            foreach (var toCheck in brushStrokesID)
-            {
-                if (affected.Contains(toCheck) || _brushStrokeIDs == toCheck )
-                {
-                    continue;
-                }
-                    
-                if (CheckCollision(
-                        toCheck.GetMinCorner(), toCheck.GetMaxCorner(), 
-                        _brushStrokeIDs.GetMinCorner(), _brushStrokeIDs.GetMaxCorner()) 
-                    && _brushStrokeIDs.indexWhenDrawn < toCheck.indexWhenDrawn
-                    )
-                {
-                    affected.Add(toCheck);
-                }
-            }
-
-            return affected;
-        }
-        public List<BrushStrokeID> GetOverlappingBrushStrokeIDAbove(BrushStrokeID _brushStrokeIDs)
-        {
-            List<BrushStrokeID> affected = new List<BrushStrokeID>();
-            foreach (var toCheck in brushStrokesID)
-            {
-                if (affected.Contains(toCheck) || _brushStrokeIDs == toCheck )
-                {
-                    continue;
-                }
-                    
-                if (CheckCollision(
-                        toCheck.GetMinCorner(), toCheck.GetMaxCorner(), 
-                        _brushStrokeIDs.GetMinCorner(), _brushStrokeIDs.GetMaxCorner()) 
-                    && _brushStrokeIDs.indexWhenDrawn > toCheck.indexWhenDrawn
-                   )
-                {
-                    affected.Add(toCheck);
-                }
-            }
-
-            return affected;
-        }
-        public List<BrushStrokeID> GetOverlappingBrushStrokeID(List<BrushStrokeID> _brushStrokeIDs)
-        {
-            List<BrushStrokeID> affected = new List<BrushStrokeID>();
-            foreach (var checkAgainst in _brushStrokeIDs)
-            {
-                foreach (var toCheck in brushStrokesID)
-                {
-                    if (affected.Contains(toCheck) || checkAgainst == toCheck )
-                    {
-                        continue;
-                    }
-                    
-                    if (CheckCollision(
-                            toCheck.GetMinCorner(), toCheck.GetMaxCorner(), 
-                            checkAgainst.GetMinCorner(), checkAgainst.GetMaxCorner()))
-                    {
-                        affected.Add(toCheck);
-                    }
-                }
-            }
-            foreach (var brushStrokeID in _brushStrokeIDs)
-            {
-                affected.Remove(brushStrokeID);
-            }
-
-            return affected;
         }
 
         private uint[] CombineBounds(List<BrushStrokeID> _brushStrokeIDs, int _subMeshIndex)

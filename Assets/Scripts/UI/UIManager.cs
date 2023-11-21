@@ -193,7 +193,7 @@ namespace UI
         public void ExportResult()
         {
             string path = FileBrowser.Instance.SaveFile("Save texture", "", projectName, pngToggle ? "png" : "exr");
-            DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
+            DrawingManager2D drawingManager = FindObjectOfType<DrawingManager2D>();
             //byte[] bytes = pngToggle ? drawingManager.drawer.rt.ToBytesPNG() : drawingManager.drawer.rt.ToBytesEXR();
             byte[] bytes = pngToggle ? drawingManager.drawer.ReverseRtoB().ToBytesPNG() : drawingManager.drawer.ReverseRtoB().ToBytesEXR();
             File.WriteAllBytes(path, bytes);

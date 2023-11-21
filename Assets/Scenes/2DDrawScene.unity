@@ -615,7 +615,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &31760079
 Transform:
   m_ObjectHideFlags: 0
@@ -905,7 +905,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b42390756a8021a46903a26abae5ec9e, type: 2}
+  - {fileID: 2100000, guid: aab489a23c1f7334fb543a40f285d938, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9654,7 +9654,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a95142dbd7a884a4cb6ed93c59542132, type: 2}
+  - {fileID: 2100000, guid: eb4284be8d3ef1d44965a58b3d74f224, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -18357,8 +18357,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d317fe4026964144bbd983f6c2f21f1c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  drawingMat: {fileID: 2100000, guid: a95142dbd7a884a4cb6ed93c59542132, type: 2}
-  displayMat: {fileID: 2100000, guid: b42390756a8021a46903a26abae5ec9e, type: 2}
+  drawingMat: {fileID: 2100000, guid: eb4284be8d3ef1d44965a58b3d74f224, type: 2}
+  displayMat: {fileID: 2100000, guid: aab489a23c1f7334fb543a40f285d938, type: 2}
   selectMat: {fileID: 2100000, guid: 9f3dba748cca8be45901faf918f11c96, type: 2}
   previewMat: {fileID: 2100000, guid: 6608ac3d3fc9c8c429a99099000b40da, type: 2}
   imageWidth: 2048
@@ -19903,7 +19903,7 @@ Transform:
   - {fileID: 1329203580}
   - {fileID: 665695236}
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1504468000
 GameObject:
@@ -20355,7 +20355,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1535245802
 Transform:
   m_ObjectHideFlags: 0
@@ -25122,7 +25122,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1851622349
 Transform:
   m_ObjectHideFlags: 0
@@ -25138,7 +25138,7 @@ Transform:
   - {fileID: 744315766}
   - {fileID: 1619482369}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1864064896
 GameObject:
