@@ -45,8 +45,10 @@ namespace MainMenus
             int imageHeight = 2048;
 
             bool success = int.TryParse(imageWidthInput.text, out int num);
+            num = Mathf.Clamp(num, 1, 16384);
             if (success) { imageWidth = num; }
             success = int.TryParse(imageHeightInput.text, out num);
+            num = Mathf.Clamp(num, 1, 16384);
             if (success) { imageHeight = num; }
 
             metaData = new ToolMetaData(System.DateTime.Now.ToBinary(), projectName.text);
