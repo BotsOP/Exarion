@@ -95,7 +95,7 @@ namespace Drawing
             return new Vector2(lowestX, lowestY);
         }
         
-        public void SetupDrawBrushStroke(BrushStrokeID _brushStrokeID)
+        public void SetupDrawBrushStroke(BrushStrokeID _brushStrokeID, bool _getPixels = true)
         {
             float oldStartTime = _brushStrokeID.brushStrokes[0].startTime;
             float oldEndTime = _brushStrokeID.brushStrokes[^1].endTime;
@@ -111,11 +111,11 @@ namespace Drawing
                 firstStroke = false;
             }
             
-            (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing(_brushStrokeID.indexWhenDrawn);
+            (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing(_brushStrokeID.indexWhenDrawn, _getPixels);
             _brushStrokeID.pixels = result.Item1;
             _brushStrokeID.bounds = result.Item2;
         }
-        public void SetupDrawBrushStroke(List<BrushStrokeID> _brushStrokeIDs)
+        public void SetupDrawBrushStroke(List<BrushStrokeID> _brushStrokeIDs, bool _getPixels = true)
         {
             foreach (var brushStrokeID in _brushStrokeIDs)
             {
@@ -133,7 +133,7 @@ namespace Drawing
                     firstStroke = false;
                 }
             
-                (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing(brushStrokeID.indexWhenDrawn);
+                (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing(brushStrokeID.indexWhenDrawn, _getPixels);
                 brushStrokeID.pixels = result.Item1;
                 brushStrokeID.bounds = result.Item2;
             }

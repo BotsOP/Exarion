@@ -88,10 +88,6 @@ namespace Drawing
                 {
                     continue;
                 }
-                if (threadGroupX == 1 && threadGroupY == 1)
-                {
-                    continue;
-                }
                 
                 textureHelperShader.SetTexture(copyHighlightKernel, "_FinalTexID", _rtIDs[i]);
                 textureHelperShader.SetTexture(copyHighlightKernel, "_FinalTexColor", rtHighlights[i]);

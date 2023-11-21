@@ -7,6 +7,7 @@ using DataPersistence.Data;
 using Managers;
 using UI;
 using Undo;
+using Unity.VisualScripting;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 using EventType = Managers.EventType;
@@ -95,15 +96,15 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.SETUP_BRUSHSTROKES, SetupBrushStrokes);
-            // EventSystem<Vector2>.Subscribe(EventType.MOVE_STROKE, MoveDirStrokes);
+            EventSystem<Vector2>.Subscribe(EventType.MOVE_STROKE, MoveDirStrokes);
+            EventSystem.Subscribe(EventType.MOVE_STROKE, StoppedMovingStroke);
+            EventSystem<Vector2, List<BrushStrokeID>>.Subscribe(EventType.MOVE_STROKE, MoveDirStrokes);
+            EventSystem<List<BrushStrokeID>, Vector2>.Subscribe(EventType.MOVE_STROKE, MovePosStrokes);
+            EventSystem<List<BrushStrokeID>, List<Vector2>>.Subscribe(EventType.MOVE_STROKE, MovePosStrokes);
             // EventSystem<float, bool>.Subscribe(EventType.RESIZE_STROKE, ResizeStrokes);
             // EventSystem<float, bool>.Subscribe(EventType.ROTATE_STROKE, RotateStroke);
-            // EventSystem.Subscribe(EventType.MOVE_STROKE, StoppedMovingStroke);
             // EventSystem.Subscribe(EventType.RESIZE_STROKE, StoppedResizing);
             // EventSystem.Subscribe(EventType.ROTATE_STROKE, StoppedRotating);
-            // EventSystem<Vector2, List<BrushStrokeID>>.Subscribe(EventType.MOVE_STROKE, MoveDirStrokes);
-            // EventSystem<List<BrushStrokeID>, Vector2>.Subscribe(EventType.MOVE_STROKE, MovePosStrokes);
-            // EventSystem<List<BrushStrokeID>, List<Vector2>>.Subscribe(EventType.MOVE_STROKE, MovePosStrokes);
             // EventSystem<float, bool, List<BrushStrokeID>>.Subscribe(EventType.RESIZE_STROKE, ResizeStrokes);
             // EventSystem<List<BrushStrokeID>, float>.Subscribe(EventType.RESIZE_STROKE, ResizeSetStrokes);
             // EventSystem<List<BrushStrokeID>, List<float>>.Subscribe(EventType.RESIZE_STROKE, ResizeSetStrokes);
@@ -140,15 +141,15 @@ namespace Drawing
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.SETUP_BRUSHSTROKES, SetupBrushStrokes);
-            // EventSystem<Vector2>.Unsubscribe(EventType.MOVE_STROKE, MoveDirStrokes);
+            EventSystem<Vector2>.Unsubscribe(EventType.MOVE_STROKE, MoveDirStrokes);
+            EventSystem<Vector2, List<BrushStrokeID>>.Unsubscribe(EventType.MOVE_STROKE, MoveDirStrokes);
+            EventSystem<List<BrushStrokeID>, Vector2>.Unsubscribe(EventType.MOVE_STROKE, MovePosStrokes);
+            EventSystem<List<BrushStrokeID>, List<Vector2>>.Unsubscribe(EventType.MOVE_STROKE, MovePosStrokes);
+            EventSystem.Unsubscribe(EventType.MOVE_STROKE, StoppedMovingStroke);
             // EventSystem<float, bool>.Unsubscribe(EventType.RESIZE_STROKE, ResizeStrokes);
             // EventSystem<float, bool>.Unsubscribe(EventType.ROTATE_STROKE, RotateStroke);
-            // EventSystem.Unsubscribe(EventType.MOVE_STROKE, StoppedMovingStroke);
             // EventSystem.Unsubscribe(EventType.RESIZE_STROKE, StoppedResizing);
             // EventSystem.Unsubscribe(EventType.ROTATE_STROKE, StoppedRotating);
-            // EventSystem<Vector2, List<BrushStrokeID>>.Unsubscribe(EventType.MOVE_STROKE, MoveDirStrokes);
-            // EventSystem<List<BrushStrokeID>, Vector2>.Unsubscribe(EventType.MOVE_STROKE, MovePosStrokes);
-            // EventSystem<List<BrushStrokeID>, List<Vector2>>.Unsubscribe(EventType.MOVE_STROKE, MovePosStrokes);
             // EventSystem<float, bool, List<BrushStrokeID>>.Unsubscribe(EventType.RESIZE_STROKE, ResizeStrokes);
             // EventSystem<List<BrushStrokeID>, float>.Unsubscribe(EventType.RESIZE_STROKE, ResizeSetStrokes);
             // EventSystem<List<BrushStrokeID>, List<float>>.Unsubscribe(EventType.RESIZE_STROKE, ResizeSetStrokes);
@@ -214,7 +215,8 @@ namespace Drawing
 
             drawer.Draw(lastCursorPos, _worldPos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
             tempBrushStrokes.Add(new BrushStroke(lastCursorPos, _worldPos, brushSize, time, cachedTime));
-            
+
+            tempAvgPos += _worldPos;
             lastCursorPos = _worldPos;
         }
         
@@ -455,155 +457,194 @@ namespace Drawing
                 
                 duplicateBrushStrokeIDs.Add(duplicateBrushStrokeID);
             }
+            drawer.SetupDrawBrushStroke(duplicateBrushStrokeIDs);
+            MoveDirStrokes(new Vector2(10, 10), duplicateBrushStrokeIDs);
+            StartCoroutine(HighlightWith1FrameDelay(duplicateBrushStrokeIDs));
             
-            //MoveDirStrokes(new Vector2(10, 10), duplicateBrushStrokeIDs);
             EventSystem.RaiseEvent(EventType.CLEAR_SELECT);
             selectedBrushStrokes = duplicateBrushStrokeIDs;
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.SELECT_TIMELINECLIP, selectedBrushStrokes);
         }
+        
+        private IEnumerator HighlightWith1FrameDelay(List<BrushStrokeID> _brushStrokeIDs)
+        {
+            yield return new WaitForEndOfFrameUnit();
+            highlighter.HighlightStroke(_brushStrokeIDs, drawer.rtIDs, drawer.brushStrokesID.Count);
+        }
 
-        // private Vector2 lastMovePos;
-        // private void MoveDirStrokes(Vector2 _dir)
-        // {
-        //     if (_dir == Vector2.zero)
-        //         return;
-        //
-        //     EventSystem.RaiseEvent(EventType.UPDATE_CLIP_INFO);
-        //     lastMovePos += _dir;
-        //     
-        //     foreach (var brushStrokeID in selectedBrushStrokes)
-        //     {
-        //         drawer.RedrawStroke(brushStrokeID, PaintType.Erase);
-        //         for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
-        //         {
-        //             var brushStroke = brushStrokeID.brushStrokes[i];
-        //             brushStroke.startPosX += _dir.x;
-        //             brushStroke.startPosY += _dir.y;
-        //             brushStroke.endPosX += _dir.x;
-        //             brushStroke.endPosY += _dir.y;
-        //             brushStrokeID.brushStrokes[i] = brushStroke;
-        //         }
-        //         brushStrokeID.avgPosX += _dir.x;
-        //         brushStrokeID.avgPosY += _dir.y;
-        //         brushStrokeID.collisionBoxMinX += _dir.x;
-        //         brushStrokeID.collisionBoxMinY += _dir.y;
-        //         brushStrokeID.collisionBoxMaxX += _dir.x;
-        //         brushStrokeID.collisionBoxMaxY += _dir.y;
-        //         brushStrokeID.RecalculateAvgPos();
-        //     }
-        //     highlighter.HighlightStroke(selectedBrushStrokes);
-        //     drawer.RedrawAllSafe(selectedBrushStrokes);
-        // }
-        //
-        // private void MoveDirStrokes(Vector2 _dir, List<BrushStrokeID> _brushStrokeIDs)
-        // {
-        //     if (_dir == Vector2.zero)
-        //         return;
-        //     
-        //     foreach (var brushStrokeID in _brushStrokeIDs)
-        //     {
-        //         drawer.RedrawStroke(brushStrokeID, PaintType.Erase);
-        //         for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
-        //         {
-        //             var brushStroke = brushStrokeID.brushStrokes[i];
-        //             brushStroke.startPosX += _dir.x;
-        //             brushStroke.startPosY += _dir.y;
-        //             brushStroke.endPosX += _dir.x;
-        //             brushStroke.endPosY += _dir.y;
-        //             brushStrokeID.brushStrokes[i] = brushStroke;
-        //         }
-        //         brushStrokeID.avgPosX += _dir.x;
-        //         brushStrokeID.avgPosY += _dir.y;
-        //         brushStrokeID.collisionBoxMinX += _dir.x;
-        //         brushStrokeID.collisionBoxMinY += _dir.y;
-        //         brushStrokeID.collisionBoxMaxX += _dir.x;
-        //         brushStrokeID.collisionBoxMaxY += _dir.y;
-        //         brushStrokeID.RecalculateAvgPos();
-        //     }
-        //     highlighter.HighlightStroke(selectedBrushStrokes);
-        //     drawer.RedrawAllSafe(_brushStrokeIDs);
-        // }
-        // private void MovePosStrokes(List<BrushStrokeID> _brushStrokeIDs, Vector2 _pos)
-        // {
-        //     foreach (var brushStrokeID in _brushStrokeIDs)
-        //     {
-        //         drawer.RedrawStroke(brushStrokeID, PaintType.Erase);
-        //         if (_pos.x < 0)
-        //         {
-        //             _pos.x = brushStrokeID.avgPosX;
-        //         }
-        //         if (_pos.y < 0)
-        //         {
-        //             _pos.y = brushStrokeID.avgPosY;
-        //         }
-        //         Vector2 dir = _pos - brushStrokeID.GetAvgPos();
-        //         
-        //         for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
-        //         {
-        //             var brushStroke = brushStrokeID.brushStrokes[i];
-        //             brushStroke.startPosX += dir.x;
-        //             brushStroke.startPosY += dir.y;
-        //             brushStroke.endPosX += dir.x;
-        //             brushStroke.endPosY += dir.y;
-        //             brushStrokeID.brushStrokes[i] = brushStroke;
-        //         }
-        //         
-        //         brushStrokeID.avgPosX += dir.x;
-        //         brushStrokeID.avgPosY += dir.y;
-        //         brushStrokeID.collisionBoxMinX += dir.x;
-        //         brushStrokeID.collisionBoxMinY += dir.y;
-        //         brushStrokeID.collisionBoxMaxX += dir.x;
-        //         brushStrokeID.collisionBoxMaxY += dir.y;
-        //         brushStrokeID.RecalculateAvgPos();
-        //     }
-        //     highlighter.HighlightStroke(selectedBrushStrokes);
-        //     drawer.RedrawAllSafe(_brushStrokeIDs);
-        // }
-        // private void MovePosStrokes(List<BrushStrokeID> _brushStrokeIDs, List<Vector2> _newPositions)
-        // {
-        //     for (int i = 0; i < _brushStrokeIDs.Count; i++)
-        //     {
-        //         var brushStrokeID = _brushStrokeIDs[i];
-        //         Vector2 pos = _newPositions[i];
-        //         drawer.RedrawStroke(brushStrokeID, PaintType.Erase);
-        //         if (pos.x < 0)
-        //         {
-        //             pos.x = brushStrokeID.avgPosX;
-        //         }
-        //         if (pos.y < 0)
-        //         {
-        //             pos.y = brushStrokeID.avgPosY;
-        //         }
-        //         Vector2 dir = pos - brushStrokeID.GetAvgPos();
-        //
-        //         for (int j = 0; j < brushStrokeID.brushStrokes.Count; j++)
-        //         {
-        //             var brushStroke = brushStrokeID.brushStrokes[j];
-        //             brushStroke.startPosX += dir.x;
-        //             brushStroke.startPosY += dir.y;
-        //             brushStroke.endPosX += dir.x;
-        //             brushStroke.endPosY += dir.y;
-        //             brushStrokeID.brushStrokes[j] = brushStroke;
-        //         }
-        //
-        //         brushStrokeID.avgPosX += dir.x;
-        //         brushStrokeID.avgPosY += dir.y;
-        //         brushStrokeID.collisionBoxMinX += dir.x;
-        //         brushStrokeID.collisionBoxMinY += dir.y;
-        //         brushStrokeID.collisionBoxMaxX += dir.x;
-        //         brushStrokeID.collisionBoxMaxY += dir.y;
-        //         brushStrokeID.RecalculateAvgPos();
-        //     }
-        //     highlighter.HighlightStroke(selectedBrushStrokes);
-        //     drawer.RedrawAllSafe(_brushStrokeIDs);
-        // }
-        // private void StoppedMovingStroke()
-        // {
-        //     ICommand moveCommand = new MoveCommand(lastMovePos, selectedBrushStrokes);
-        //     EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, moveCommand);
-        //     lastMovePos = Vector2.zero;
-        // }
-        //
+        private Vector2 lastMovePos;
+        private bool firstTimeMove;
+        private void MoveDirStrokes(Vector2 _dir)
+        {
+            if (_dir == Vector2.zero)
+                return;
+
+            if (firstTimeMove)
+            {
+                drawer.CachePixelBuffer(selectedBrushStrokes);
+                firstTimeMove = false;
+            }
+        
+            EventSystem.RaiseEvent(EventType.UPDATE_CLIP_INFO);
+            lastMovePos += _dir;
+
+            List<BrushStrokeID> affected = drawer.GetOverlappingBrushStrokeID(selectedBrushStrokes);
+            List<BrushStrokeID> affectedAll = new List<BrushStrokeID>(affected);
+            affectedAll.AddRange(selectedBrushStrokes);
+            drawer.EraseBrushStroke(affectedAll);
+            
+            foreach (var brushStrokeID in selectedBrushStrokes)
+            {
+                for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
+                {
+                    var brushStroke = brushStrokeID.brushStrokes[i];
+                    brushStroke.startPosX += _dir.x;
+                    brushStroke.startPosY += _dir.y;
+                    brushStroke.endPosX += _dir.x;
+                    brushStroke.endPosY += _dir.y;
+                    brushStrokeID.brushStrokes[i] = brushStroke;
+                }
+                brushStrokeID.avgPosX += _dir.x;
+                brushStrokeID.avgPosY += _dir.y;
+                brushStrokeID.collisionBoxMinX += _dir.x;
+                brushStrokeID.collisionBoxMinY += _dir.y;
+                brushStrokeID.collisionBoxMaxX += _dir.x;
+                brushStrokeID.collisionBoxMaxY += _dir.y;
+                brushStrokeID.RecalculateAvgPos();
+            }
+            drawer.DrawBrushStroke(affected);
+            drawer.SetupDrawBrushStroke(selectedBrushStrokes, false);
+            highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, drawer.brushStrokesID.Count);
+        }
+        
+        private void MoveDirStrokes(Vector2 _dir, List<BrushStrokeID> _brushStrokeIDs)
+        {
+            if (_dir == Vector2.zero)
+                return;
+            
+            List<BrushStrokeID> affected = drawer.GetOverlappingBrushStrokeID(_brushStrokeIDs);
+            List<BrushStrokeID> affectedAll = new List<BrushStrokeID>(affected);
+            affectedAll.AddRange(_brushStrokeIDs);
+            drawer.EraseBrushStroke(affectedAll);
+            
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
+                {
+                    var brushStroke = brushStrokeID.brushStrokes[i];
+                    brushStroke.startPosX += _dir.x;
+                    brushStroke.startPosY += _dir.y;
+                    brushStroke.endPosX += _dir.x;
+                    brushStroke.endPosY += _dir.y;
+                    brushStrokeID.brushStrokes[i] = brushStroke;
+                }
+                brushStrokeID.avgPosX += _dir.x;
+                brushStrokeID.avgPosY += _dir.y;
+                brushStrokeID.collisionBoxMinX += _dir.x;
+                brushStrokeID.collisionBoxMinY += _dir.y;
+                brushStrokeID.collisionBoxMaxX += _dir.x;
+                brushStrokeID.collisionBoxMaxY += _dir.y;
+                brushStrokeID.RecalculateAvgPos();
+            }
+            drawer.DrawBrushStroke(affected);
+            drawer.SetupDrawBrushStroke(_brushStrokeIDs);
+            highlighter.HighlightStroke(_brushStrokeIDs, drawer.rtIDs, drawer.brushStrokesID.Count);
+        }
+        
+        private void MovePosStrokes(List<BrushStrokeID> _brushStrokeIDs, Vector2 _pos)
+        {
+            List<BrushStrokeID> affected = drawer.GetOverlappingBrushStrokeID(_brushStrokeIDs);
+            List<BrushStrokeID> affectedAll = new List<BrushStrokeID>(affected);
+            affectedAll.AddRange(_brushStrokeIDs);
+            drawer.EraseBrushStroke(affectedAll);
+            
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                if (_pos.x < 0)
+                {
+                    _pos.x = brushStrokeID.avgPosX;
+                }
+                if (_pos.y < 0)
+                {
+                    _pos.y = brushStrokeID.avgPosY;
+                }
+                Vector2 dir = _pos - brushStrokeID.GetAvgPos();
+                
+                for (int i = 0; i < brushStrokeID.brushStrokes.Count; i++)
+                {
+                    var brushStroke = brushStrokeID.brushStrokes[i];
+                    brushStroke.startPosX += dir.x;
+                    brushStroke.startPosY += dir.y;
+                    brushStroke.endPosX += dir.x;
+                    brushStroke.endPosY += dir.y;
+                    brushStrokeID.brushStrokes[i] = brushStroke;
+                }
+                
+                brushStrokeID.avgPosX += dir.x;
+                brushStrokeID.avgPosY += dir.y;
+                brushStrokeID.collisionBoxMinX += dir.x;
+                brushStrokeID.collisionBoxMinY += dir.y;
+                brushStrokeID.collisionBoxMaxX += dir.x;
+                brushStrokeID.collisionBoxMaxY += dir.y;
+                brushStrokeID.RecalculateAvgPos();
+            }
+            drawer.DrawBrushStroke(affected);
+            drawer.SetupDrawBrushStroke(_brushStrokeIDs);
+            highlighter.HighlightStroke(_brushStrokeIDs, drawer.rtIDs, drawer.brushStrokesID.Count);
+        }
+        private void MovePosStrokes(List<BrushStrokeID> _brushStrokeIDs, List<Vector2> _newPositions)
+        {
+            List<BrushStrokeID> affected = drawer.GetOverlappingBrushStrokeID(_brushStrokeIDs);
+            List<BrushStrokeID> affectedAll = new List<BrushStrokeID>(affected);
+            affectedAll.AddRange(_brushStrokeIDs);
+            drawer.EraseBrushStroke(affectedAll);
+            
+            for (int i = 0; i < _brushStrokeIDs.Count; i++)
+            {
+                var brushStrokeID = _brushStrokeIDs[i];
+                Vector2 pos = _newPositions[i];
+                if (pos.x < 0)
+                {
+                    pos.x = brushStrokeID.avgPosX;
+                }
+                if (pos.y < 0)
+                {
+                    pos.y = brushStrokeID.avgPosY;
+                }
+                Vector2 dir = pos - brushStrokeID.GetAvgPos();
+        
+                for (int j = 0; j < brushStrokeID.brushStrokes.Count; j++)
+                {
+                    var brushStroke = brushStrokeID.brushStrokes[j];
+                    brushStroke.startPosX += dir.x;
+                    brushStroke.startPosY += dir.y;
+                    brushStroke.endPosX += dir.x;
+                    brushStroke.endPosY += dir.y;
+                    brushStrokeID.brushStrokes[j] = brushStroke;
+                }
+        
+                brushStrokeID.avgPosX += dir.x;
+                brushStrokeID.avgPosY += dir.y;
+                brushStrokeID.collisionBoxMinX += dir.x;
+                brushStrokeID.collisionBoxMinY += dir.y;
+                brushStrokeID.collisionBoxMaxX += dir.x;
+                brushStrokeID.collisionBoxMaxY += dir.y;
+                brushStrokeID.RecalculateAvgPos();
+            }
+            drawer.DrawBrushStroke(affected);
+            drawer.SetupDrawBrushStroke(_brushStrokeIDs);
+            highlighter.HighlightStroke(_brushStrokeIDs, drawer.rtIDs, drawer.brushStrokesID.Count);
+        }
+        private void StoppedMovingStroke()
+        {
+            drawer.SetupDrawBrushStroke(selectedBrushStrokes);
+            drawer.ClearCachePixelBuffer();
+            firstTimeMove = true;
+            ICommand moveCommand = new MoveCommand(lastMovePos, selectedBrushStrokes);
+            EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, moveCommand);
+            lastMovePos = Vector2.zero;
+        }
+        
         // private float rotateAmount;
         // private void RotateStroke(float _angle, bool _center)
         // {

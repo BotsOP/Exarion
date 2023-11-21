@@ -112,7 +112,7 @@ void Erase (uint2 id : SV_DispatchThreadID)
 void CopyHighlight (uint2 id : SV_DispatchThreadID)
 {
     id += uint2((uint)_StartPosX, (uint)_StartPosY);
-    int brushID = _FinalTexID[id];
+    int brushID = (int)_FinalTexID[id];
     if(brushID < 0)
     {
         return;
@@ -121,7 +121,7 @@ void CopyHighlight (uint2 id : SV_DispatchThreadID)
     float value = (float)_HighlightIndex[brushID];
     if(value > 0)
     {
-        _FinalTexColor[id] = value;
+        _FinalTexColor[id] = 1;
     }
 }
 

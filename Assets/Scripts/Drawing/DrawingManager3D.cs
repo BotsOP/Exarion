@@ -199,6 +199,9 @@ namespace Drawing
                 drawingMats.Add(drawingMat);
                 displayMats.Add(displayMat);
             }
+
+            selectedBrushStrokes = new List<BrushStrokeID>();
+            tempBrushStrokes = new List<BrushStroke>();
             
             _drawingRend.materials = drawingMats.ToArray();
             _displayRend.materials = displayMats.ToArray();

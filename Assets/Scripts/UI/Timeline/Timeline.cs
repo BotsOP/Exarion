@@ -1229,7 +1229,6 @@ namespace UI
                 foreach (var clip in clips)
                 {
                     if(!clip.selectedBrushStrokes.Contains(brushStrokeID)) { clip.selectedBrushStrokes.Add(brushStrokeID); }
-                    Debug.Log($"{clip.GetBrushStrokeIDs().Count} {clip.selectedBrushStrokes.Count}");
                     if (clip.GetBrushStrokeIDs().Count == clip.selectedBrushStrokes.Count)
                     {
                         clip.rawImage.color = selectedColor;
