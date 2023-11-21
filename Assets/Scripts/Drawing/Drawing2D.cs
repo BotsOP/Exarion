@@ -98,7 +98,7 @@ namespace Drawing
         public void SetupDrawBrushStroke(BrushStrokeID _brushStrokeID)
         {
             float oldStartTime = _brushStrokeID.brushStrokes[0].startTime;
-            float oldEndTime = _brushStrokeID.brushStrokes[^1].startTime;
+            float oldEndTime = _brushStrokeID.brushStrokes[^1].endTime;
             
             bool firstStroke = true;
             foreach (var brushStroke in _brushStrokeID.brushStrokes)
@@ -120,7 +120,7 @@ namespace Drawing
             foreach (var brushStrokeID in _brushStrokeIDs)
             {
                 float oldStartTime = brushStrokeID.brushStrokes[0].startTime;
-                float oldEndTime = brushStrokeID.brushStrokes[^1].startTime;
+                float oldEndTime = brushStrokeID.brushStrokes[^1].endTime;
             
                 bool firstStroke = true;
                 foreach (var brushStroke in brushStrokeID.brushStrokes)

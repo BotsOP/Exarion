@@ -74,11 +74,6 @@ float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
 }
 
 [numthreads(32,32,1)]
-void PaintUnderOwnLine (uint3 id : SV_DispatchThreadID)
-{
-}
-
-[numthreads(32,32,1)]
 void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
 {
     float2 paintPos = _StartPos.xy + id.xy;
@@ -94,11 +89,23 @@ void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
     {
         return;
     }
+
+    if(_FirstStroke && distance(paintPos, _LastCursorPos) < _BrushSize)
+    {
+        _ResultTex[paintPos] = _PreviousTimeColor;
+        _IDTex[paintPos] = 1;
+        return;
+    }
     
     paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
 
     _ResultTex[paintPos] = paintColor;
     _IDTex[paintPos] = 1;
+}
+
+[numthreads(32,32,1)]
+void PaintUnderOwnLine (uint3 id : SV_DispatchThreadID)
+{
 }
 
 [numthreads(32,32,1)]

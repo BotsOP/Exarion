@@ -152,13 +152,13 @@ namespace Drawing
             
             float angleStep = 2 * Mathf.PI / _amountAngles;
             Vector2 lastPos = new Vector2(Mathf.Cos(0), Mathf.Sin(0)) * _size + _middlePos;
-            float timeIncrease = (_endTime - _startTime) / _amountAngles;
+            float timeIncrease = (_endTime - _startTime) / (_amountAngles);
             for (int i = 1; i < _amountAngles + 1; i++)
             {
                 float angle = i * angleStep;
                 Vector2 localPos = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * _size + _middlePos;
-                float startTime = _startTime + timeIncrease * (i);
-                float endTime = _startTime + timeIncrease * (i + 1);
+                float startTime = _startTime + timeIncrease * (i - 1);
+                float endTime = _startTime + timeIncrease * (i);
                 BrushStroke brushStroke = new BrushStroke(lastPos, localPos, _brushSize, endTime, startTime);
                 brushStrokes.Add(brushStroke);
                 lastPos = localPos;

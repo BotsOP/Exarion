@@ -91,7 +91,6 @@ namespace Drawing
             EventSystem.Subscribe(EventType.REDRAW_ALL, RedrawAllStrokes);
             EventSystem<BrushStrokeID>.Subscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.ADD_STROKE, AddStroke);
-            EventSystem<Vector2, string>.Subscribe(EventType.SPAWN_STAMP, DrawStamp);
             EventSystem<Vector2, int>.Subscribe(EventType.SPAWN_STAMP, DrawStamp);
             EventSystem<BrushStrokeID>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem<List<BrushStrokeID>>.Subscribe(EventType.REMOVE_SELECT, RemoveHighlight);
@@ -137,7 +136,6 @@ namespace Drawing
             EventSystem.Unsubscribe(EventType.REDRAW_ALL, RedrawAllStrokes);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.ADD_STROKE, AddStroke);
-            EventSystem<Vector2, string>.Unsubscribe(EventType.SPAWN_STAMP, DrawStamp);
             EventSystem<Vector2, int>.Unsubscribe(EventType.SPAWN_STAMP, DrawStamp);
             EventSystem<BrushStrokeID>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
             EventSystem<List<BrushStrokeID>>.Unsubscribe(EventType.REMOVE_SELECT, RemoveHighlight);
@@ -1085,18 +1083,6 @@ namespace Drawing
             }
             
             highlighter.HighlightStroke(selectedBrushStrokes, drawer.rtIDs, drawer.brushStrokesID.Count);
-        }
-
-        private void DrawStamp(Vector2 _mousePos, string _key)
-        {
-            BrushStrokeID brushStrokeID = drawStamp.GetStamp(_key, _mousePos, 256, drawer.brushStrokesID.Count, 
-                brushSize, time, time + 0.05f);
-            EventSystem<float>.RaiseEvent(EventType.ADD_TIME, 0.05f);
-
-            drawer.SetupDrawBrushStroke(brushStrokeID);
-            drawer.brushStrokesID.Add(brushStrokeID);
-            
-            EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
         }
         private void DrawStamp(Vector2 _mousePos, int _sides)
         {
