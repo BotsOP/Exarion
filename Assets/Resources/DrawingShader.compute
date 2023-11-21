@@ -55,6 +55,7 @@ float Remap (float value, float from1, float to1, float from2, float to2)
     return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
 }
 
+//start of brushstrtoke is already drawn
 float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
 {
     const float2 paintPosOnLine = ClosestPointOnLine(startPos, endPos, paintPos);
