@@ -157,6 +157,5 @@ public class ImportOBJ : MonoBehaviour, IDataPersistence
         {
             Debug.LogError($"Data is not ToolData3D");
         }
-
     }
 }

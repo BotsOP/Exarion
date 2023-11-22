@@ -64,7 +64,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Boolean: 0
-    - _CustomTime: 0.033999998
+    - _CustomTime: 0.09
     - _QueueControl: 0
     - _QueueOffset: 0
     m_Colors:

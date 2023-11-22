@@ -14,13 +14,9 @@ namespace Drawing
         public List<uint[]> bounds;
         [JsonIgnore]
         public bool shouldDelete;
-        [JsonIgnore]
         public float startTimeWhenDrawn;
-        [JsonIgnore]
         public float endTimeWhenDrawn;
-        [JsonIgnore]
         public float startTimeOld;
-        [JsonIgnore]
         public float endTimeOld;
         
         public float collisionBoxMinX;

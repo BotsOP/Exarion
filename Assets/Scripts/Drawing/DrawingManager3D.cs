@@ -177,7 +177,6 @@ namespace Drawing
             previewer.rend = _drawingRend;
 
             Mesh mesh = _drawingRend.gameObject.GetComponent<MeshFilter>().sharedMesh;
-            EventSystem<int>.RaiseEvent(EventType.UPDATE_SUBMESH_COUNT, mesh.subMeshCount);
             
             drawingMats.Clear();
             displayMats.Clear();

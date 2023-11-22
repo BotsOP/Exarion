@@ -14,7 +14,7 @@ public class ImportModelTexture : MonoBehaviour
     [SerializeField] private TMP_Dropdown dropdown;
     private Texture2D importedTexture;
     private byte[] imgData;
-    private string[] extensions = { "png,jpeg,jpe,jfif,jpg" };
+    private string[] extensions = { "" };
 
     public void OnEnable()
     {
