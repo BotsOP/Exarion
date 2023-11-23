@@ -38,6 +38,7 @@ namespace UI
             
                 float lastTimePos = ExtensionMethods.Remap(value.x, 0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
                 float currentTimePos = ExtensionMethods.Remap(value.y, 0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
+                Debug.Log($"{TimelineBarCorners[0].x} {TimelineBarCorners[2].x}");
                 float clipLength = currentTimePos - lastTimePos;
                 sizeDelta = new Vector2(clipLength, sizeDelta.y);
                 rect.sizeDelta = sizeDelta;
@@ -75,7 +76,6 @@ namespace UI
         private float mouseOffset;
         private float clipHandle = 5;
         private float minumunWidth = 10;
-        private float spacing = 10;
         
         private readonly Vector3[] corners;
         private Vector3[] Corners
@@ -292,19 +292,19 @@ namespace UI
         private float GetYPos()
         {
             float yPos = rect.position.y;
-            float timelineBarHeight = Corners[2].y - Corners[0].y + spacing;
+            float timelineBarHeight = Corners[2].y - Corners[0].y + Timeline.timelineBarSpacing;
             float inputOffset = Input.mousePosition.y;
             if (inputOffset < TimelineAreaCorners[0].y || inputOffset > TimelineAreaCorners[2].y)
             {
                 return yPos;
             }
         
-            if (inputOffset < Corners[0].y - spacing)
+            if (inputOffset < Corners[0].y - Timeline.timelineBarSpacing)
             {
                 currentBar ++;
                 return yPos - timelineBarHeight;
             }
-            if (inputOffset > Corners[2].y + spacing)
+            if (inputOffset > Corners[2].y + Timeline.timelineBarSpacing)
             {
                 currentBar --;
                 return yPos + timelineBarHeight;
@@ -313,7 +313,7 @@ namespace UI
         }
         public void SetBar(int newBar)
         {
-            float timelineBarHeight = Corners[2].y - Corners[0].y + spacing;
+            float timelineBarHeight = Corners[2].y - Corners[0].y + Timeline.timelineBarSpacing;
             int amountToMove = newBar - currentBar;
             timelineBarHeight *= amountToMove;
 

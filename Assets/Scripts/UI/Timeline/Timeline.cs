@@ -16,6 +16,7 @@ namespace UI
 {
     public class Timeline : MonoBehaviour, IDataPersistence
     {
+        public static float timelineBarSpacing;
         [Header("Timeline objects")]
         [SerializeField] private RectTransform timelineBarObject;
         [SerializeField] private List<RectTransform> timelineBarObjects;
@@ -122,6 +123,8 @@ namespace UI
             }
             
             amountTimelineBars = clipsOrdered.Count - 1;
+
+            timelineBarSpacing = 10f.Remap(0, 1080, 0, Screen.height);
         }
 
         private void OnEnable()
