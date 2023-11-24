@@ -27,15 +27,13 @@ namespace Undo
         }
         public void Undo()
         {
-            List<BrushStrokeID> redrawStrokes = new List<BrushStrokeID>();
+            List<BrushStrokeID> redrawStrokes = timelineClips.SelectMany(clip => clip.GetBrushStrokeIDs()).ToList();
             for (int i = 0; i < timelineClips.Count; i++)
             {
                 var clip = timelineClips[i];
                 clip.SetTime(clipTimeOld[i]);
                 clip.ClipTime = clipTimeOld[i];
                 EventSystem<TimelineClip, int>.RaiseEvent(EventType.UPDATE_CLIP, clip, timelineBars[i]);
-
-                redrawStrokes.AddRange(clip.GetBrushStrokeIDs());
             }
             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, redrawStrokes);
         }

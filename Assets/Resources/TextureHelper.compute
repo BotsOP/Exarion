@@ -1,21 +1,91 @@
 #pragma kernel Copy
 #pragma kernel Erase
 #pragma kernel CopyHighlight
+#pragma kernel FinalCopy
+#pragma kernel TimeRemap
+#pragma kernel UpdateIDTex
+#pragma kernel DrawBrushStroke
 
-Texture2D<float4> _OrgTex4;
-RWTexture2D<float4> _FinalTex4;
-RWTexture2D<float4> _FinalTexInt;
+struct CompressedPixel
+{
+    uint pos;
+    float color;
+};
+
+Texture2D<float> _OrgTexColor;
+RWTexture2D<float> _FinalTexColor;
+RWTexture2D<float> _FinalTexID;
+RWTexture2D<int> _TempTexID;
+
+StructuredBuffer<float4> _TimeRemap;
+StructuredBuffer<int4> _IndexRemap;
+StructuredBuffer<int4> _EraseRemap;
+StructuredBuffer<int> _HighlightIndex;
+
+AppendStructuredBuffer<CompressedPixel> _TexToBuffer;
+StructuredBuffer<CompressedPixel> _BufferToTex;
+RWStructuredBuffer<int> _Counter;
+RWStructuredBuffer<int> _BrushStrokeBounds;
+
+int _StartPosX;
+int _StartPosY;
 
 float _StrokeID;
-float _OffsetUV;
+
+float4 _TimeRemapBrushStroke;
+
+uint CompactPos(uint2 xy)
+{
+    uint highPart = xy.x & 0xFFFF; // Take the lower 16 bits of the first uint
+    uint lowPart = xy.y & 0xFFFF;  // Take the lower 16 bits of the second uint
+
+    return (highPart << 16) | lowPart;
+}
+
+uint2 DeCompactPos(uint compacted)
+{
+    uint highPart = (compacted >> 16) & 0xFFFF; // Get the upper 16 bits
+    uint lowPart = compacted & 0xFFFF;          // Get the lower 16 bits
+
+    return uint2(highPart, lowPart);
+}
+
+float Remap (float value, float from1, float to1, float from2, float to2) 
+{
+    return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
+}
 
 [numthreads(32,32,1)]
 void Copy (uint2 id : SV_DispatchThreadID)
 {
-    if(_OrgTex4[id].x > 0)
+    if(_OrgTexColor[id] > 0 && _TempTexID[id] == 0)
     {
-        _FinalTex4[id] = _OrgTex4[id];
-        _FinalTexInt[id] = float4(_StrokeID, 0, 0, 0);
+        _TempTexID[id] = float4(1, 0, 0, 0);
+        _FinalTexColor[id] = _OrgTexColor[id];
+    }
+}
+
+[numthreads(32,32,1)]
+void FinalCopy (uint2 id : SV_DispatchThreadID)
+{
+    if(_OrgTexColor[id] > 0)
+    {
+        CompressedPixel texToBuffer;
+        texToBuffer.pos = CompactPos(id);
+        texToBuffer.color = _OrgTexColor[id];
+        _TexToBuffer.Append(texToBuffer);
+        InterlockedAdd(_Counter[0], 1);
+        
+        InterlockedMin(_BrushStrokeBounds[0], id.x);
+        InterlockedMin(_BrushStrokeBounds[1], id.y);
+        InterlockedMax(_BrushStrokeBounds[2], id.x);
+        InterlockedMax(_BrushStrokeBounds[3], id.y);
+        
+        if(_FinalTexID[id] < 0 || _StrokeID < _FinalTexID[id])
+        {
+            _FinalTexColor[id] = _OrgTexColor[id];
+            _FinalTexID[id] = float4(_StrokeID, 0, 0, 0);
+        }
     }
 }
 
@@ -23,19 +93,79 @@ void Copy (uint2 id : SV_DispatchThreadID)
 [numthreads(32,32,1)]
 void Erase (uint2 id : SV_DispatchThreadID)
 {
-    if(_OrgTex4[id].x > 0)
+    id += uint2((uint)_StartPosX, (uint)_StartPosY);
+    int brushID = _FinalTexID[id];
+    if(brushID < 0)
     {
-        _FinalTex4[id] = float4(0, 0, 0, 0);
-        _FinalTexInt[id] = float4(-1, 0, 0, 0);
+        return;
+    }
+    
+    int shouldErase = _EraseRemap[brushID].x;
+    if(shouldErase == 1)
+    {
+        _FinalTexID[id] = -1;
+        _FinalTexColor[id] = 0;
     }
 }
 
 [numthreads(32,32,1)]
 void CopyHighlight (uint2 id : SV_DispatchThreadID)
 {
-    if(_OrgTex4[id].x > 0)
+    id += uint2((uint)_StartPosX, (uint)_StartPosY);
+    int brushID = (int)_FinalTexID[id];
+    if(brushID < 0)
     {
-        _FinalTex4[id] = _OrgTex4[id];
+        return;
+    }
+
+    float value = (float)_HighlightIndex[brushID];
+    if(value > 0)
+    {
+        _FinalTexColor[id] = 1;
+    }
+}
+
+[numthreads(32,32,1)]
+void TimeRemap (uint2 id : SV_DispatchThreadID)
+{
+    id += uint2((uint)_StartPosX, (uint)_StartPosY);
+    int brushID = _FinalTexID[id];
+    if(brushID < 0)
+    {
+        return;
+    }
+    
+    float pixel = _FinalTexColor[id];
+
+    float4 time = _TimeRemap[brushID];
+    float newPixel = Remap(pixel, time.x, time.y, time.z, time.w);
+    _FinalTexColor[id] = float4(newPixel, 0, 0, 0);
+}
+
+[numthreads(32,32,1)]
+void UpdateIDTex (uint2 id : SV_DispatchThreadID)
+{
+    id += uint2((uint)_StartPosX, (uint)_StartPosY);
+    int brushID = _FinalTexID[id];
+    if(brushID < 0)
+    {
+        return;
+    }
+    
+    int newID = _IndexRemap[brushID].x;
+    _FinalTexID[id] = newID;
+}
+
+[numthreads(1024,1,1)]
+void DrawBrushStroke (uint id : SV_DispatchThreadID)
+{
+    CompressedPixel pixel = _BufferToTex[id];
+    uint2 pos = DeCompactPos(pixel.pos);
+
+    if(_FinalTexID[pos] < 0 || _StrokeID < _FinalTexID[pos])
+    {
+        _FinalTexColor[pos] = Remap(pixel.color, _TimeRemapBrushStroke.x, _TimeRemapBrushStroke.y, _TimeRemapBrushStroke.z, _TimeRemapBrushStroke.w);
+        _FinalTexID[pos] = _StrokeID;
     }
 }
 

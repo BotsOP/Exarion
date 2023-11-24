@@ -38,6 +38,7 @@ namespace UI
             
                 float lastTimePos = ExtensionMethods.Remap(value.x, 0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
                 float currentTimePos = ExtensionMethods.Remap(value.y, 0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
+                Debug.Log($"{TimelineBarCorners[0].x} {TimelineBarCorners[2].x}");
                 float clipLength = currentTimePos - lastTimePos;
                 sizeDelta = new Vector2(clipLength, sizeDelta.y);
                 rect.sizeDelta = sizeDelta;
@@ -73,8 +74,8 @@ namespace UI
         private RectTransform timelineAreaRect;
     
         private float mouseOffset;
+        private float clipHandle = 5;
         private float minumunWidth = 10;
-        private float spacing = 10;
         
         private readonly Vector3[] corners;
         private Vector3[] Corners
@@ -192,7 +193,7 @@ namespace UI
         {
             if (IsMouseOver() && mouseAction == MouseAction.Nothing)
             {
-                if (Input.mousePosition.x > Corners[0].x && Input.mousePosition.x < Corners[0].x + 10)
+                if (Input.mousePosition.x > Corners[0].x && Input.mousePosition.x < Corners[0].x + clipHandle)
                 {
                     if (rect.pivot.x < 1)
                     {
@@ -202,7 +203,7 @@ namespace UI
                     }
                     return MouseAction.ResizeClipLeft;
                 }
-                if (Input.mousePosition.x < Corners[2].x && Input.mousePosition.x > Corners[2].x - 10)
+                if (Input.mousePosition.x < Corners[2].x && Input.mousePosition.x > Corners[2].x - clipHandle)
                 {
                     if (rect.pivot.x > 0)
                     {
@@ -291,23 +292,20 @@ namespace UI
         private float GetYPos()
         {
             float yPos = rect.position.y;
-            float timelineBarHeight = Corners[2].y - Corners[0].y + spacing;
+            float timelineBarHeight = Corners[2].y - Corners[0].y + Timeline.timelineBarSpacing;
             float inputOffset = Input.mousePosition.y;
             if (inputOffset < TimelineAreaCorners[0].y || inputOffset > TimelineAreaCorners[2].y)
             {
                 return yPos;
             }
         
-            if (inputOffset < Corners[0].y - spacing)
+            if (inputOffset < Corners[0].y - Timeline.timelineBarSpacing)
             {
-                //int amountBarsMoved = (int)((Corners[0].y - spacing - inputOffset) / (Corners[2].y - Corners[0].y));
                 currentBar ++;
                 return yPos - timelineBarHeight;
             }
-            if (inputOffset > Corners[2].y + spacing)
+            if (inputOffset > Corners[2].y + Timeline.timelineBarSpacing)
             {
-                // float smth = Mathf.CeilToInt((inputOffset - Corners[0].y + spacing) / (Corners[2].y - Corners[0].y));
-                // int amountBarsMoved = Mathf.CeilToInt(smth);
                 currentBar --;
                 return yPos + timelineBarHeight;
             }
@@ -315,7 +313,7 @@ namespace UI
         }
         public void SetBar(int newBar)
         {
-            float timelineBarHeight = Corners[2].y - Corners[0].y + spacing;
+            float timelineBarHeight = Corners[2].y - Corners[0].y + Timeline.timelineBarSpacing;
             int amountToMove = newBar - currentBar;
             timelineBarHeight *= amountToMove;
 

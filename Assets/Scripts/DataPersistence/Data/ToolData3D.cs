@@ -8,6 +8,7 @@ public class ToolData3D : ToolData
 {
     //Mesh textures
     public List<byte[]> overlayImg = new List<byte[]>();
+    public List<byte[]> maskImg = new List<byte[]>();
     
     //Mesh
     public bool meshLoaded;
@@ -38,6 +39,11 @@ public class ToolData3D : ToolData
 
     public void SaveMesh(Mesh _mesh)
     {
+        if (_mesh == null)
+        {
+            Debug.Log($"Mesh is null");
+            return;
+        }
         meshName = _mesh.name;
         
         List<Vector3> vertexPosUnity = new List<Vector3>();

@@ -7,7 +7,7 @@
 
 RWTexture2D<float> _ResultTex;
 RWTexture2D<float4> _ResultTexReverse;
-RWTexture2D<int> _IdTex;
+RWTexture2D<int> _IDTex;
 
 float2 _CursorPos;
 float2 _CursorPosPlusBrushSize;
@@ -39,60 +39,38 @@ float2 ClosestPointOnLine(const float2 lineStart, const float2 lineEnd, const fl
     return lineStart + projectionDistance * lineDirection;
 }
 
-float cubicBezierCircle(float t)
+float CubicCircle(float t)
 {
     return t * t * t;
 }
 
+float LinearToCircle(float t)
+{
+    //return sqrt(1 - pow(t - 0.9, 2));
+    return sqrt(4 - pow(t * 2 - 2, 2)) / 2;
+}
+
+float Remap (float value, float from1, float to1, float from2, float to2) 
+{
+    return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
+}
+
+//start of brushstrtoke is already drawn
 float CalculatePaintColor(float2 paintPos, float2 startPos, float2 endPos)
 {
     const float2 paintPosOnLine = ClosestPointOnLine(startPos, endPos, paintPos);
-
-    float distLine = distance(startPos, endPos);
-    float distanceToPointA = distance(startPos, paintPosOnLine) / distLine;
-    float paintColor = lerp(_PreviousTimeColor, _TimeColor, distanceToPointA);
-    //paintColor = clamp(paintColor, _PreviousTimeColor, _TimeColor);
     
+    float distLine = distance(startPos, endPos) + _BrushSize;
+    float distanceToPointA = (distance(startPos, paintPosOnLine) + _BrushSize) / distLine;
+    float paintColor = Remap(distanceToPointA, 0, 1, 0, 0.9);
+
     float distToLine = distance(paintPosOnLine, paintPos);
-    distToLine = 1 - saturate((cubicBezierCircle(distToLine / _BrushSize) * _BrushSize) / distLine);
-    float paintColorOutside = (_TimeColor - _PreviousTimeColor) * distToLine;
-    //paintColorOutside = clamp(paintColorOutside, 0, _TimeColor - _PreviousTimeColor);
-    
-    paintColor -= paintColorOutside;
-    
+    distToLine = distToLine / _BrushSize;
+    paintColor += CubicCircle(distToLine) / 10;
+                
+    paintColor = lerp(_PreviousTimeColor, _TimeColor, saturate(paintColor));
+                
     return paintColor;
-}
-
-[numthreads(32,32,1)]
-void PaintUnderOwnLine (uint3 id : SV_DispatchThreadID)
-{
-    const float2 paintPos = _StartPos.xy + id.xy;
-
-    if(_IdTex[paintPos] == _StrokeID)
-    {
-        return;
-    }
-
-    if(distance(paintPos, _LastCursorPos) < _BrushSize)
-    {
-        float2 AtoB = _CursorPos - _LastCursorPos;
-        float2 paintPosToA = _LastCursorPos - paintPos;
-        
-        if(dot(AtoB, paintPosToA) > 0.0 && !_FirstStroke)
-        {
-            return;
-        }
-    }
-
-    float paintColor = LineSegment2DSDF(paintPos, _LastCursorPos, _CursorPos);
-    paintColor = 1 - smoothstep(_BrushSize, _BrushSize, paintColor);
-
-    if(paintColor <= 0) { return; }
-
-    paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
-
-    _IdTex[paintPos] = _StrokeID;
-    _ResultTex[paintPos] = float4(paintColor, paintColor, paintColor, 1);
 }
 
 [numthreads(32,32,1)]
@@ -100,37 +78,34 @@ void PaintUnderEverything (uint3 id : SV_DispatchThreadID)
 {
     float2 paintPos = _StartPos.xy + id.xy;
 
-    if(_IdTex[paintPos] != -1)
-    {
-        return;
-    }
-    
-    const float2 AtoB = _CursorPos - _LastCursorPos;
-    const float2 paintPosToA = _LastCursorPos - paintPos;
-    
-    if(dot(normalize(AtoB), paintPosToA) > 0.0 && !_FirstStroke)
+    if(_IDTex[paintPos] == 1)
     {
         return;
     }
 
     float paintColor = LineSegment2DSDF(paintPos, _LastCursorPos, _CursorPos);
-    paintColor = 1 - smoothstep(_BrushSize, _BrushSize, paintColor);
-
-    if(paintColor <= 0) { return; }
-
-    if(_FirstStroke)
+    
+    if(paintColor > _BrushSize)
     {
-        paintColor = _PreviousTimeColor;
+        return;
+    }
 
-        _ResultTex[paintPos] = paintColor;
-        _IdTex[paintPos] = _StrokeID;
+    if(_FirstStroke && distance(paintPos, _LastCursorPos) < _BrushSize)
+    {
+        _ResultTex[paintPos] = _PreviousTimeColor;
+        _IDTex[paintPos] = 1;
         return;
     }
     
-    paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPosPlusBrushSize);
+    paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
 
     _ResultTex[paintPos] = paintColor;
-    _IdTex[paintPos] = _StrokeID;
+    _IDTex[paintPos] = 1;
+}
+
+[numthreads(32,32,1)]
+void PaintUnderOwnLine (uint3 id : SV_DispatchThreadID)
+{
 }
 
 [numthreads(32,32,1)]
@@ -138,7 +113,7 @@ void PaintOverOwnLine (uint3 id : SV_DispatchThreadID)
 {
     const float2 paintPos = _StartPos.xy + id.xy;
 
-    if(_IdTex[paintPos] != _StrokeID && _IdTex[paintPos] != -1)
+    if(_IDTex[paintPos] != _StrokeID && _IDTex[paintPos] != -1)
     {
         return;
     }
@@ -161,7 +136,7 @@ void PaintOverOwnLine (uint3 id : SV_DispatchThreadID)
 
     paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
 
-    _IdTex[paintPos] = _StrokeID;
+    _IDTex[paintPos] = _StrokeID;
     _ResultTex[paintPos] = paintColor;
 }
 
@@ -189,7 +164,7 @@ void PaintOverEverything (uint3 id : SV_DispatchThreadID)
     paintColor = CalculatePaintColor(paintPos, _LastCursorPos, _CursorPos);
 
     _ResultTex[paintPos] = paintColor;
-    _IdTex[paintPos] = _StrokeID;
+    _IDTex[paintPos] = _StrokeID;
 }
 
 //Doesnt always have to erase the result tex
@@ -203,7 +178,7 @@ void Erase (uint3 id : SV_DispatchThreadID)
 
     if(paintColor <= 0) { return; }
 
-    _IdTex[paintPos] = -1;
+    _IDTex[paintPos] = -1;
     _ResultTex[paintPos] = 250;
 }
 
