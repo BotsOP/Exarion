@@ -47,6 +47,8 @@ namespace UI
         [SerializeField] private RectTransform timelineControl;
         [SerializeField] private RectTransform timelineFullView;
         [SerializeField] private RectTransform timelineFocusView;
+        [SerializeField] private RectTransform uvImageChannelContent;
+        [SerializeField] private RawImage currentUVChannelImage;
         
         [Header("Select Deselect")]
         [SerializeField] private Color selectedColor;
@@ -63,9 +65,9 @@ namespace UI
         [SerializeField] private Button exrButton;
         [SerializeField] private Image pivotButton;
         [SerializeField] private Image centerButton;
+        [SerializeField] private GameObject uvImageChannelButton;
 
-        
-        
+        private List<RawImage> uvChannelButtonBackgrounds;
         private CustomRenderTexture viewFullRT;
         private CustomRenderTexture viewFocusRT;
         private CustomRenderTexture displayFullRT;
@@ -79,6 +81,12 @@ namespace UI
         private bool exportPNG;
         private bool toggleSave;
         private float startTime;
+        private int subMeshCount;
+        private int currentUVChannel;
+        private string[] extensions = { "" };
+        private byte[] imgData;
+        private Texture2D importedTexture;
+        private Texture2D[] channelTextures;
         
         private void OnEnable()
         {
@@ -142,6 +150,27 @@ namespace UI
         private void Start()
         {
             EventSystem<RectTransform, RectTransform>.RaiseEvent(EventType.VIEW_CHANGED, rectTransformViewFull, rectTransformDisplayFull);
+            uvChannelButtonBackgrounds = new List<RawImage>();
+            
+            for (int i = 0; i < subMeshCount; i++)
+            {
+                GameObject temp = Instantiate(uvImageChannelButton, uvImageChannelContent);
+                UVImageChannelButton uvImageChannelButtonClass = temp.GetComponent<UVImageChannelButton>();
+                uvImageChannelButtonClass.channel = i;
+                
+                temp.GetComponent<Button>().onClick.AddListener(delegate { SwitchedUVChannel(uvImageChannelButtonClass); });
+                
+                RawImage background = temp.GetComponent<RawImage>();
+                background.color = i == 0 ? selectedColor : backgroundColor;
+                uvChannelButtonBackgrounds.Add(background);
+                
+                temp.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = "UV Channel " + i;
+            }
+
+            if (channelTextures[0] is not null)
+            {
+                currentUVChannelImage.texture = channelTextures[0];
+            }
         }
 
         private void Update()
@@ -170,6 +199,71 @@ namespace UI
             }
         }
 
+        private void SwitchedUVChannel(UVImageChannelButton _button)
+        {
+            currentUVChannel = _button.channel;
+            foreach (var rawImage in uvChannelButtonBackgrounds)
+            {
+                rawImage.color = backgroundColor;
+            }
+
+            Texture2D tex = channelTextures[currentUVChannel];
+            if (tex is not null)
+            {
+                currentUVChannelImage.texture = channelTextures[currentUVChannel];
+            }
+            else
+            {
+                currentUVChannelImage.texture = new Texture2D(1, 1);
+            }
+            _button.GetComponent<RawImage>().color = selectedColor;
+        }
+        
+        public void LoadImage()
+        {
+            String path = FileBrowser.Instance.OpenSingleFile("Open file", "", "", extensions);
+            StartCoroutine(LoadImage(path));
+        }
+
+        private IEnumerator LoadImage(string _path)
+        {
+            using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(_path))
+            {
+                yield return uwr.SendWebRequest();
+
+                if (uwr.isNetworkError || uwr.isHttpError)
+                {
+                    Debug.Log(uwr.error);
+                }
+                else
+                {
+                    var uwrTexture = DownloadHandlerTexture.GetContent(uwr);
+                
+                    imgData = uwrTexture.EncodeToPNG();
+                    if (!LoadImage(out importedTexture))
+                    {
+                        Debug.LogError($"Image is null or holds no data");
+                    }
+
+                    channelTextures[currentUVChannel] = importedTexture;
+                    currentUVChannelImage.texture = importedTexture;
+                    EventSystem<int, Texture2D>.RaiseEvent(EventType.IMPORT_MODEL_TEXTURE, currentUVChannel, importedTexture);
+                }
+            }
+        }
+        
+        private bool LoadImage(out Texture2D _texture)
+        {
+            _texture = null;
+            if (imgData is null) return false;
+            if (imgData.Length <= 0) return false;
+        
+            //Size doesnt matter ;)
+            _texture = new Texture2D(1, 1);
+            _texture.LoadImage(imgData);
+            return true;
+        }
+
         private void Saved()
         {
             toggleSave = true;
@@ -193,7 +287,7 @@ namespace UI
         public void ExportResult()
         {
             string path = FileBrowser.Instance.SaveFile("Save texture", "", projectName, pngToggle ? "png" : "exr");
-            DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
+            DrawingManager2D drawingManager = FindObjectOfType<DrawingManager2D>();
             //byte[] bytes = pngToggle ? drawingManager.drawer.rt.ToBytesPNG() : drawingManager.drawer.rt.ToBytesEXR();
             byte[] bytes = pngToggle ? drawingManager.drawer.ReverseRtoB().ToBytesPNG() : drawingManager.drawer.ReverseRtoB().ToBytesEXR();
             File.WriteAllBytes(path, bytes);
@@ -353,16 +447,62 @@ namespace UI
             brushSizeInput.text = brushSize.ToString(CultureInfo.CurrentCulture);
             brushSizeSlider.value = brushSize;
         }
-
         
         public void LoadData(ToolData _data, ToolMetaData _metaData)
         {
             imageWidth = _data.imageWidth;
             imageHeight = _data.imageHeight;
             projectName = _metaData.projectName;
+            if (_data is ToolData3D)
+            {
+                ToolData3D toolData3D = (ToolData3D)_data;
+                subMeshCount = toolData3D.indices.Count;
+                channelTextures = new Texture2D[subMeshCount];
+                List<int> channels = new List<int>();
+                List<Texture2D> texture2Ds = new List<Texture2D>();
+                for (var i = 0; i < toolData3D.maskImg.Count; i++)
+                {
+                    var imgByte = toolData3D.maskImg[i];
+                    if (imgByte == null || imgByte.Length == 0)
+                    {
+                        continue;
+                    }
+                    Texture2D tex = new Texture2D(1, 1);
+                    tex.LoadImage(imgByte);
+                    channels.Add(i);
+                    texture2Ds.Add(tex);
+                    channelTextures[i] = tex;
+                }
+                StartCoroutine(WaitAndPrint(channels, texture2Ds));
+            }
+        }
+        
+        private IEnumerator WaitAndPrint(List<int> _currentUVChannels, List<Texture2D> _importedTextures)
+        {
+            yield return new WaitForEndOfFrameUnit();
+            yield return new WaitForEndOfFrameUnit();
+            yield return new WaitForEndOfFrameUnit();
+            for (int i = 0; i < _currentUVChannels.Count; i++)
+            {
+                EventSystem<int, Texture2D>.RaiseEvent(EventType.IMPORT_MODEL_TEXTURE, _currentUVChannels[i], _importedTextures[i]);
+            }
         }
         public void SaveData(ToolData _data, ToolMetaData _metaData)
         {
+            if (_data is ToolData3D)
+            {
+                ToolData3D toolData3D = (ToolData3D)_data;
+                toolData3D.maskImg.Clear();
+                for (var i = 0; i < subMeshCount; i++)
+                {
+                    if (channelTextures[i] == null)
+                    {
+                        toolData3D.maskImg.Add(new byte[0]);
+                        continue;
+                    }
+                    toolData3D.maskImg.Add(channelTextures[i].EncodeToPNG());
+                }
+            }
         }
     }
 }

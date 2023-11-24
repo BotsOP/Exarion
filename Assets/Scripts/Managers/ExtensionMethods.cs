@@ -53,6 +53,21 @@ namespace Managers
         {
             return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
         }
+        
+        public static int GetCounter(this ComputeBuffer _buffer)
+        {
+            int[] intArray = new int[1];
+            _buffer.GetData(intArray);
+            _buffer.SetData(new int[1]);
+            return intArray[0];
+        }
+        
+        public static int GetCounter(this ComputeBuffer _buffer, int _bufferCount, int _index)
+        {
+            int[] intArray = new int[_bufferCount];
+            _buffer.GetData(intArray);
+            return intArray[_index];
+        }
 
         public static void Clear(this CustomRenderTexture _rt, bool _clearDepth, bool _clearColor, Color _color)
         {

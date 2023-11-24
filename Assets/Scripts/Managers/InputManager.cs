@@ -20,8 +20,8 @@ public class InputManager : MonoBehaviour, IDataPersistence
     private RectTransform currentDisplayArea;
     private DrawingInput drawingInput;
     private DrawingInput3D drawingInput3D;
-    private int imageWidth;
-    private int imageHeight;
+    private int imageWidth = 2048;
+    private int imageHeight = 2048;
 
     private void Start()
     {

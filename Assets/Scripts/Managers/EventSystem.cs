@@ -5,6 +5,7 @@ namespace Managers
     public enum EventType
     {
         DRAW,
+        DRAW_PREVIEW,
         FINISHED_STROKE,
         TIME,
         ADD_TIME,
@@ -14,6 +15,7 @@ namespace Managers
         REDRAW_STROKE,
         REDRAW_STROKES,
         REDRAW_ALL,
+        SETUP_BRUSHSTROKES,
         REMOVE_STROKE,
         MOVE_STROKE,
         RESIZE_STROKE,
