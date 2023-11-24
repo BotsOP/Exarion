@@ -77,7 +77,7 @@ namespace UI
         private float minumunWidth = 10;
         
         private readonly Vector3[] corners;
-        private Vector3[] Corners
+        public Vector3[] Corners
         {
             get {
                 rect.GetWorldCorners(corners);
@@ -164,11 +164,11 @@ namespace UI
                     break;
             }
         }
-        public void SetMouseOffset()
+        private void SetMouseOffset()
         {
             mouseOffset = Input.mousePosition.x - rect.position.x;
         }
-        protected void SetResizeLeft()
+        private void SetResizeLeft()
         {
             if (rect.pivot.x < 1)
             {
@@ -300,12 +300,12 @@ namespace UI
         
             if (inputOffset < Corners[0].y - Timeline.timelineBarSpacing)
             {
-                currentBar ++;
+                currentBar++;
                 return yPos - timelineBarHeight;
             }
             if (inputOffset > Corners[2].y + Timeline.timelineBarSpacing)
             {
-                currentBar --;
+                currentBar--;
                 return yPos + timelineBarHeight;
             }
             return yPos;

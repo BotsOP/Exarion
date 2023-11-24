@@ -519,6 +519,7 @@ namespace UI
             {
                 foreach (TimelineClip clip in selectedClips)
                 {
+                    Debug.Log($"{clip.currentBar}");
                     clip.previousBar = clip.currentBar;
                     clip.clipTimeOld = clip.ClipTime;
 
@@ -566,8 +567,7 @@ namespace UI
                         }
                         continue;
                     }
-                    Debug.Log($"mouse over {lastMousePos} {Input.mousePosition}");
-
+                    
                     if (!clip.hover)
                     {
                         OnHoverEnter(clip);
@@ -794,6 +794,29 @@ namespace UI
         }
         private bool IsClipColliding(TimelineClip _clip, TimelineClip _clip2)
         {
+            float xDiffLeft = _clip.Corners[0].x - _clip2.Corners[2].x;
+            if (Math.Abs(xDiffLeft) < Screen.width / 300f )
+            {
+                Vector2 clipTime = _clip.ClipTime;
+                float timeDiff = clipTime.x - _clip2.ClipTime.y;
+                _clip.ClipTime = new Vector2(clipTime.x - timeDiff, clipTime.y - timeDiff);
+                _clip.SetTime(_clip.ClipTime);
+                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, _clip.GetBrushStrokeIDs());
+                return false;
+            }
+            
+            float xDiffRight = _clip.Corners[2].x - _clip2.Corners[0].x;
+            if (Math.Abs(xDiffRight) < Screen.width / 300f)
+            {
+                Vector2 clipTime = _clip.ClipTime;
+                float timeDiff = _clip2.ClipTime.x - clipTime.y;
+                _clip.ClipTime = new Vector2(clipTime.x + timeDiff, clipTime.y + timeDiff);
+                
+                _clip.SetTime(_clip.ClipTime);
+                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, _clip.GetBrushStrokeIDs());
+                return false;
+            }
+            
             if (_clip.ClipTime.x > _clip2.ClipTime.x && _clip.ClipTime.x < _clip2.ClipTime.y ||
                 _clip.ClipTime.y > _clip2.ClipTime.x && _clip.ClipTime.y < _clip2.ClipTime.y
                 )
@@ -807,10 +830,6 @@ namespace UI
                 return true;
             }
 
-            if (Math.Abs(_clip.ClipTime.x - _clip2.ClipTime.x) < 0.0001f && Math.Abs(_clip.ClipTime.y - _clip2.ClipTime.y) < 0.0001f)
-            {
-                return true;
-            }
             return false;
         }
         #endregion
