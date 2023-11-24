@@ -72,7 +72,8 @@ namespace UI
         private RectTransform timelineBarRect;
         private RectTransform timelineAreaRect;
     
-        private float mouseOffset;
+        private float mouseOffsetX;
+        private float mouseOffsetY;
         private float clipHandle = 5;
         private float minumunWidth = 10;
         
@@ -166,7 +167,9 @@ namespace UI
         }
         private void SetMouseOffset()
         {
-            mouseOffset = Input.mousePosition.x - rect.position.x;
+            var position = rect.position;
+            mouseOffsetX = Input.mousePosition.x - position.x;
+            mouseOffsetY = Input.mousePosition.y - position.y;
         }
         private void SetResizeLeft()
         {
@@ -176,7 +179,7 @@ namespace UI
                 rect.position += new Vector3(clipLength, 0, 0);
                 rect.pivot = new Vector2(1, 1);
             }
-            mouseOffset = Input.mousePosition.x - rect.position.x + rect.sizeDelta.x;
+            mouseOffsetX = Input.mousePosition.x - rect.position.x + rect.sizeDelta.x;
         }
         private void SetResizeRight()
         {
@@ -186,7 +189,7 @@ namespace UI
                 rect.position -= new Vector3(clipLength, 0, 0);
                 rect.pivot = new Vector2(0, 1);
             }
-            mouseOffset = Input.mousePosition.x - rect.position.x - rect.sizeDelta.x;
+            mouseOffsetX = Input.mousePosition.x - rect.position.x - rect.sizeDelta.x;
         }
         public MouseAction GetMouseAction()
         {
@@ -273,7 +276,7 @@ namespace UI
             float clipLength = rect.sizeDelta.x;
             Vector3 position = rect.position;
             float yPos = GetYPos();
-            float xPos = Input.mousePosition.x - mouseOffset;
+            float xPos = Input.mousePosition.x - mouseOffsetX;
 
             if (rect.pivot.x == 0)
             {
@@ -292,7 +295,7 @@ namespace UI
         {
             float yPos = rect.position.y;
             float timelineBarHeight = Corners[2].y - Corners[0].y + Timeline.timelineBarSpacing;
-            float inputOffset = Input.mousePosition.y;
+            float inputOffset = Input.mousePosition.y - mouseOffsetY;
             if (inputOffset < TimelineAreaCorners[0].y || inputOffset > TimelineAreaCorners[2].y)
             {
                 return yPos;
