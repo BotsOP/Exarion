@@ -284,7 +284,7 @@ namespace Drawing
             collisionBoxMax.z = collisionBoxMax.z < _worldPos.z ? _worldPos.z + brushSize: collisionBoxMax.z;
 
             drawer.Draw(lastCursorPos, _worldPos, brushSize, paintType, cachedTime, time, firstDraw, newBrushStrokeID);
-            tempBrushStrokes.Add(new BrushStroke(lastCursorPos, _worldPos, brushSize, time, cachedTime));
+            tempBrushStrokes.Add(new BrushStroke(_worldPos, brushSize, time));
             
             lastCursorPos = _worldPos;
         }
@@ -304,7 +304,7 @@ namespace Drawing
             List<BrushStroke> brushStrokes = new List<BrushStroke>(tempBrushStrokes);
             
             BrushStrokeID brushStrokeID = new BrushStrokeID(
-                pixels, brushStrokes, bounds, paintType, brushStrokes[0].startTime, brushStrokes[^1].endTime, collisionBoxMin, collisionBoxMax, drawer.brushStrokesID.Count, tempAvgPos);
+                pixels, brushStrokes, bounds, paintType, brushStrokes[0].colorTime, brushStrokes[^1].colorTime, collisionBoxMin, collisionBoxMax, drawer.brushStrokesID.Count, tempAvgPos);
 
             sphere1.transform.position = collisionBoxMin;
             sphere2.transform.position = collisionBoxMax;

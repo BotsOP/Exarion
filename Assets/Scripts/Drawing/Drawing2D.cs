@@ -97,42 +97,48 @@ namespace Drawing
         
         public void SetupDrawBrushStroke(BrushStrokeID _brushStrokeID, bool _getPixels = true)
         {
-            float oldStartTime = _brushStrokeID.brushStrokes[0].startTime;
-            float oldEndTime = _brushStrokeID.brushStrokes[^1].endTime;
+            float oldStartTime = _brushStrokeID.brushStrokes[0].colorTime;
+            float oldEndTime = _brushStrokeID.brushStrokes[^1].colorTime;
             
             bool firstStroke = true;
-            foreach (var brushStroke in _brushStrokeID.brushStrokes)
+            for (int i = 0; i < _brushStrokeID.brushStrokes.Count - 1; i++)
             {
-                float startTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
-                float endTime = brushStroke.endTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
-                
-                Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, _brushStrokeID.paintType, 
-                     startTime, endTime, firstStroke, _brushStrokeID.indexWhenDrawn);
+                var startBrushStroke = _brushStrokeID.brushStrokes[i];
+                var endBrushStroke = _brushStrokeID.brushStrokes[i + 1];
+                float startTime = startBrushStroke.colorTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
+                float endTime = endBrushStroke.colorTime.Remap(oldStartTime, oldEndTime, _brushStrokeID.startTime, _brushStrokeID.endTime);
+
+                Draw(
+                    startBrushStroke.GetPos(), endBrushStroke.GetPos(), startBrushStroke.brushSize, _brushStrokeID.paintType,
+                    startTime, endTime, firstStroke, _brushStrokeID.indexWhenDrawn);
                 firstStroke = false;
             }
-            
+
             (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing(_brushStrokeID.indexWhenDrawn, _getPixels);
             _brushStrokeID.pixels = result.Item1;
             _brushStrokeID.bounds = result.Item2;
         }
         public void SetupDrawBrushStroke(List<BrushStrokeID> _brushStrokeIDs, bool _getPixels = true)
         {
-            foreach (var brushStrokeID in _brushStrokeIDs)
+            foreach (BrushStrokeID brushStrokeID in _brushStrokeIDs)
             {
-                float oldStartTime = brushStrokeID.brushStrokes[0].startTime;
-                float oldEndTime = brushStrokeID.brushStrokes[^1].endTime;
-            
+                float oldStartTime = brushStrokeID.brushStrokes[0].colorTime;
+                float oldEndTime = brushStrokeID.brushStrokes[^1].colorTime;
+
                 bool firstStroke = true;
-                foreach (var brushStroke in brushStrokeID.brushStrokes)
+                for (int j = 0; j < brushStrokeID.brushStrokes.Count - 1; j++)
                 {
-                    float startTime = brushStroke.startTime.Remap(oldStartTime, oldEndTime, brushStrokeID.startTime, brushStrokeID.endTime);
-                    float endTime = brushStroke.endTime.Remap(oldStartTime, oldEndTime, brushStrokeID.startTime, brushStrokeID.endTime);
-                
-                    Draw(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, brushStrokeID.paintType, 
+                    var startBrushStroke = brushStrokeID.brushStrokes[j];
+                    var endBrushStroke = brushStrokeID.brushStrokes[j + 1];
+                    float startTime = startBrushStroke.colorTime.Remap(oldStartTime, oldEndTime, brushStrokeID.startTime, brushStrokeID.endTime);
+                    float endTime = endBrushStroke.colorTime.Remap(oldStartTime, oldEndTime, brushStrokeID.startTime, brushStrokeID.endTime);
+
+                    Draw(
+                        startBrushStroke.GetPos(), endBrushStroke.GetPos(), startBrushStroke.brushSize, brushStrokeID.paintType,
                         startTime, endTime, firstStroke, brushStrokeID.indexWhenDrawn);
                     firstStroke = false;
                 }
-            
+
                 (List<BrushStrokePixel[]>, List<uint[]>) result = FinishDrawing(brushStrokeID.indexWhenDrawn, _getPixels);
                 brushStrokeID.pixels = result.Item1;
                 brushStrokeID.bounds = result.Item2;
@@ -151,9 +157,11 @@ namespace Drawing
             Vector4 collisionBox = _brushStrokeID.GetCollisionBox();
             if (CheckCollision(collisionBox, _mousePos))
             {
-                foreach (var brushStroke in _brushStrokeID.brushStrokes)
+                for (int i = 0; i < _brushStrokeID.brushStrokes.Count - 1; i++)
                 {
-                    if (DistancePointToLine(brushStroke.GetStartPos(), brushStroke.GetEndPos(), _mousePos) < brushStroke.brushSize)
+                    var startBrushStroke = _brushStrokeID.brushStrokes[i];
+                    var endBrushStroke = _brushStrokeID.brushStrokes[i + 1];
+                    if (DistancePointToLine(startBrushStroke.GetPos(), endBrushStroke.GetPos(), _mousePos) < startBrushStroke.brushSize)
                     {
                         return true;
                     }

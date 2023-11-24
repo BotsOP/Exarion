@@ -167,9 +167,13 @@ namespace UI
                 temp.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = "UV Channel " + i;
             }
 
-            if (channelTextures[0] is not null)
+            channelTextures = new Texture2D[subMeshCount];
+            if (channelTextures.Length > 0)
             {
-                currentUVChannelImage.texture = channelTextures[0];
+                if (channelTextures[0] is not null)
+                {
+                    currentUVChannelImage.texture = channelTextures[0];
+                }
             }
         }
 

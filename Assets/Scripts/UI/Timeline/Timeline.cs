@@ -182,6 +182,7 @@ namespace UI
             timelineScrollBar.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
         }
 
+        private Vector2 lastMousePos;
         private void Update()
         {
             if (Input.GetMouseButtonUp(0))
@@ -196,6 +197,8 @@ namespace UI
             {
                 TimelineClipsInput();
             }
+            
+            lastMousePos = Input.mousePosition;
         }
         
         private void MoveTimelineIndicator()
@@ -554,7 +557,7 @@ namespace UI
                 for (int j = 0; j < clipsOrdered[i].Count; j++)
                 {
                     var clip = clipsOrdered[i][j];
-                    bool isMouseOver = clip.IsMouseOver();
+                    bool isMouseOver = clip.IsMouseOver(lastMousePos);
                     if (!isMouseOver)
                     {
                         if (clip.hover)
@@ -563,11 +566,13 @@ namespace UI
                         }
                         continue;
                     }
+                    Debug.Log($"mouse over {lastMousePos} {Input.mousePosition}");
 
                     if (!clip.hover)
                     {
                         OnHoverEnter(clip);
                     }
+                    
 
                     if (!selectedClips.Contains(clip) && Input.GetMouseButton(0))
                     {
@@ -580,7 +585,7 @@ namespace UI
                             clip.selectedBrushStrokes.AddRange(clip.GetBrushStrokeIDs());
                             clip.rawImage.color = selectedColor;
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, clip.GetBrushStrokeIDs());
-                            return;
+                            continue;
                         }
                         if (Input.GetMouseButtonDown(0) && clip != lastSelectedClip)
                         {
@@ -597,7 +602,7 @@ namespace UI
                             UpdateClipInfo();
                             clip.selectedBrushStrokes.AddRange(clip.GetBrushStrokeIDs());
                             EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.ADD_SELECT, clip.GetBrushStrokeIDs());
-                            return;
+                            continue;
                         }
                     }
                     if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButton(0) && (clip != lastSelectedClip && clip.previousBar == clip.currentBar 
@@ -611,7 +616,6 @@ namespace UI
                         clip.rawImage.color = clip.GetNotSelectedColor();
                         firstTimeSelected = true;
                         EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REMOVE_SELECT, clip.GetBrushStrokeIDs());
-                        return;
                     }
                 }
             }

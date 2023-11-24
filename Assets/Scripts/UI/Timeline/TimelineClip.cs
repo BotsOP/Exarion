@@ -27,8 +27,8 @@ namespace UI
         {
             get
             {
-                float lastTime = ExtensionMethods.Remap(Corners[0].x, TimelineBarCorners[0].x, TimelineBarCorners[2].x, 0, 1);
-                float currentTime = ExtensionMethods.Remap(Corners[2].x, TimelineBarCorners[0].x, TimelineBarCorners[2].x, 0, 1);
+                float lastTime = Corners[0].x.Remap(TimelineBarCorners[0].x, TimelineBarCorners[2].x, 0, 1);
+                float currentTime = Corners[2].x.Remap(TimelineBarCorners[0].x, TimelineBarCorners[2].x, 0, 1);
                 return new Vector2(lastTime, currentTime);
             }
             set
@@ -36,9 +36,8 @@ namespace UI
                 var sizeDelta = rect.sizeDelta;
                 var position = rect.position;
             
-                float lastTimePos = ExtensionMethods.Remap(value.x, 0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
-                float currentTimePos = ExtensionMethods.Remap(value.y, 0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
-                Debug.Log($"{TimelineBarCorners[0].x} {TimelineBarCorners[2].x}");
+                float lastTimePos = value.x.Remap(0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
+                float currentTimePos = value.y.Remap(0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
                 float clipLength = currentTimePos - lastTimePos;
                 sizeDelta = new Vector2(clipLength, sizeDelta.y);
                 rect.sizeDelta = sizeDelta;
@@ -320,11 +319,24 @@ namespace UI
             rect.position -= new Vector3(0, timelineBarHeight, 0);
             currentBar = newBar;
         }
-
+        
         public bool IsMouseOver()
         {
-            return Input.mousePosition.x > Corners[0].x && Input.mousePosition.x < Corners[2].x && Input.mousePosition.y > Corners[0].y &&
-                   Input.mousePosition.y < Corners[2].y;
+            return Input.mousePosition.x > Corners[0].x && Input.mousePosition.x < Corners[2].x && 
+                   Input.mousePosition.y > Corners[0].y && Input.mousePosition.y < Corners[2].y;
+        }
+
+        public bool IsMouseOver(Vector2 _lastMousePos)
+        {
+            float minCornerX = Mathf.Min(Input.mousePosition.x, _lastMousePos.x);
+            float minCornerY = Mathf.Min(Input.mousePosition.y, _lastMousePos.y);
+            float maxCornerX = Mathf.Max(Input.mousePosition.x, _lastMousePos.x);
+            float maxCornerY = Mathf.Max(Input.mousePosition.y, _lastMousePos.y);
+            Vector4 mouseBox = new Vector4(minCornerX, minCornerY, maxCornerX, maxCornerY);
+            return (mouseBox.x >= Corners[0].x && mouseBox.z <= Corners[2].x) &&
+                   (mouseBox.y >= Corners[0].y && mouseBox.w <= Corners[2].y) ||
+                   (Corners[0].x >= mouseBox.x && Corners[0].x <= mouseBox.z) &&
+                   (mouseBox.y >= Corners[0].y && mouseBox.w <= Corners[2].y);
         }
     }
 }
