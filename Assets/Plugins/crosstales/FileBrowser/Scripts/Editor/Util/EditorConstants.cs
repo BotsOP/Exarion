@@ -10,7 +10,6 @@ namespace Crosstales.FB.EditorUtil
 
       public const string KEY_UPDATE_CHECK = Constants.KEY_PREFIX + "UPDATE_CHECK";
       public const string KEY_COMPILE_DEFINES = Constants.KEY_PREFIX + "COMPILE_DEFINES";
-      public const string KEY_PREFAB_AUTOLOAD = Constants.KEY_PREFIX + "PREFAB_AUTOLOAD";
       public const string KEY_HIERARCHY_ICON = Constants.KEY_PREFIX + "HIERARCHY_ICON";
       public const string KEY_MACOS_MODIFY_BUNDLE = Constants.KEY_PREFIX + "MACOS_MODIFY_BUNDLE";
       public const string KEY_WSA_MODIFY_MANIFEST = Constants.KEY_PREFIX + "WSA_MODIFY_MANIFEST";
@@ -22,9 +21,8 @@ namespace Crosstales.FB.EditorUtil
       public const string DEFAULT_ASSET_PATH = "/Plugins/crosstales/FileBrowser/";
       public const bool DEFAULT_UPDATE_CHECK = false;
       public const bool DEFAULT_COMPILE_DEFINES = true;
-      public const bool DEFAULT_PREFAB_AUTOLOAD = false;
       public const bool DEFAULT_HIERARCHY_ICON = false;
-      public const bool DEFAULT_MACOS_MODIFY_BUNDLE = true;
+      public const bool DEFAULT_MACOS_MODIFY_BUNDLE = false;
       public const bool DEFAULT_WSA_MODIFY_MANIFEST = false;
 
       #endregion

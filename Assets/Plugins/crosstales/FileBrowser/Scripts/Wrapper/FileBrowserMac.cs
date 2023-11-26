@@ -40,9 +40,9 @@ namespace Crosstales.FB.Wrapper
 
       public override string[] OpenFiles(string title, string directory, string defaultName, bool multiselect, params ExtensionFilter[] extensions)
       {
-         if (Crosstales.FB.Util.Constants.MAC_SYNC_CALLS_DISABLED)
+         if (!FileBrowser.Instance.AllowSyncCalls)
          {
-            Debug.LogWarning("'OpenFiles' is not disabled under macOS. Please use 'OpenFilesAsync'.");
+            Debug.LogWarning("'OpenFiles' is a synchronous call and disabled. Please use 'OpenFilesAsync' or set 'AllowSyncCalls' to true.");
             return null;
          }
 
@@ -56,9 +56,9 @@ namespace Crosstales.FB.Wrapper
 
       public override string[] OpenFolders(string title, string directory, bool multiselect)
       {
-         if (Crosstales.FB.Util.Constants.MAC_SYNC_CALLS_DISABLED)
+         if (!FileBrowser.Instance.AllowSyncCalls)
          {
-            Debug.LogWarning("'OpenFolders' is not supported under macOS. Please use 'OpenFoldersAsync'.");
+            Debug.LogWarning("'OpenFolders' is a synchronous call and disabled. Please use 'OpenFoldersAsync' or set 'AllowSyncCalls' to true.");
             return null;
          }
 
@@ -69,9 +69,9 @@ namespace Crosstales.FB.Wrapper
 
       public override string SaveFile(string title, string directory, string defaultName, params ExtensionFilter[] extensions)
       {
-         if (Crosstales.FB.Util.Constants.MAC_SYNC_CALLS_DISABLED)
+         if (!FileBrowser.Instance.AllowSyncCalls)
          {
-            Debug.LogWarning("'SaveFile' is not supported under macOS. Please use 'SaveFileAsync'.");
+            Debug.LogWarning("'SaveFile' is a synchronous call and disabled. Please use 'SaveFileAsync' or set 'AllowSyncCalls' to true.");
             return null;
          }
 

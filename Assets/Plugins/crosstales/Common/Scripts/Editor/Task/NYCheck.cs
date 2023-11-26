@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+﻿#if UNITY_EDITOR && !UNITY_CLOUD_BUILD
 using UnityEngine;
 using UnityEditor;
 

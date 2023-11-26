@@ -20,6 +20,7 @@ namespace Crosstales.FB.EditorExtension
       private bool customMode;
       private bool legacyFolderBrowser;
       private bool askOverwriteFile;
+      private bool allowSyncCalls;
       private bool alwaysReadFile;
       private bool dontDestroy;
 
@@ -179,6 +180,16 @@ namespace Crosstales.FB.EditorExtension
          if (askOverwriteFile != script.AskOverwriteFile)
          {
             serializedObject.FindProperty("askOverwriteFile").boolValue = askOverwriteFile;
+            serializedObject.ApplyModifiedProperties();
+         }
+
+         GUILayout.Space(8);
+         GUILayout.Label("macOS Settings", EditorStyles.boldLabel);
+
+         allowSyncCalls = EditorGUILayout.Toggle(new GUIContent("Allow Sync Calls", "Allow synchronous calls under macOS (default: false)."), script.AllowSyncCalls);
+         if (allowSyncCalls != script.AllowSyncCalls)
+         {
+            serializedObject.FindProperty("allowSyncCalls").boolValue = allowSyncCalls;
             serializedObject.ApplyModifiedProperties();
          }
 

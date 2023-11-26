@@ -16,9 +16,6 @@ namespace Crosstales.FB.EditorUtil
       /// <summary>Enable or disable adding compile define "CT_FB" for the asset.</summary>
       public static bool COMPILE_DEFINES = Crosstales.FB.EditorUtil.EditorConstants.DEFAULT_COMPILE_DEFINES;
 
-      /// <summary>Automatically load and add the prefabs to the scene.</summary>
-      public static bool PREFAB_AUTOLOAD = Crosstales.FB.EditorUtil.EditorConstants.DEFAULT_PREFAB_AUTOLOAD;
-
       /// <summary>Enable or disable the icon in the hierarchy.</summary>
       public static bool HIERARCHY_ICON = Crosstales.FB.EditorUtil.EditorConstants.DEFAULT_HIERARCHY_ICON;
 
@@ -110,7 +107,6 @@ namespace Crosstales.FB.EditorUtil
       {
          UPDATE_CHECK = Crosstales.FB.EditorUtil.EditorConstants.DEFAULT_UPDATE_CHECK;
          COMPILE_DEFINES = Crosstales.FB.EditorUtil.EditorConstants.DEFAULT_COMPILE_DEFINES;
-         PREFAB_AUTOLOAD = Crosstales.FB.EditorUtil.EditorConstants.DEFAULT_PREFAB_AUTOLOAD;
          HIERARCHY_ICON = Crosstales.FB.EditorUtil.EditorConstants.DEFAULT_HIERARCHY_ICON;
          MACOS_MODIFY_BUNDLE = Crosstales.FB.EditorUtil.EditorConstants.DEFAULT_MACOS_MODIFY_BUNDLE;
          WSA_MODIFY_MANIFEST = Crosstales.FB.EditorUtil.EditorConstants.DEFAULT_WSA_MODIFY_MANIFEST;
@@ -124,9 +120,6 @@ namespace Crosstales.FB.EditorUtil
 
          if (Crosstales.Common.Util.CTPlayerPrefs.HasKey(Crosstales.FB.EditorUtil.EditorConstants.KEY_COMPILE_DEFINES))
             COMPILE_DEFINES = Crosstales.Common.Util.CTPlayerPrefs.GetBool(Crosstales.FB.EditorUtil.EditorConstants.KEY_COMPILE_DEFINES);
-
-         if (Crosstales.Common.Util.CTPlayerPrefs.HasKey(Crosstales.FB.EditorUtil.EditorConstants.KEY_PREFAB_AUTOLOAD))
-            PREFAB_AUTOLOAD = Crosstales.Common.Util.CTPlayerPrefs.GetBool(Crosstales.FB.EditorUtil.EditorConstants.KEY_PREFAB_AUTOLOAD);
 
          if (Crosstales.Common.Util.CTPlayerPrefs.HasKey(Crosstales.FB.EditorUtil.EditorConstants.KEY_HIERARCHY_ICON))
             HIERARCHY_ICON = Crosstales.Common.Util.CTPlayerPrefs.GetBool(Crosstales.FB.EditorUtil.EditorConstants.KEY_HIERARCHY_ICON);
@@ -145,7 +138,6 @@ namespace Crosstales.FB.EditorUtil
       {
          Crosstales.Common.Util.CTPlayerPrefs.SetBool(Crosstales.FB.EditorUtil.EditorConstants.KEY_UPDATE_CHECK, UPDATE_CHECK);
          Crosstales.Common.Util.CTPlayerPrefs.SetBool(Crosstales.FB.EditorUtil.EditorConstants.KEY_COMPILE_DEFINES, COMPILE_DEFINES);
-         Crosstales.Common.Util.CTPlayerPrefs.SetBool(Crosstales.FB.EditorUtil.EditorConstants.KEY_PREFAB_AUTOLOAD, PREFAB_AUTOLOAD);
          Crosstales.Common.Util.CTPlayerPrefs.SetBool(Crosstales.FB.EditorUtil.EditorConstants.KEY_HIERARCHY_ICON, HIERARCHY_ICON);
          Crosstales.Common.Util.CTPlayerPrefs.SetBool(Crosstales.FB.EditorUtil.EditorConstants.KEY_MACOS_MODIFY_BUNDLE, MACOS_MODIFY_BUNDLE);
          Crosstales.Common.Util.CTPlayerPrefs.SetBool(Crosstales.FB.EditorUtil.EditorConstants.KEY_WSA_MODIFY_MANIFEST, WSA_MODIFY_MANIFEST);

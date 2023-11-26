@@ -7,6 +7,8 @@ namespace Crosstales.FB.Wrapper
 {
    public class FileBrowserEditor : BaseFileBrowser
    {
+      private bool isAsync;
+
       #region Implemented methods
 
       public override bool canOpenFile => true;
@@ -23,6 +25,12 @@ namespace Crosstales.FB.Wrapper
 
       public override string[] OpenFiles(string title, string directory, string defaultName, bool multiselect, params ExtensionFilter[] extensions)
       {
+         if (Crosstales.FB.Util.Helper.isMacOSPlatform && !isAsync && !FileBrowser.Instance.AllowSyncCalls) //emulate real behaviour for builds under macOS
+         {
+            Debug.LogWarning("'OpenFiles' is a synchronous call and disabled. Please use 'OpenFilesAsync' or set 'AllowSyncCalls' to true.");
+            return null;
+         }
+
          if (Crosstales.FB.Util.Helper.isMacOSEditor && extensions?.Length > 1)
             Debug.LogWarning("Multiple 'extensions' are not supported in the Editor.");
 
@@ -49,11 +57,19 @@ namespace Crosstales.FB.Wrapper
          CurrentOpenSingleFile = Crosstales.Common.Util.FileHelper.ValidateFile(path);
          CurrentOpenFiles = new[] { CurrentOpenSingleFile };
 
+         isAsync = false;
+
          return CurrentOpenFiles;
       }
 
       public override string[] OpenFolders(string title, string directory, bool multiselect)
       {
+         if (Crosstales.FB.Util.Helper.isMacOSPlatform && !isAsync && !FileBrowser.Instance.AllowSyncCalls) //emulate real behaviour for builds under macOS
+         {
+            Debug.LogWarning("'OpenFolders' is a synchronous call and disabled. Please use 'OpenFoldersAsync' or set 'AllowSyncCalls' to true.");
+            return null;
+         }
+
          if (multiselect)
             Debug.LogWarning("'multiselect' for folders is not supported in the Editor.");
 
@@ -72,11 +88,19 @@ namespace Crosstales.FB.Wrapper
          CurrentOpenSingleFolder = Crosstales.Common.Util.FileHelper.ValidatePath(path);
          CurrentOpenFolders = new[] { CurrentOpenSingleFolder };
 
+         isAsync = false;
+
          return CurrentOpenFolders;
       }
 
       public override string SaveFile(string title, string directory, string defaultName, params ExtensionFilter[] extensions)
       {
+         if (Crosstales.FB.Util.Helper.isMacOSPlatform && !isAsync && !FileBrowser.Instance.AllowSyncCalls) //emulate real behaviour for builds under macOS
+         {
+            Debug.LogWarning("'SaveFile' is a synchronous call and disabled. Please use 'SaveFileAsync' or set 'AllowSyncCalls' to true.");
+            return null;
+         }
+
          //resetSaveFile();
 
          string ext = extensions?.Length > 0 ? extensions[0].Extensions[0].Equals("*") ? string.Empty : extensions[0].Extensions[0] : string.Empty;
@@ -96,24 +120,29 @@ namespace Crosstales.FB.Wrapper
 
          CurrentSaveFile = Crosstales.Common.Util.FileHelper.ValidateFile(path);
 
+         isAsync = false;
+
          return CurrentSaveFile;
       }
 
       public override void OpenFilesAsync(string title, string directory, string defaultName, bool multiselect, ExtensionFilter[] extensions, Action<string[]> cb)
       {
          Debug.LogWarning("'OpenFilesAsync' is running synchronously in the Editor.");
+         isAsync = true;
          cb?.Invoke(OpenFiles(title, directory, defaultName, multiselect, extensions));
       }
 
       public override void OpenFoldersAsync(string title, string directory, bool multiselect, Action<string[]> cb)
       {
          Debug.LogWarning("'OpenFoldersAsync' is running synchronously in the Editor.");
+         isAsync = true;
          cb?.Invoke(OpenFolders(title, directory, multiselect));
       }
 
       public override void SaveFileAsync(string title, string directory, string defaultName, ExtensionFilter[] extensions, Action<string> cb)
       {
          Debug.LogWarning("'SaveFileAsync' is running synchronously in the Editor.");
+         isAsync = true;
          cb?.Invoke(SaveFile(title, directory, defaultName, extensions));
       }
 
