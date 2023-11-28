@@ -99,17 +99,17 @@ namespace UI
                     hitModel = mousePosToWorld(cam, displayAreaCorners, out worldPos);
                 }
                 
-                StopDrawing();
+                StopDrawing(worldPos);
                 
                 if (Resize(worldPos))
                 {
-                    StopDrawing();
+                    StopDrawing(worldPos);
                     return;
                 }
                     
                 if (RotateBrushStrokes(worldPos))
                 {
-                    StopDrawing();
+                    StopDrawing(worldPos);
                     return;
                 }
                 
@@ -122,14 +122,14 @@ namespace UI
                     {
                         if (SelectBrushStroke(worldPos))
                         {
-                            StopDrawing();
+                            StopDrawing(worldPos);
                             return;
                         }
                     }
                 
                     if (MoveBrushStrokes(worldPos))
                     {
-                        StopDrawing();
+                        StopDrawing(worldPos);
                         return;
                     }
 
@@ -203,7 +203,7 @@ namespace UI
             }
             return false;
         }
-
+        
         private void StopDrawing()
         {
             if (mouseIsDrawing)
@@ -212,7 +212,28 @@ namespace UI
                 {
                     if(isInteracting && Input.GetKey(KeyCode.LeftControl))
                         return;
+
+                    EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
+                    EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
+
+                    mouseIsDrawing = false;
+                }
+            }
+        }
+        
+        
+
+        private void StopDrawing(Vector3 _worldPos)
+        {
+            if (mouseIsDrawing)
+            {
+                if (Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || time > 1 && !Input.GetMouseButton(0) || Input.GetKeyUp(KeyCode.LeftControl))
+                {
+                    if(isInteracting && Input.GetKey(KeyCode.LeftControl))
+                        return;
                     
+                    EventSystem<Vector3>.RaiseEvent(EventType.DRAW, _worldPos);
+                    EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
                     EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
                     EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
 

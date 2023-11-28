@@ -330,6 +330,13 @@ namespace Drawing
         }
         private void RedrawStrokes(List<BrushStrokeID> _brushStrokeIDs)
         {
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                if (brushStrokeID.bounds is null)
+                {
+                    return;
+                }
+            }
             drawer.RedrawBrushStrokes(_brushStrokeIDs);
         }
         private void RedrawAllStrokes()

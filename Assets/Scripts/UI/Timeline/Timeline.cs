@@ -16,7 +16,8 @@ namespace UI
 {
     public class Timeline : MonoBehaviour, IDataPersistence
     {
-        public static float timelineBarSpacing;
+        public static float timelineBarSpacing => 10f.Remap(0, 1080, 0, Screen.height);
+        
         [Header("Timeline objects")]
         [SerializeField] private RectTransform timelineBarObject;
         [SerializeField] private List<RectTransform> timelineBarObjects;
@@ -123,8 +124,6 @@ namespace UI
             }
             
             amountTimelineBars = clipsOrdered.Count - 1;
-
-            timelineBarSpacing = 10f.Remap(0, 1080, 0, Screen.height);
         }
 
         private void OnEnable()
@@ -519,7 +518,6 @@ namespace UI
             {
                 foreach (TimelineClip clip in selectedClips)
                 {
-                    Debug.Log($"{clip.currentBar}");
                     clip.previousBar = clip.currentBar;
                     clip.clipTimeOld = clip.ClipTime;
 
@@ -794,29 +792,6 @@ namespace UI
         }
         private bool IsClipColliding(TimelineClip _clip, TimelineClip _clip2)
         {
-            float xDiffLeft = _clip.Corners[0].x - _clip2.Corners[2].x;
-            if (Math.Abs(xDiffLeft) < Screen.width / 300f )
-            {
-                Vector2 clipTime = _clip.ClipTime;
-                float timeDiff = clipTime.x - _clip2.ClipTime.y;
-                _clip.ClipTime = new Vector2(clipTime.x - timeDiff, clipTime.y - timeDiff);
-                _clip.SetTime(_clip.ClipTime);
-                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, _clip.GetBrushStrokeIDs());
-                return false;
-            }
-            
-            float xDiffRight = _clip.Corners[2].x - _clip2.Corners[0].x;
-            if (Math.Abs(xDiffRight) < Screen.width / 300f)
-            {
-                Vector2 clipTime = _clip.ClipTime;
-                float timeDiff = _clip2.ClipTime.x - clipTime.y;
-                _clip.ClipTime = new Vector2(clipTime.x + timeDiff, clipTime.y + timeDiff);
-                
-                _clip.SetTime(_clip.ClipTime);
-                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, _clip.GetBrushStrokeIDs());
-                return false;
-            }
-            
             if (_clip.ClipTime.x > _clip2.ClipTime.x && _clip.ClipTime.x < _clip2.ClipTime.y ||
                 _clip.ClipTime.y > _clip2.ClipTime.x && _clip.ClipTime.y < _clip2.ClipTime.y
                 )
@@ -828,6 +803,29 @@ namespace UI
                )
             {
                 return true;
+            }
+            
+            float xDiffLeft = _clip.Corners[0].x - _clip2.Corners[2].x;
+            if (Math.Abs(xDiffLeft) < Screen.width / 300f && Mathf.Abs(_clip.ClipTime.x - _clip2.ClipTime.y) > 0.00001f)
+            {
+                Vector2 clipTime = _clip.ClipTime;
+                float timeDiff = clipTime.x - _clip2.ClipTime.y;
+                _clip.ClipTime = new Vector2(clipTime.x - timeDiff, clipTime.y - timeDiff);
+                //_clip.SetTime(_clip.ClipTime);
+                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, _clip.GetBrushStrokeIDs());
+                return false;
+            }
+            
+            float xDiffRight = _clip.Corners[2].x - _clip2.Corners[0].x;
+            if (Math.Abs(xDiffRight) < Screen.width / 300f && Mathf.Abs(_clip.ClipTime.y - _clip2.ClipTime.x) > 0.00001f)
+            {
+                Vector2 clipTime = _clip.ClipTime;
+                float timeDiff = _clip2.ClipTime.x - clipTime.y;
+                _clip.ClipTime = new Vector2(clipTime.x + timeDiff, clipTime.y + timeDiff);
+                
+                //_clip.SetTime(_clip.ClipTime);
+                EventSystem<List<BrushStrokeID>>.RaiseEvent(EventType.REDRAW_STROKES, _clip.GetBrushStrokeIDs());
+                return false;
             }
 
             return false;
@@ -1182,14 +1180,16 @@ namespace UI
                 float sizeDelta = _brushStrokeID.endTime - 1;
                 ResizeTimeline(sizeDelta);
                 
-                Debug.Log($"delta: {delta}");
                 ICommand resizeTimelineCommand = new ResizeTimelineCommand(-(1 - _brushStrokeID.startTime));
                 List<ICommand> commands = new List<ICommand> { draw, resizeTimelineCommand };
                 ICommand multiCommand = new MultiCommand(commands);
                 EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, multiCommand);
                 return;
             }
-            
+
+            // MoveTimelineTimIndicator(_brushStrokeID.endTime);
+            // time = _brushStrokeID.endTime;
+            // EventSystem<float>.RaiseEvent(EventType.TIME, _brushStrokeID.endTime);
             EventSystem<ICommand>.RaiseEvent(EventType.ADD_COMMAND, draw);
         }
         private void AddNewBrushClip(TimelineClip _timelineClip)

@@ -20,14 +20,11 @@ public class SetScreenSize : MonoBehaviour
     {
         if (Math.Abs(Screen.width - cachedScreenRes.x) > FLOAT_PRECISION || Math.Abs(Screen.height - cachedScreenRes.y) > FLOAT_PRECISION)
         {
-            Debug.LogError($"resizing");
             beingResized = true;
         }
         
-        Debug.LogError($"{beingResized}  {Screen.width}, {Screen.height}");
         if (Math.Abs((float)Screen.width / Screen.height - aspectRatio) > 0.2f && !beingResized)
         {
-            Debug.LogError($"set res");
             Screen.SetResolution(Screen.width, (int)(Screen.width / aspectRatio), FullScreenMode.Windowed);
         }
 
