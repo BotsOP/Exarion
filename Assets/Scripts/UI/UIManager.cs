@@ -197,7 +197,7 @@ namespace UI
                 saveIcon.color = color;
             }
 
-            if (Input.GetKeyDown(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.S) && Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.S) && Input.GetKeyDown(KeyCode.LeftShift))
             {
                 SaveProject();
             }

@@ -299,19 +299,26 @@ namespace Drawing
             (List<BrushStrokePixel[]>, List<uint[]>) result = drawer.FinishDrawing(newBrushStrokeID);
             List<BrushStrokePixel[]> pixels = result.Item1;
             List<uint[]> bounds = result.Item2;
-            
-            tempAvgPos /= tempBrushStrokes.Count;
-            List<BrushStroke> brushStrokes = new List<BrushStroke>(tempBrushStrokes);
-            
-            BrushStrokeID brushStrokeID = new BrushStrokeID(
-                pixels, brushStrokes, bounds, paintType, brushStrokes[0].colorTime, brushStrokes[^1].colorTime, collisionBoxMin, collisionBoxMax, drawer.brushStrokesID.Count, tempAvgPos);
 
-            sphere1.transform.position = collisionBoxMin;
-            sphere2.transform.position = collisionBoxMax;
+            if (tempBrushStrokes.Count > 0)
+            {
+                tempAvgPos /= tempBrushStrokes.Count;
+                List<BrushStroke> brushStrokes = new List<BrushStroke>(tempBrushStrokes);
             
-            drawer.brushStrokesID.Add(brushStrokeID);
+                BrushStrokeID brushStrokeID = new BrushStrokeID(
+                    pixels, brushStrokes, bounds, paintType, brushStrokes[0].colorTime, brushStrokes[^1].colorTime, collisionBoxMin, collisionBoxMax, drawer.brushStrokesID.Count, tempAvgPos);
+
+                brushStrokeID.endTime = time;
             
-            EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
+                drawer.RedrawBrushStrokes(new List<BrushStrokeID> {brushStrokeID});
+
+                sphere1.transform.position = collisionBoxMin;
+                sphere2.transform.position = collisionBoxMax;
+            
+                drawer.brushStrokesID.Add(brushStrokeID);
+            
+                EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);
+            }
             
             tempBrushStrokes.Clear();
             tempAvgPos = Vector2.zero;
@@ -1073,7 +1080,6 @@ namespace Drawing
                     drawer.brushStrokesID.Remove(temp);
                     if (newIndex >= drawer.brushStrokesID.Count)
                     {
-                        Debug.Log($"added instead of inserted");
                         drawer.brushStrokesID.Add(temp);
                     }
                     else
@@ -1088,7 +1094,6 @@ namespace Drawing
                 }
 
                 int count = drawer.brushStrokesID.Count() - lowestIndex;
-                Debug.Log($"{lowestIndex}  {drawer.brushStrokesID.Count()}  {count}   {indexes.Count()}");
                 List<BrushStrokeID> updateID = drawer.brushStrokesID.GetRange(lowestIndex, count);
                 drawer.UpdateIDTex(updateID);
                 

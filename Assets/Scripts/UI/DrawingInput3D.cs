@@ -99,17 +99,17 @@ namespace UI
                     hitModel = mousePosToWorld(cam, displayAreaCorners, out worldPos);
                 }
                 
-                StopDrawing(worldPos);
+                StopDrawing();
                 
                 if (Resize(worldPos))
                 {
-                    StopDrawing(worldPos);
+                    StopDrawing();
                     return;
                 }
                     
                 if (RotateBrushStrokes(worldPos))
                 {
-                    StopDrawing(worldPos);
+                    StopDrawing();
                     return;
                 }
                 
@@ -122,14 +122,14 @@ namespace UI
                     {
                         if (SelectBrushStroke(worldPos))
                         {
-                            StopDrawing(worldPos);
+                            StopDrawing();
                             return;
                         }
                     }
                 
                     if (MoveBrushStrokes(worldPos))
                     {
-                        StopDrawing(worldPos);
+                        StopDrawing();
                         return;
                     }
 
@@ -213,27 +213,6 @@ namespace UI
                     if(isInteracting && Input.GetKey(KeyCode.LeftControl))
                         return;
 
-                    EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
-                    EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
-
-                    mouseIsDrawing = false;
-                }
-            }
-        }
-        
-        
-
-        private void StopDrawing(Vector3 _worldPos)
-        {
-            if (mouseIsDrawing)
-            {
-                if (Input.GetMouseButtonUp(0) || !isMouseInsideDrawArea || time > 1 && !Input.GetMouseButton(0) || Input.GetKeyUp(KeyCode.LeftControl))
-                {
-                    if(isInteracting && Input.GetKey(KeyCode.LeftControl))
-                        return;
-                    
-                    EventSystem<Vector3>.RaiseEvent(EventType.DRAW, _worldPos);
-                    EventSystem<bool>.RaiseEvent(EventType.DRAW, false);
                     EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
                     EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
 

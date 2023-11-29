@@ -1366,22 +1366,22 @@ namespace UI
                     }
 
                     timelineClip = new TimelineClipGroup(childClips, rect, timelineBarObject, timelineRectFullView, clipImage);
-                    timelineClip.ClipTime = new Vector2(condensedClip.lastTime, condensedClip.currentTime);
+                    timelineClip.ClipTime = new Vector2(condensedClip.startTime, condensedClip.endTime);
                     timelineClip.previousBar = condensedClip.currentBar;
                     timelineClip.SetBar(condensedClip.currentBar);
                     clipImage.color = timelineClip.GetNotSelectedColor();
                     clipsOrdered[condensedClip.currentBar].Add(timelineClip);
-                    CheckClipCollisions(timelineClip);
+                    //CheckClipCollisions(timelineClip);
                     continue;
                 }
 
                 timelineClip = new TimelineClipSingle(condensedClip.brushStrokeIDs[0], rect, timelineBarObject, timelineRectFullView, clipImage);
-                timelineClip.ClipTime = new Vector2(condensedClip.lastTime, condensedClip.currentTime);
+                timelineClip.ClipTime = new Vector2(condensedClip.startTime, condensedClip.endTime);
                 timelineClip.previousBar = condensedClip.currentBar;
                 timelineClip.SetBar(condensedClip.currentBar);
                 clipImage.color = timelineClip.GetNotSelectedColor();
                 clipsOrdered[condensedClip.currentBar].Add(timelineClip);
-                CheckClipCollisions(timelineClip);
+                //CheckClipCollisions(timelineClip);
             }
 
             List<BrushStrokeID> brushStrokeIDs = clipsOrdered.SelectMany(clips => clips.SelectMany(clip => clip.GetBrushStrokeIDs())).ToList();

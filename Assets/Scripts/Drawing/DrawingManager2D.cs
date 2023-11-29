@@ -235,7 +235,6 @@ namespace Drawing
 
         private void StoppedDrawing()
         {
-            
             (List<BrushStrokePixel[]>, List<uint[]>) result = drawer.FinishDrawing(newBrushStrokeID);
             List<BrushStrokePixel[]> pixels = result.Item1;
             List<uint[]> bounds = result.Item2;
@@ -252,6 +251,9 @@ namespace Drawing
             BrushStrokeID brushStrokeID = new BrushStrokeID(
                 pixels, brushStrokes, bounds, paintType, brushStrokes[0].colorTime, brushStrokes[^1].colorTime, collisionBoxMin, collisionBoxMax, drawer.brushStrokesID.Count, tempAvgPos);
 
+            brushStrokeID.endTime = time;
+            drawer.RedrawBrushStrokes(new List<BrushStrokeID> {brushStrokeID});
+            
             drawer.brushStrokesID.Add(brushStrokeID);
             
             EventSystem<BrushStrokeID>.RaiseEvent(EventType.FINISHED_STROKE, brushStrokeID);

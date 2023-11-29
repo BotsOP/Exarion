@@ -312,6 +312,10 @@ namespace Drawing
                     else
                     {
                         BrushStrokePixel[] pixels = brushStrokeID.pixels[j];
+                        if (pixels.Length == 0)
+                        {
+                            continue;
+                        }
                         int threadGroupX = Mathf.CeilToInt(pixels.Length / 1024f);
                         ComputeBuffer tempPixelsBuffer = new ComputeBuffer(pixels.Length, sizeof(int) + sizeof(float),
                             ComputeBufferType.Structured);
