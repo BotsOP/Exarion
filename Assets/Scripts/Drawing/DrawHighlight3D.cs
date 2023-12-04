@@ -105,7 +105,9 @@ namespace Drawing
                 highlightIndexBuffer?.Release();
                 highlightIndexBuffer = null;
 
-                highlightIndexBufferSize += TIME_TABLE_BUFFER_SIZE_INCREASE;
+                int amountToIncrease = _totalSize / TIME_TABLE_BUFFER_SIZE_INCREASE;
+
+                highlightIndexBufferSize += TIME_TABLE_BUFFER_SIZE_INCREASE * amountToIncrease;
                 highlightIndexBuffer = new ComputeBuffer(highlightIndexBufferSize, sizeof(float) * 4, ComputeBufferType.Structured);
             }
         }

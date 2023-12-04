@@ -90,6 +90,8 @@ namespace UI
         
         private void OnEnable()
         {
+            isInteracting = true;
+            
             rectTransformViewFull = viewImageFull.rectTransform;
             rectTransformViewFocus = viewImageFocus.rectTransform;
             rectTransformDisplayFull = displayImageFull.rectTransform;
