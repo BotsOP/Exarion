@@ -14,7 +14,10 @@ namespace UI
         
         private bool mouseIsDrawing;
         private Vector2 startPosWhenDragging;
-        private Vector2 startMousePos;
+        private Vector3 startWorldPos;
+        private Ray startRay;
+        private bool didMouseHitModel;
+        private float startMouseDistance;
         private Vector2 startPosViewCam;
         private Vector2 startPosDisplayCam;
         private Vector2 lastMousePos;
@@ -84,7 +87,8 @@ namespace UI
 
             bool hitModel = false;
             Vector3 worldPos = new Vector3();
-            if (Input.GetMouseButton(0))
+
+            if (!UIManager.isInteracting || isInteracting)
             {
                 if (isMouseInsideDrawArea)
                 {
@@ -94,10 +98,7 @@ namespace UI
                 {
                     hitModel = mousePosToWorld(cam, displayAreaCorners, out worldPos);
                 }
-            }
-
-            if (!UIManager.isInteracting || isInteracting)
-            {
+                
                 StopDrawing();
                 
                 if (Resize(worldPos))
@@ -143,11 +144,13 @@ namespace UI
 
                     if (hitModel)
                     {
-                        if(DrawInput(worldPos))
+                        if (DrawInput(worldPos))
+                        {
                             return;
+                        }
                     }
                 
-                    if (SetBrushSize(worldPos))
+                    if (SetBrushSize(worldPos, hitModel))
                         return;
                 
                     if(MoveCamera(viewCam, drawAreaCorners, startPosViewCam, viewFocus))
@@ -162,8 +165,6 @@ namespace UI
             {
                 StopDrawing();
             }
-            
-            lastMousePos = worldPos;
         }
 
         private bool SpawnCircle(Vector2 _mousePos)
@@ -202,7 +203,7 @@ namespace UI
             }
             return false;
         }
-
+        
         private void StopDrawing()
         {
             if (mouseIsDrawing)
@@ -211,7 +212,7 @@ namespace UI
                 {
                     if(isInteracting && Input.GetKey(KeyCode.LeftControl))
                         return;
-                    
+
                     EventSystem.RaiseEvent(EventType.FINISHED_STROKE);
                     EventSystem<bool>.RaiseEvent(EventType.DRAW, true);
 
@@ -400,21 +401,49 @@ namespace UI
             return false;
         }
 
-        private bool SetBrushSize(Vector2 _mousePos)
+        private bool SetBrushSize(Vector3 _worldPos, bool _hitModel)
         {
-            if (Input.GetMouseButtonDown(1) && Input.GetKey(KeyCode.LeftAlt))
+            if (Input.GetMouseButtonDown(1) && Input.GetKey(KeyCode.LeftAlt) || Input.GetMouseButton(1) && Input.GetKeyDown(KeyCode.LeftAlt))
             {
-                startMousePos = _mousePos;
-            }
-            if (Input.GetMouseButton(1) && Input.GetKey(KeyCode.LeftAlt))
-            {
-                float brushSize = Vector2.Distance(startMousePos, _mousePos);
-                brushSize = Mathf.Clamp(brushSize, 1, 1024);
-                EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, brushSize);
-                EventSystem<Vector2>.RaiseEvent(EventType.SET_BRUSH_SIZE, startMousePos);
-                return true;
-            }
+                Vector4 drawCorners = new Vector4(drawAreaCorners[0].x, drawAreaCorners[0].y, drawAreaCorners[2].x, drawAreaCorners[2].y);
+                float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, viewCam.pixelWidth);
+                float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, viewCam.pixelHeight);
+                Vector2 mousePos = new Vector2(mousePosX, mousePosY);
             
+                Ray ray = viewCam.ScreenPointToRay(mousePos);
+                RaycastHit hit;
+                if (Physics.Raycast(ray, out hit))
+                {
+                    startRay = ray;
+                    didMouseHitModel = true;
+                    startWorldPos = hit.point;
+                    startMouseDistance = hit.distance;
+                }
+            }
+
+            if (didMouseHitModel)
+            {
+                if (Input.GetMouseButton(1) && Input.GetKey(KeyCode.LeftAlt))
+                {
+                    Vector4 drawCorners = new Vector4(drawAreaCorners[0].x, drawAreaCorners[0].y, drawAreaCorners[2].x, drawAreaCorners[2].y);
+                    float mousePosX = Input.mousePosition.x.Remap(drawCorners.x, drawCorners.z, 0, viewCam.pixelWidth);
+                    float mousePosY = Input.mousePosition.y.Remap(drawCorners.y, drawCorners.w, 0, viewCam.pixelHeight);
+                    Vector2 mousePos = new Vector2(mousePosX, mousePosY);
+                    
+                    Ray ray = viewCam.ScreenPointToRay(mousePos);
+                    ray.direction = ray.direction.normalized;
+                    Vector3 dir = ray.direction * startMouseDistance;
+                    Vector3 newHitPos = ray.origin + dir;
+                    float dist = Vector3.Distance(newHitPos, startWorldPos);
+
+                    dist = Mathf.Clamp(dist, 0.000000001f, float.MaxValue);
+                    EventSystem<float>.RaiseEvent(EventType.SET_BRUSH_SIZE, dist);
+                    EventSystem<Vector3>.RaiseEvent(EventType.SET_BRUSH_SIZE, _hitModel ? _worldPos : newHitPos);
+                    return true;
+                }
+            }
+
+            didMouseHitModel = false;
             EventSystem.RaiseEvent(EventType.STOPPED_SETTING_BRUSH_SIZE);
             return false;
         }

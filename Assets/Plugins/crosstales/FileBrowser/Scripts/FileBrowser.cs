@@ -31,6 +31,9 @@ namespace Crosstales.FB
 
       [Tooltip("Ask to overwrite existing file in save dialog (default: true)."), SerializeField] private bool askOverwriteFile = true;
 
+      [Header("macOS Settings"), Tooltip("Allow synchronous calls under macOS (default: false)."), SerializeField]
+      private bool allowSyncCalls;
+
       [Header("UWP (WSA) Settings"), Tooltip("Always read the file data under UWP (default: false)."), SerializeField]
       private bool alwaysReadFile;
 
@@ -87,6 +90,13 @@ namespace Crosstales.FB
       {
          get => askOverwriteFile;
          set => askOverwriteFile = value;
+      }
+
+      /// <summary>Allow synchronous calls (macOS).</summary>
+      public bool AllowSyncCalls
+      {
+         get => allowSyncCalls;
+         set => allowSyncCalls = value;
       }
 
       /// <summary>Always read the file data (UWP).</summary>

@@ -24,8 +24,8 @@ public abstract class ToolData
     // the tool starts with when there's no data to load
     public ToolData()
     {
-        imageWidth = 1024;
-        imageHeight = 1024;
+        imageWidth = 2048;
+        imageHeight = 2048;
         timelineClips = new List<CondensedClip>();
     }
 }

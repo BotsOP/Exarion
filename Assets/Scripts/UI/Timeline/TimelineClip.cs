@@ -27,8 +27,8 @@ namespace UI
         {
             get
             {
-                float lastTime = ExtensionMethods.Remap(Corners[0].x, TimelineBarCorners[0].x, TimelineBarCorners[2].x, 0, 1);
-                float currentTime = ExtensionMethods.Remap(Corners[2].x, TimelineBarCorners[0].x, TimelineBarCorners[2].x, 0, 1);
+                float lastTime = Corners[0].x.Remap(TimelineBarCorners[0].x, TimelineBarCorners[2].x, 0, 1);
+                float currentTime = Corners[2].x.Remap(TimelineBarCorners[0].x, TimelineBarCorners[2].x, 0, 1);
                 return new Vector2(lastTime, currentTime);
             }
             set
@@ -36,8 +36,8 @@ namespace UI
                 var sizeDelta = rect.sizeDelta;
                 var position = rect.position;
             
-                float lastTimePos = ExtensionMethods.Remap(value.x, 0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
-                float currentTimePos = ExtensionMethods.Remap(value.y, 0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
+                float lastTimePos = value.x.Remap(0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
+                float currentTimePos = value.y.Remap(0, 1, TimelineBarCorners[0].x, TimelineBarCorners[2].x);
                 float clipLength = currentTimePos - lastTimePos;
                 sizeDelta = new Vector2(clipLength, sizeDelta.y);
                 rect.sizeDelta = sizeDelta;
@@ -72,12 +72,13 @@ namespace UI
         private RectTransform timelineBarRect;
         private RectTransform timelineAreaRect;
     
-        private float mouseOffset;
+        private float mouseOffsetX;
+        private float mouseOffsetY;
+        private float clipHandle = 5;
         private float minumunWidth = 10;
-        private float spacing = 10;
         
         private readonly Vector3[] corners;
-        private Vector3[] Corners
+        public Vector3[] Corners
         {
             get {
                 rect.GetWorldCorners(corners);
@@ -164,11 +165,13 @@ namespace UI
                     break;
             }
         }
-        public void SetMouseOffset()
+        private void SetMouseOffset()
         {
-            mouseOffset = Input.mousePosition.x - rect.position.x;
+            var position = rect.position;
+            mouseOffsetX = Input.mousePosition.x - position.x;
+            mouseOffsetY = Input.mousePosition.y - position.y;
         }
-        protected void SetResizeLeft()
+        private void SetResizeLeft()
         {
             if (rect.pivot.x < 1)
             {
@@ -176,7 +179,7 @@ namespace UI
                 rect.position += new Vector3(clipLength, 0, 0);
                 rect.pivot = new Vector2(1, 1);
             }
-            mouseOffset = Input.mousePosition.x - rect.position.x + rect.sizeDelta.x;
+            mouseOffsetX = Input.mousePosition.x - rect.position.x + rect.sizeDelta.x;
         }
         private void SetResizeRight()
         {
@@ -186,13 +189,13 @@ namespace UI
                 rect.position -= new Vector3(clipLength, 0, 0);
                 rect.pivot = new Vector2(0, 1);
             }
-            mouseOffset = Input.mousePosition.x - rect.position.x - rect.sizeDelta.x;
+            mouseOffsetX = Input.mousePosition.x - rect.position.x - rect.sizeDelta.x;
         }
         public MouseAction GetMouseAction()
         {
             if (IsMouseOver() && mouseAction == MouseAction.Nothing)
             {
-                if (Input.mousePosition.x > Corners[0].x && Input.mousePosition.x < Corners[0].x + 10)
+                if (Input.mousePosition.x > Corners[0].x && Input.mousePosition.x < Corners[0].x + clipHandle)
                 {
                     if (rect.pivot.x < 1)
                     {
@@ -202,7 +205,7 @@ namespace UI
                     }
                     return MouseAction.ResizeClipLeft;
                 }
-                if (Input.mousePosition.x < Corners[2].x && Input.mousePosition.x > Corners[2].x - 10)
+                if (Input.mousePosition.x < Corners[2].x && Input.mousePosition.x > Corners[2].x - clipHandle)
                 {
                     if (rect.pivot.x > 0)
                     {
@@ -273,7 +276,7 @@ namespace UI
             float clipLength = rect.sizeDelta.x;
             Vector3 position = rect.position;
             float yPos = GetYPos();
-            float xPos = Input.mousePosition.x - mouseOffset;
+            float xPos = Input.mousePosition.x - mouseOffsetX;
 
             if (rect.pivot.x == 0)
             {
@@ -291,42 +294,52 @@ namespace UI
         private float GetYPos()
         {
             float yPos = rect.position.y;
-            float timelineBarHeight = Corners[2].y - Corners[0].y + spacing;
-            float inputOffset = Input.mousePosition.y;
+            float timelineBarHeight = Corners[2].y - Corners[0].y + Timeline.timelineBarSpacing;
+            float inputOffset = Input.mousePosition.y - mouseOffsetY;
             if (inputOffset < TimelineAreaCorners[0].y || inputOffset > TimelineAreaCorners[2].y)
             {
                 return yPos;
             }
         
-            if (inputOffset < Corners[0].y - spacing)
+            if (inputOffset < Corners[0].y - Timeline.timelineBarSpacing)
             {
-                //int amountBarsMoved = (int)((Corners[0].y - spacing - inputOffset) / (Corners[2].y - Corners[0].y));
-                currentBar ++;
+                currentBar++;
                 return yPos - timelineBarHeight;
             }
-            if (inputOffset > Corners[2].y + spacing)
+            if (inputOffset > Corners[2].y + Timeline.timelineBarSpacing)
             {
-                // float smth = Mathf.CeilToInt((inputOffset - Corners[0].y + spacing) / (Corners[2].y - Corners[0].y));
-                // int amountBarsMoved = Mathf.CeilToInt(smth);
-                currentBar --;
+                currentBar--;
                 return yPos + timelineBarHeight;
             }
             return yPos;
         }
         public void SetBar(int newBar)
         {
-            float timelineBarHeight = Corners[2].y - Corners[0].y + spacing;
+            float timelineBarHeight = Corners[2].y - Corners[0].y + Timeline.timelineBarSpacing;
             int amountToMove = newBar - currentBar;
             timelineBarHeight *= amountToMove;
 
             rect.position -= new Vector3(0, timelineBarHeight, 0);
             currentBar = newBar;
         }
-
+        
         public bool IsMouseOver()
         {
-            return Input.mousePosition.x > Corners[0].x && Input.mousePosition.x < Corners[2].x && Input.mousePosition.y > Corners[0].y &&
-                   Input.mousePosition.y < Corners[2].y;
+            return Input.mousePosition.x > Corners[0].x && Input.mousePosition.x < Corners[2].x && 
+                   Input.mousePosition.y > Corners[0].y && Input.mousePosition.y < Corners[2].y;
+        }
+
+        public bool IsMouseOver(Vector2 _lastMousePos)
+        {
+            float minCornerX = Mathf.Min(Input.mousePosition.x, _lastMousePos.x);
+            float minCornerY = Mathf.Min(Input.mousePosition.y, _lastMousePos.y);
+            float maxCornerX = Mathf.Max(Input.mousePosition.x, _lastMousePos.x);
+            float maxCornerY = Mathf.Max(Input.mousePosition.y, _lastMousePos.y);
+            Vector4 mouseBox = new Vector4(minCornerX, minCornerY, maxCornerX, maxCornerY);
+            return (mouseBox.x >= Corners[0].x && mouseBox.z <= Corners[2].x) &&
+                   (mouseBox.y >= Corners[0].y && mouseBox.w <= Corners[2].y) ||
+                   (Corners[0].x >= mouseBox.x && Corners[0].x <= mouseBox.z) &&
+                   (mouseBox.y >= Corners[0].y && mouseBox.w <= Corners[2].y);
         }
     }
 }

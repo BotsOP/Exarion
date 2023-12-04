@@ -17,6 +17,9 @@ namespace Crosstales.FB.Wrapper
 
       private const char splitChar = (char)28;
 
+      private static bool useFallback;
+      private static string fallbackExtension;
+
       #endregion
 
 
@@ -141,26 +144,7 @@ namespace Crosstales.FB.Wrapper
          {
             if (isAsync)
             {
-               //TODO change to the same method as for macOS?
-               Linux.NativeMethods.DialogOpenFilePanelAsync(title, directory, getFilterFromFileExtensionList(extensions), multiselect, paths =>
-               {
-                  if (string.IsNullOrEmpty(paths))
-                  {
-                     instance.CurrentOpenFiles = System.Array.Empty<string>();
-                     instance.CurrentOpenSingleFile = string.Empty;
-
-                     _openFileCb?.Invoke(null);
-                  }
-                  else
-                  {
-                     string[] pathArray = paths.Split(splitChar);
-
-                     instance.CurrentOpenFiles = pathArray;
-                     instance.CurrentOpenSingleFile = pathArray[0];
-
-                     _openFileCb?.Invoke(pathArray);
-                  }
-               });
+               Linux.NativeMethods.DialogOpenFilePanelAsync(title, directory, getFilterFromFileExtensionList(extensions), multiselect, openFileCb);
             }
             else
             {
@@ -199,26 +183,7 @@ namespace Crosstales.FB.Wrapper
          {
             if (isAsync)
             {
-               //TODO change to the same method as for macOS?
-               Linux.NativeMethods.DialogOpenFolderPanelAsync(title, directory, multiselect, paths =>
-               {
-                  if (string.IsNullOrEmpty(paths))
-                  {
-                     instance.CurrentOpenFolders = System.Array.Empty<string>();
-                     instance.CurrentOpenSingleFolder = string.Empty;
-
-                     _openFolderCb?.Invoke(null);
-                  }
-                  else
-                  {
-                     string[] pathArray = paths.Split(splitChar);
-
-                     instance.CurrentOpenFolders = pathArray;
-                     instance.CurrentOpenSingleFolder = pathArray[0];
-
-                     _openFolderCb?.Invoke(pathArray);
-                  }
-               });
+               Linux.NativeMethods.DialogOpenFolderPanelAsync(title, directory, multiselect, openFolderCb);
             }
             else
             {
@@ -253,32 +218,14 @@ namespace Crosstales.FB.Wrapper
 
       private static string saveFile(string title, string directory, string defaultName, bool isAsync, params ExtensionFilter[] extensions)
       {
-         bool useFallback = extensions != null && extensions.Length == 1 && extensions[0].Extensions.Length == 1;
-         string fallbackExtension = useFallback ? $".{extensions[0].Extensions[0]}" : string.Empty;
+         useFallback = extensions != null && extensions.Length == 1 && extensions[0].Extensions.Length == 1;
+         fallbackExtension = useFallback ? $".{extensions[0].Extensions[0]}" : string.Empty;
 
          try
          {
             if (isAsync)
             {
-               //TODO change to the same method as for macOS?
-               Linux.NativeMethods.DialogSaveFilePanelAsync(title, directory, defaultName, getFilterFromFileExtensionList(extensions), path =>
-               {
-                  if (string.IsNullOrEmpty(path))
-                  {
-                     instance.CurrentSaveFile = string.Empty;
-
-                     _saveFileCb?.Invoke(null);
-                  }
-                  else
-                  {
-                     if (useFallback && !path.EndsWith(fallbackExtension))
-                        path += fallbackExtension;
-
-                     instance.CurrentSaveFile = path;
-
-                     _saveFileCb?.Invoke(path);
-                  }
-               });
+               Linux.NativeMethods.DialogSaveFilePanelAsync(title, directory, defaultName, getFilterFromFileExtensionList(extensions), saveFileCb);
             }
             else
             {
@@ -307,6 +254,71 @@ namespace Crosstales.FB.Wrapper
          }
 
          return null;
+      }
+
+      //[AOT.MonoPInvokeCallbackAttribute(typeof(Action))]
+      [AOT.MonoPInvokeCallback(typeof(AsyncCallback))]
+      private static void openFileCb(string result)
+      {
+         if (string.IsNullOrEmpty(result))
+         {
+            instance.CurrentOpenFiles = System.Array.Empty<string>();
+            instance.CurrentOpenSingleFile = string.Empty;
+
+            _openFileCb?.Invoke(null);
+         }
+         else
+         {
+            string[] pathArray = result.Split(splitChar);
+
+            instance.CurrentOpenFiles = pathArray;
+            instance.CurrentOpenSingleFile = pathArray[0];
+
+            _openFileCb?.Invoke(pathArray);
+         }
+      }
+
+      //[AOT.MonoPInvokeCallbackAttribute(typeof(Action))]
+      [AOT.MonoPInvokeCallback(typeof(AsyncCallback))]
+      private static void openFolderCb(string result)
+      {
+         if (string.IsNullOrEmpty(result))
+         {
+            instance.CurrentOpenFolders = System.Array.Empty<string>();
+            instance.CurrentOpenSingleFolder = string.Empty;
+
+            _openFolderCb?.Invoke(null);
+         }
+         else
+         {
+            string[] pathArray = result.Split(splitChar);
+
+            instance.CurrentOpenFolders = pathArray;
+            instance.CurrentOpenSingleFolder = pathArray[0];
+
+            _openFolderCb?.Invoke(pathArray);
+         }
+      }
+
+      //[AOT.MonoPInvokeCallbackAttribute(typeof(Action))]
+      [AOT.MonoPInvokeCallback(typeof(AsyncCallback))]
+      private static void saveFileCb(string result)
+      {
+         if (string.IsNullOrEmpty(result))
+         {
+            instance.CurrentSaveFile = string.Empty;
+
+            _saveFileCb?.Invoke(null);
+         }
+         else
+         {
+            if (useFallback && !result.EndsWith(fallbackExtension))
+               result += fallbackExtension;
+
+            instance.CurrentSaveFile = result;
+
+            _saveFileCb?.Invoke(result);
+         }
       }
    }
 }

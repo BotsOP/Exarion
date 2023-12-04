@@ -1,4 +1,4 @@
-﻿# FileBrowser PRO 2023.2.3
+﻿# FileBrowser PRO 2023.2.4
 
 Thank you for buying our asset "File Browser PRO"! 
 If you have any questions about this asset, send us an email at [fb@crosstales.com](mailto:fb@crosstales.com). 
@@ -28,6 +28,7 @@ Follow this steps to upgrade the version of "File Browser PRO":
 
 
 ## Notes:
+Whenever possible, use the asynchronous methods – they work best and ensure your game/app stays responsive during an operation.
 
 ### Windows
 Windows allows setting the path for any application just once (for every dialog type). As soon as a user chooses a file or folder, it "remembers" the last destination and ignores any further attempts to change the path via code.
@@ -44,7 +45,7 @@ codesign --deep --force --verify --verbose --timestamp --sign "Developer ID Appl
 
 
 ### Linux
-The library is tested under Ubuntu 22.04 with GTK3+.
+The library is tested under Ubuntu 18.04 with GTK3+ and X11.
 Since there are so many different Linux distributions and configurations, we simply can't test and support them all.
 Therefore, we included the whole source code; please follow the README in the "File Browser - Linux (source).zip".
 
@@ -113,4 +114,4 @@ CH-8002 Zürich
 * [WebGL Native File Browser](https://assetstore.unity.com/packages/slug/41902?aid=1011lNGT)
 
 
-`Version: 20.07.2023`
+`Version: 20.11.2023`

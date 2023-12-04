@@ -8,26 +8,28 @@ namespace Drawing
 {
     public class DrawHighlight3D
     {
+        private const int TIME_TABLE_BUFFER_SIZE_INCREASE = 50;
+
         public Renderer rend;
         public List<CustomRenderTexture> rtHighlights = new List<CustomRenderTexture>();
-        private readonly CustomRenderTexture rtHighlightTemp;
+        
         private ComputeShader textureHelperShader;
         private Vector3 threadGroupSizeOut;
         private Vector3 threadGroupSize;
-        private Material simplePaintMaterial;
-        private CommandBuffer commandBuffer;
+        private int copyHighlightKernel;
+        
         private int imageWidth;
         private int imageHeight;
-        private static readonly int CursorPos = Shader.PropertyToID("_CursorPos");
-        private static readonly int LastCursorPos = Shader.PropertyToID("_LastCursorPos");
-        private static readonly int BrushSize = Shader.PropertyToID("_BrushSize");
         
+        private ComputeBuffer highlightIndexBuffer;
+        private int highlightIndexBufferSize;
+
         public DrawHighlight3D(int _imageWidth, int _imageHeight)
         {
             textureHelperShader = Resources.Load<ComputeShader>("TextureHelper");
-            simplePaintMaterial = new Material(Resources.Load<Shader>("SimplePainter"));
+            copyHighlightKernel = textureHelperShader.FindKernel("CopyHighlight");
             
-            textureHelperShader.GetKernelThreadGroupSizes(0, out uint threadGroupSizeX, out uint threadGroupSizeY, out _);
+            textureHelperShader.GetKernelThreadGroupSizes(copyHighlightKernel, out uint threadGroupSizeX, out uint threadGroupSizeY, out _);
             threadGroupSizeOut.x = threadGroupSizeX;
             threadGroupSizeOut.y = threadGroupSizeY;
 
@@ -36,15 +38,9 @@ namespace Drawing
             
             threadGroupSize.x = Mathf.CeilToInt(_imageWidth / threadGroupSizeOut.x);
             threadGroupSize.y = Mathf.CeilToInt(_imageHeight / threadGroupSizeOut.y);
-            
-            rtHighlightTemp = new CustomRenderTexture(_imageWidth, _imageHeight, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                enableRandomWrite = true,
-                name = "rtSelectTemp",
-            };
-            
-            commandBuffer = new CommandBuffer();
+
+            highlightIndexBufferSize += TIME_TABLE_BUFFER_SIZE_INCREASE;
+            highlightIndexBuffer = new ComputeBuffer(highlightIndexBufferSize, sizeof(int), ComputeBufferType.Structured);
         }
 
         public CustomRenderTexture AddRT()
@@ -60,65 +56,59 @@ namespace Drawing
             rtHighlights.Add(rtHighlight);
             return rtHighlight;
         }
-        
-        private void Highlight(Vector3 _lastPos, Vector3 _currentPos, float _strokeBrushSize, HighlightType _highlightType, float _borderThickness = 0)
-        {
-            simplePaintMaterial.SetVector(CursorPos, _currentPos);
-            simplePaintMaterial.SetVector(LastCursorPos, _lastPos);
-            simplePaintMaterial.SetFloat(BrushSize, _strokeBrushSize);
 
+        public void HighlightStroke(List<BrushStrokeID> _brushStrokeIDs, List<CustomRenderTexture> _rtIDs, int _totalBrushStrokes)
+        {
+            ClearHighlight();
+
+            if (_brushStrokeIDs.Count == 0)
+            {
+                return;
+            }
+            
+            CheckTimeTableBufferSize(_totalBrushStrokes);
+
+            int[] highlightIndex = new int[highlightIndexBufferSize];
+            for (int i = 0; i < _brushStrokeIDs.Count; i++)
+            {
+                highlightIndex[_brushStrokeIDs[i].indexWhenDrawn] = 1;
+            }
+            highlightIndexBuffer.SetData(highlightIndex);
+
+            textureHelperShader.SetBuffer(copyHighlightKernel, "_HighlightIndex", highlightIndexBuffer);
             for (int i = 0; i < rtHighlights.Count; i++)
             {
-                commandBuffer.SetRenderTarget(rtHighlightTemp);
-                commandBuffer.DrawRenderer(rend, simplePaintMaterial, i);
-            
-                commandBuffer.SetComputeTextureParam(textureHelperShader, 2, "_OrgTex4", rtHighlightTemp);
-                commandBuffer.SetComputeTextureParam(textureHelperShader, 2, "_FinalTex4", rtHighlights[i]);
-                commandBuffer.DispatchCompute(textureHelperShader, 2, (int)threadGroupSize.x, (int)threadGroupSize.y, 1);
+                uint[] bounds = CombineBounds(_brushStrokeIDs, i);
+                uint width = bounds[2] - bounds[0];
+                uint height = bounds[3] - bounds[1];
+                int threadGroupX = Mathf.CeilToInt(width / threadGroupSizeOut.x);
+                int threadGroupY = Mathf.CeilToInt(height / threadGroupSizeOut.y);
+
+                if (threadGroupX == 0 && threadGroupY == 0)
+                {
+                    continue;
+                }
                 
-                Graphics.ExecuteCommandBuffer(commandBuffer);
-                commandBuffer.Clear();
-            }
-        }
-
-        public void HighlightStroke(BrushStrokeID _brushStrokeID)
-        {
-            ClearHighlight();
-            foreach (var brushStroke in _brushStrokeID.brushStrokes)
-            {
-                float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
-
-                Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
-            }
-            
-            foreach (var brushStroke in _brushStrokeID.brushStrokes)
-            {
-                Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Erase, -5);
+                textureHelperShader.SetTexture(copyHighlightKernel, "_FinalTexID", _rtIDs[i]);
+                textureHelperShader.SetTexture(copyHighlightKernel, "_FinalTexColor", rtHighlights[i]);
+                textureHelperShader.SetInt("_StartPosX", (int)bounds[0]);
+                textureHelperShader.SetInt("_StartPosY", (int)bounds[1]);
+                
+                textureHelperShader.Dispatch(copyHighlightKernel, threadGroupX, threadGroupY, 1);
             }
         }
         
-        public void HighlightStroke(List<BrushStrokeID> _brushStrokeIDs)
+        private void CheckTimeTableBufferSize(int _totalSize)
         {
-            ClearHighlight();
-            foreach (var brushStrokeID in _brushStrokeIDs)
+            if (_totalSize >= highlightIndexBufferSize)
             {
-                foreach (var brushStroke in brushStrokeID.brushStrokes)
-                {
-                    float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
-                    highlightBrushThickness = 0;
+                highlightIndexBuffer?.Release();
+                highlightIndexBuffer = null;
 
-                    Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Paint, highlightBrushThickness);
-                }
-            }
-            
-            foreach (var brushStrokeID in _brushStrokeIDs)
-            {
-                foreach (var brushStroke in brushStrokeID.brushStrokes)
-                {
-                    float highlightBrushThickness = Mathf.Clamp(brushStroke.brushSize / 2, 5, 1024);
-                    
-                    Highlight(brushStroke.GetStartPos(), brushStroke.GetEndPos(), brushStroke.brushSize, HighlightType.Erase, -highlightBrushThickness);
-                }
+                int amountToIncrease = _totalSize / TIME_TABLE_BUFFER_SIZE_INCREASE;
+
+                highlightIndexBufferSize += TIME_TABLE_BUFFER_SIZE_INCREASE * amountToIncrease;
+                highlightIndexBuffer = new ComputeBuffer(highlightIndexBufferSize, sizeof(float) * 4, ComputeBufferType.Structured);
             }
         }
 
@@ -128,6 +118,34 @@ namespace Drawing
             {
                 rtHighlight.Clear(false, true, Color.black);
             }
+        }
+        
+        private uint[] CombineBounds(List<BrushStrokeID> _brushStrokeIDs, int _subMeshIndex)
+        {
+            uint[] combinedBounds = new uint[4];
+            combinedBounds[0] = uint.MaxValue;
+            combinedBounds[1] = uint.MaxValue;
+            
+            foreach (var brushStrokeID in _brushStrokeIDs)
+            {
+                uint tempLowX = brushStrokeID.bounds[_subMeshIndex][0];
+                uint lowestX = combinedBounds[0];
+                combinedBounds[0] = lowestX > tempLowX ? tempLowX : lowestX;
+                
+                uint tempLowY = brushStrokeID.bounds[_subMeshIndex][1];
+                uint lowestY = combinedBounds[1];
+                combinedBounds[1] = lowestY > tempLowY ? tempLowY : lowestY;
+                
+                uint tempHighestX = brushStrokeID.bounds[_subMeshIndex][2];
+                uint highestX = combinedBounds[2];
+                combinedBounds[2] = highestX < tempHighestX ? tempHighestX : highestX;
+                
+                uint tempHighestY = brushStrokeID.bounds[_subMeshIndex][3];
+                uint highestY = combinedBounds[3];
+                combinedBounds[3] = highestY < tempHighestY ? tempHighestY : highestY;
+            }
+
+            return combinedBounds;
         }
     }
 }

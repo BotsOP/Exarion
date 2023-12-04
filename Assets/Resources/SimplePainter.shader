@@ -10,6 +10,7 @@
             #pragma fragment frag
 
             float _BrushSize;
+            float _TimeColor;
             float3 _LastCursorPos;
             float3 _CursorPos;
             bool _FirstStroke;
@@ -48,7 +49,7 @@
 
                 if(paintColor > _BrushSize) { return float4(0, 0, 0, 0); }
                 
-                return float4(1, 0, 0, 0); 
+                return float4(_TimeColor, 0, 0, 0); 
             }
             ENDCG
         }

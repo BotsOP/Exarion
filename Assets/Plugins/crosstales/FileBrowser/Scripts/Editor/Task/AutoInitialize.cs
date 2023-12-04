@@ -33,7 +33,7 @@ namespace Crosstales.FB.EditorTask
       {
          if (currentScene != EditorSceneManager.GetActiveScene())
          {
-            if (EditorConfig.PREFAB_AUTOLOAD)
+            if (EditorConfig.isLoaded)
             {
                if (!EditorHelper.isFileBrowserInScene)
                   EditorHelper.InstantiatePrefab(Crosstales.FB.Util.Constants.FB_SCENE_OBJECT_NAME);

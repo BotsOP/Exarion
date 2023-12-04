@@ -12,16 +12,16 @@
       public const string ASSET_NAME_SHORT = "FB PRO";
 
       /// <summary>Version of the asset.</summary>
-      public const string ASSET_VERSION = "2023.2.3";
+      public const string ASSET_VERSION = "2023.2.4";
 
       /// <summary>Build number of the asset.</summary>
-      public const int ASSET_BUILD = 20230720;
+      public const int ASSET_BUILD = 20231120;
 
       /// <summary>Create date of the asset (YYYY, MM, DD).</summary>
       public static readonly System.DateTime ASSET_CREATED = new System.DateTime(2017, 8, 1);
 
       /// <summary>Change date of the asset (YYYY, MM, DD).</summary>
-      public static readonly System.DateTime ASSET_CHANGED = new System.DateTime(2023, 7, 20);
+      public static readonly System.DateTime ASSET_CHANGED = new System.DateTime(2023, 11, 20);
 
       /// <summary>URL of the PRO asset in UAS.</summary>
       public const string ASSET_PRO_URL = "https://assetstore.unity.com/packages/slug/98713?aid=1011lNGT";
@@ -75,9 +75,6 @@
 
       /// <summary>Minimal number of selectable files under Windows with a path length of 260 (default: 256).</summary>
       public static int WINDOWS_MIN_OPEN_NUMBER_OF_FILES = 256;
-
-      /// <summary>Disables the synchronous calls on macOS.</summary>
-      public static bool MAC_SYNC_CALLS_DISABLED = true;
 
       #endregion
    }

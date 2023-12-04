@@ -8,7 +8,7 @@ namespace Crosstales.Common.Util
    /// <summary>Post processor for macOS.</summary>
    public static class CTPMacOSPostProcessor
    {
-      public static bool REWRITE_BUNDLE = true; //change it to false if the bundle should not be changed
+      public static bool REWRITE_BUNDLE = false; //change it to true if the bundle-id should be changed
 
       private const string ID = "com.crosstales.procstart";
 

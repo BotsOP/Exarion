@@ -25,6 +25,7 @@ namespace UI
         [SerializeField] private List<ToolButton> buttons;
         [SerializeField] private Color selectedColor;
         [SerializeField] private Color notSelectedColor;
+        [SerializeField] private bool use3D;
         private ToolType lastTool = ToolType.brush;
         private ToolType currentTool = ToolType.brush;
 
@@ -63,124 +64,127 @@ namespace UI
                 buttons[(int)lastTool].backgroundImage.color = selectedColor;
                 currentTool = lastTool;
             }
-            
-            //rotate
-            if (Input.GetKeyDown(KeyCode.E))
+
+            if (!use3D)
             {
-                lastTool = currentTool;
-                currentTool = ToolType.rotate;
-                buttons[(int)currentTool].backgroundImage.color = selectedColor;
-                buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, ToolType.rotate);
-            }
-            else if (Input.GetKeyUp(KeyCode.E))
-            {
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
-                buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
-                buttons[(int)lastTool].backgroundImage.color = selectedColor;
-                currentTool = lastTool;
-            }
-            
-            //resize
-            if (Input.GetKeyDown(KeyCode.R))
-            {
-                lastTool = currentTool;
-                currentTool = ToolType.resize;
-                buttons[(int)currentTool].backgroundImage.color = selectedColor;
-                buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, ToolType.resize);
-            }
-            else if (Input.GetKeyUp(KeyCode.R))
-            {
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
-                buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
-                buttons[(int)lastTool].backgroundImage.color = selectedColor;
-                currentTool = lastTool;
-            }
-            
-            //brush
-            if (Input.GetKeyDown(KeyCode.B))
-            {
-                lastTool = currentTool;
-                currentTool = ToolType.brush;
-                buttons[(int)currentTool].backgroundImage.color = selectedColor;
-                buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, ToolType.brush);
-            }
-            else if (Input.GetKeyUp(KeyCode.B))
-            {
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
-                buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
-                buttons[(int)lastTool].backgroundImage.color = selectedColor;
-                currentTool = lastTool;
-            }
-            
-            //polygon
-            if (Input.GetKeyDown(KeyCode.F))
-            {
-                lastTool = currentTool;
-                currentTool = ToolType.Polygon;
-                buttons[(int)currentTool].backgroundImage.color = selectedColor;
-                buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, currentTool);
-            }
-            else if (Input.GetKeyUp(KeyCode.F))
-            {
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
-                buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
-                buttons[(int)lastTool].backgroundImage.color = selectedColor;
-                currentTool = lastTool;
-            }
-            
-            //line
-            if (Input.GetKeyDown(KeyCode.D))
-            {
-                lastTool = currentTool;
-                currentTool = ToolType.Line;
-                buttons[(int)currentTool].backgroundImage.color = selectedColor;
-                buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, currentTool);
-            }
-            else if (Input.GetKeyUp(KeyCode.D))
-            {
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
-                buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
-                buttons[(int)lastTool].backgroundImage.color = selectedColor;
-                currentTool = lastTool;
-            }
-            
-            //Square
-            if (Input.GetKeyDown(KeyCode.G))
-            {
-                lastTool = currentTool;
-                currentTool = ToolType.Square;
-                buttons[(int)currentTool].backgroundImage.color = selectedColor;
-                buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, currentTool);
-            }
-            else if (Input.GetKeyUp(KeyCode.G))
-            {
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
-                buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
-                buttons[(int)lastTool].backgroundImage.color = selectedColor;
-                currentTool = lastTool;
-            }
-            
-            //circle
-            if (Input.GetKeyDown(KeyCode.V))
-            {
-                lastTool = currentTool;
-                currentTool = ToolType.Circle;
-                buttons[(int)currentTool].backgroundImage.color = selectedColor;
-                buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, currentTool);
-            }
-            else if (Input.GetKeyUp(KeyCode.V))
-            {
-                EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
-                buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
-                buttons[(int)lastTool].backgroundImage.color = selectedColor;
-                currentTool = lastTool;
+                //rotate
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    lastTool = currentTool;
+                    currentTool = ToolType.rotate;
+                    buttons[(int)currentTool].backgroundImage.color = selectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, ToolType.rotate);
+                }
+                else if (Input.GetKeyUp(KeyCode.E))
+                {
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
+                    buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = selectedColor;
+                    currentTool = lastTool;
+                }
+                
+                //resize
+                if (Input.GetKeyDown(KeyCode.R))
+                {
+                    lastTool = currentTool;
+                    currentTool = ToolType.resize;
+                    buttons[(int)currentTool].backgroundImage.color = selectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, ToolType.resize);
+                }
+                else if (Input.GetKeyUp(KeyCode.R))
+                {
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
+                    buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = selectedColor;
+                    currentTool = lastTool;
+                }
+                
+                //brush
+                if (Input.GetKeyDown(KeyCode.B))
+                {
+                    lastTool = currentTool;
+                    currentTool = ToolType.brush;
+                    buttons[(int)currentTool].backgroundImage.color = selectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, ToolType.brush);
+                }
+                else if (Input.GetKeyUp(KeyCode.B))
+                {
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
+                    buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = selectedColor;
+                    currentTool = lastTool;
+                }
+                
+                //polygon
+                if (Input.GetKeyDown(KeyCode.F))
+                {
+                    lastTool = currentTool;
+                    currentTool = ToolType.Polygon;
+                    buttons[(int)currentTool].backgroundImage.color = selectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, currentTool);
+                }
+                else if (Input.GetKeyUp(KeyCode.F))
+                {
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
+                    buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = selectedColor;
+                    currentTool = lastTool;
+                }
+                
+                //line
+                if (Input.GetKeyDown(KeyCode.D))
+                {
+                    lastTool = currentTool;
+                    currentTool = ToolType.Line;
+                    buttons[(int)currentTool].backgroundImage.color = selectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, currentTool);
+                }
+                else if (Input.GetKeyUp(KeyCode.D))
+                {
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
+                    buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = selectedColor;
+                    currentTool = lastTool;
+                }
+                
+                //Square
+                if (Input.GetKeyDown(KeyCode.G))
+                {
+                    lastTool = currentTool;
+                    currentTool = ToolType.Square;
+                    buttons[(int)currentTool].backgroundImage.color = selectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, currentTool);
+                }
+                else if (Input.GetKeyUp(KeyCode.G))
+                {
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
+                    buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = selectedColor;
+                    currentTool = lastTool;
+                }
+                
+                //circle
+                if (Input.GetKeyDown(KeyCode.V))
+                {
+                    lastTool = currentTool;
+                    currentTool = ToolType.Circle;
+                    buttons[(int)currentTool].backgroundImage.color = selectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = notSelectedColor;
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, currentTool);
+                }
+                else if (Input.GetKeyUp(KeyCode.V))
+                {
+                    EventSystem<ToolType>.RaiseEvent(EventType.CHANGE_TOOLTYPE, lastTool);
+                    buttons[(int)currentTool].backgroundImage.color = notSelectedColor;
+                    buttons[(int)lastTool].backgroundImage.color = selectedColor;
+                    currentTool = lastTool;
+                }
             }
         }
         public void OnClick(ToolButton _toolButton)
